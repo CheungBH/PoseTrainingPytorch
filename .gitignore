@@ -41,9 +41,11 @@ test/.coverage
 test/data/legacy_serialized.pt
 *~
 .idea
-models
 yolo
 SPPE
 log
 Video
+exp
+data
+
 
