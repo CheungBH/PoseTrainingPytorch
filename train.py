@@ -13,7 +13,6 @@ from utils.img import flip, shuffleLR
 from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
-
 import config.config as config
 
 if config.backbone == "mobilenet":

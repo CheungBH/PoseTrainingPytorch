@@ -8,6 +8,9 @@ backbone = "mobilenet"
 seresnet_cfg = "config/pose_cfg/seresnet_cfg.txt"   # if origin, model_cfg = None
 mobile_setting = None
 
+loadModel = None
+save_folder = "test"
+
 body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right ear", 6: "left shoulder",
                 7: "right shoulder", 8: "left elbow", 9: "right elbow", 10: "left wrist", 11: "right wrist",
                 12: "left hip", 13: "right hip", 14: "left knee", 15: "right knee", 16: "left ankle", 17: "right ankle"}
@@ -18,6 +21,7 @@ sigma = 1
 
 train_data = "coco"
 train_data_path = "G:/images"
+train_data_anno = "data/coco/annot_coco.h5"
 print(os.path.isdir(train_data_path))
 
 sparse = False
@@ -25,12 +29,9 @@ sparse_s = 1e-7
 
 train_batch = 12
 val_batch = 32
-
 epochs = 500
 save_interval = 1
 
-loadModel = None
-save_folder = "test"
 
 opt_method = "adam"  # "rmsprop"
 lr = 1e-3

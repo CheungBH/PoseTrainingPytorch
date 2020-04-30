@@ -37,7 +37,7 @@ class Mscoco(data.Dataset):
         self.flipRef = [item for idx, item in enumerate(origin_flipRef) if (idx+1)*2 < len(self.accIdxs)]
 
         # create train/val split
-        with h5py.File('data/coco/annot_coco.h5', 'r') as annot:
+        with h5py.File(config.train_data_anno, 'r') as annot:
             # train
             self.imgname_coco_train = annot['imgname'][:-5887] #:-5887
             self.bndbox_coco_train = annot['bndbox'][:-5887]
