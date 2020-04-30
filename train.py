@@ -232,7 +232,7 @@ def main():
         #     writer.add_histogram(str(mod), mod.weight.data)
 
         print('############# Starting Epoch {} #############'.format(i))
-        log.write('############# Starting Epoch {} #############'.format(i))
+        log.write('############# Starting Epoch {} #############\n'.format(i))
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
 
         print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
@@ -240,7 +240,7 @@ def main():
             loss=loss,
             acc=acc
         ))
-        log.write('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+        log.write('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
             idx=i,
             loss=loss,
             acc=acc
@@ -264,7 +264,7 @@ def main():
             loss=loss,
             acc=acc
         ))
-        log.write('Valid-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+        log.write('Valid-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
             idx=i,
             loss=loss,
             acc=acc
