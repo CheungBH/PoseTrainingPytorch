@@ -148,12 +148,12 @@ def main():
         val_dataset = Mscoco(train=False)
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=config.train_batch, shuffle=True, num_workers=0, pin_memory=True)
+        train_dataset, batch_size=config.train_batch, shuffle=True, num_workers=config.train_mum_worker, pin_memory=True)
 
     #opt.nThreads
 
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=config.val_batch, shuffle=False, num_workers=0, pin_memory=True)
+        val_dataset, batch_size=config.val_batch, shuffle=False, num_workers=config.val_num_worker, pin_memory=True)
 
     # Model Initialize
     if device != "cpu":

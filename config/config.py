@@ -37,3 +37,6 @@ opt_method = "adam"  # "rmsprop"
 lr = 1e-3
 momentum = 0
 weightDecay = 0
+
+train_mum_worker = 4
+val_num_worker = 4
