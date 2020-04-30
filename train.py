@@ -170,6 +170,7 @@ def main():
     if pre_train_model:
         print('Loading Model from {}'.format(pre_train_model))
         m.load_state_dict(torch.load(pre_train_model))
+        opt.trainIters = config.train_batch * (begin_epoch-1)
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
         os.makedirs("exp/{}/{}".format(dataset, save_folder),exist_ok=True)
         # if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
