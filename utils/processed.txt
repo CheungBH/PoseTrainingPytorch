@@ -1,0 +1,13 @@
+bull.jpg
+car.jpg
+cat1.jpg
+cat2.jpg
+cello.jpg
+dog1.jpg
+dog2.jpg
+dog3.jpg
+elephant.jpg
+flower.jpg
+guitar.jpg
+houses.jpg
+wine.png
