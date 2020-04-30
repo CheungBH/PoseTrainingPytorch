@@ -211,7 +211,7 @@ def main():
         m, optimizer = amp.initialize(m, optimizer, opt_level="O1")
 
     writer = SummaryWriter(
-        '.tensorboard/{}/{}'.format(dataset, save_folder))
+        'tensorboard/{}/{}'.format(dataset, save_folder))
 
 
     # Model Transfer
@@ -223,6 +223,7 @@ def main():
     # Start Training
     for i in range(config.epochs)[begin_epoch:]:
 
+        log = open("log/{}.txt".format(save_folder), "a+")
         for name, param in m.named_parameters():
             writer.add_histogram(
                 name, param.clone().data.to("cpu").numpy(), i)
@@ -231,9 +232,15 @@ def main():
         #     writer.add_histogram(str(mod), mod.weight.data)
 
         print('############# Starting Epoch {} #############'.format(i))
+        log.write('############# Starting Epoch {} #############'.format(i))
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
 
         print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+            idx=i,
+            loss=loss,
+            acc=acc
+        ))
+        log.write('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
             loss=loss,
             acc=acc
@@ -257,6 +264,12 @@ def main():
             loss=loss,
             acc=acc
         ))
+        log.write('Valid-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+            idx=i,
+            loss=loss,
+            acc=acc
+        ))
+        log.close()
 
     writer.close()
 
