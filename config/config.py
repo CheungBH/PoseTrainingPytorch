@@ -4,8 +4,8 @@ device = "cuda:0"
 
 backbone_ls = ["mobilenet", "seresnet101"]
 
-backbone = "seresnet101"
-seresnet_cfg = None   # if origin, model_cfg = None
+backbone = "mobilenet"
+seresnet_cfg = "config/pose_cfg/seresnet_cfg.txt"   # if origin, model_cfg = None
 mobile_setting = None
 
 body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right ear", 6: "left shoulder",
@@ -36,5 +36,3 @@ opt_method = "adam"  # "rmsprop"
 lr = 1e-3
 momentum = 0
 weightDecay = 0
-
-n_classes = 17

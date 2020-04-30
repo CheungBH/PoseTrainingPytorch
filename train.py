@@ -18,10 +18,12 @@ import config.config as config
 
 if config.backbone == "mobilenet":
     from models.mobilenet.MobilePose import createModel
-    model_cfg = config.seresnet_cfg
+    model_cfg = config.mobile_setting
 elif config.backbone == "seresnet101":
     from models.seresnet.FastPose import createModel
-    model_cfg = config.mobile_setting
+    model_cfg = config.seresnet_cfg
+else:
+    raise ValueError("Your model name is wrong")
 
 try:
     from apex import amp
