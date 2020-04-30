@@ -161,7 +161,9 @@ def main():
     else:
         m = createModel(cfg=model_cfg).cpu()
 
-    print(m)
+    # print(m)
+    # print(list(m.modules()))
+    # print(list(m.named_modules()))
 
     begin_epoch = 0
     pre_train_model = config.loadModel
@@ -169,12 +171,13 @@ def main():
         print('Loading Model from {}'.format(pre_train_model))
         m.load_state_dict(torch.load(pre_train_model))
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
-        if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
-            try:
-                os.mkdir("exp/{}/{}".format(dataset, save_folder))
-            except FileNotFoundError:
-                os.mkdir("exp/{}".format(dataset))
-                os.mkdir("exp/{}/{}".format(dataset, save_folder))
+        os.makedirs("exp/{}/{}".format(dataset, save_folder),exist_ok=True)
+        # if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
+        #     try:
+        #         os.mkdir("exp/{}/{}".format(dataset, save_folder))
+        #     except FileNotFoundError:
+        #         os.mkdir("exp/{}".format(dataset))
+        #         os.mkdir("exp/{}/{}".format(dataset, save_folder))
     else:
         print('Create new model')
         if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
@@ -222,6 +225,9 @@ def main():
         for name, param in m.named_parameters():
             writer.add_histogram(
                 name, param.clone().data.to("cpu").numpy(), i)
+
+        # for mod in m.modules():
+        #     writer.add_histogram(str(mod), mod.weight.data)
 
         print('############# Starting Epoch {} #############'.format(i))
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
