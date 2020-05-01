@@ -21,6 +21,9 @@ if config.backbone == "mobilenet":
 elif config.backbone == "seresnet101":
     from models.seresnet.FastPose import createModel
     model_cfg = config.seresnet_cfg
+elif "efficient" in config.backbone:
+    from models.efficientnet.EfficientPose import createModel
+    model_cfg = config.backbone
 else:
     raise ValueError("Your model name is wrong")
 
