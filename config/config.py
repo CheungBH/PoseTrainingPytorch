@@ -2,7 +2,7 @@ import os
 
 device = "cuda:0"
 
-backbone_ls = ["mobilenet", "seresnet101"]
+backbone_ls = ["mobilenet", "seresnet101", "efficientnet-b0", "shufflenet"]
 
 backbone = "efficientnet-b0"
 seresnet_cfg = "config/pose_cfg/seresnet_cfg.txt"   # if origin, model_cfg = None

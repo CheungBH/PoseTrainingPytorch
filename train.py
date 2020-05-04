@@ -26,6 +26,9 @@ elif config.backbone == "seresnet101":
 elif "efficient" in config.backbone:
     from models.efficientnet.EfficientPose import createModel
     model_cfg = config.backbone
+elif config.backbone == "shufflenet":
+    from models.shufflenet.ShufflePose import createModel
+    model_cfg = ""
 else:
     raise ValueError("Your model name is wrong")
 
