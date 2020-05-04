@@ -23,11 +23,15 @@ class Mscoco(data.Dataset):
                  scale_factor=(0.2, 0.3), rot_factor=40, label_type='Gaussian'):
         self.img_folder = config.train_data_path    # root image folders
         self.is_train = train           # training set or test set
-        self.inputResH = opt.inputResH
-        # print(os.path.isdir(self.img_folder))
-        self.inputResW = opt.inputResW
-        self.outputResH = opt.outputResH
-        self.outputResW = opt.outputResW
+        # self.inputResH = opt.inputResH
+        # # print(os.path.isdir(self.img_folder))
+        # self.inputResW = opt.inputResW
+        # self.outputResH = opt.outputResH
+        # self.outputResW = opt.outputResW
+        self.inputResH = config.input_height
+        self.inputResW = config.input_width
+        self.outputResH = config.output_height
+        self.outputResW = config.output_width
         self.sigma = sigma
         self.scale_factor = scale_factor
         self.rot_factor = rot_factor

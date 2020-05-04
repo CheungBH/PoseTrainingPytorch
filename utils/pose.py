@@ -8,7 +8,10 @@ import torch
 import numpy as np
 import random
 from src.opt import opt
-from config.config import train_body_part
+import config.config as config
+
+inputResH, inputResW = config.input_height, config.input_width
+outputResH, outputResW = config.output_height, config.output_width
 
 
 def rnd(x):
@@ -104,8 +107,6 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
             elif switch > 0.68:
                 upLeft[1] = (upLeft[1] + bottomRight[1]) / 2
 
-    inputResH, inputResW = opt.inputResH, opt.inputResW
-    outputResH, outputResW = opt.outputResH, opt.outputResW
 
     inp = cropBox(img, upLeft, bottomRight, inputResH, inputResW)
 
@@ -122,7 +123,7 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
                 hm_part = transformBox(
                     part[i], upLeft, bottomRight, inputResH, inputResW, outputResH, outputResW)
 
-                out[i] = drawGaussian(out[i], hm_part, opt.hmGauss)
+                out[i] = drawGaussian(out[i], hm_part, config.hmGauss)
 
             setMask[i].add_(1)
 
@@ -137,8 +138,8 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
         if random.uniform(0, 1) < 0.6:
             r = 0
         if r != 0:
-            inp = cv_rotate(inp, r, opt.inputResW, opt.inputResH)
-            out = cv_rotate(out, r, opt.outputResW, opt.outputResH)
+            inp = cv_rotate(inp, r, inputResW, inputResH)
+            out = cv_rotate(out, r, outputResW, outputResH)
 
     return inp, out, setMask
 

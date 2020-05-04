@@ -25,6 +25,7 @@ body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right
 # train_body_part = [1,6,7,8,9,10,11,12,13,14,15,16,17]
 train_body_part = [i+1 for i in range(17)]
 sigma = 1
+hmGauss = 1
 
 train_data = "coco"
 train_data_path = "/media/hkuit164/新加卷/images"
@@ -47,3 +48,8 @@ weightDecay = 0
 
 train_mum_worker = 4
 val_num_worker = 3
+
+input_width = 256
+input_height = 320
+output_width = 2 * (len(DUCs)+1) * 10
+output_height = 2 * (len(DUCs)+1) * 8
