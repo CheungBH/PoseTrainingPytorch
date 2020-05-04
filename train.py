@@ -14,7 +14,7 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.compute_flops import print_model_param_flops
+from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
 
 if config.backbone == "mobilenet":
@@ -172,6 +172,11 @@ def main():
 
     begin_epoch = 0
     pre_train_model = config.loadModel
+    flops = print_model_param_flops(m)
+    print("FLOPs of current model is {}".format(flops))
+    params = print_model_param_nums(m)
+    print("Parameters of current model is {}".format(flops))
+
     if pre_train_model:
         print('Loading Model from {}'.format(pre_train_model))
         m.load_state_dict(torch.load(pre_train_model))
@@ -180,10 +185,9 @@ def main():
         os.makedirs("exp/{}/{}".format(dataset, save_folder),exist_ok=True)
     else:
         print('Create new model')
-        flops = print_model_param_flops(m)
-        print("FLOPs of current model is {}".format(flops))
         with open("log/{}.txt".format(save_folder), "a+") as f:
             f.write("FLOPs of current model is {}\n".format(flops))
+            f.write("Parameters of current model is {}".format(flops))
         if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
             try:
                 os.mkdir("exp/{}/{}".format(dataset, save_folder))

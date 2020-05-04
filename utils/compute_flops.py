@@ -12,6 +12,7 @@ def print_model_param_nums(model=None, multiply_adds=True):
         model = torchvision.models.alexnet()
     total = sum([param.nelement() for param in model.parameters()])
     print('  + Number of params: %.2fM' % (total / 1e6))
+    return total
 
 
 def print_model_param_flops(model=None, input_res=224, multiply_adds=True):
