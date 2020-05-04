@@ -14,6 +14,8 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
+from utils.compute_flops import print_model_param_flops
+
 
 if config.backbone == "mobilenet":
     from models.mobilenet.MobilePose import createModel
@@ -176,25 +178,18 @@ def main():
         opt.trainIters = config.train_batch * (begin_epoch-1)
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
         os.makedirs("exp/{}/{}".format(dataset, save_folder),exist_ok=True)
-        # if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
-        #     try:
-        #         os.mkdir("exp/{}/{}".format(dataset, save_folder))
-        #     except FileNotFoundError:
-        #         os.mkdir("exp/{}".format(dataset))
-        #         os.mkdir("exp/{}/{}".format(dataset, save_folder))
     else:
         print('Create new model')
+        flops = print_model_param_flops(m)
+        print("FLOPs of current model is {}".format(flops))
+        with open("log/{}.txt".format(save_folder), "a+") as f:
+            f.write("FLOPs of current model is {}\n".format(flops))
         if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
             try:
                 os.mkdir("exp/{}/{}".format(dataset, save_folder))
             except FileNotFoundError:
                 os.mkdir("exp/{}".format(dataset))
                 os.mkdir("exp/{}/{}".format(dataset, save_folder))
-
-    if device != "cpu":
-        criterion = torch.nn.MSELoss().cuda()
-    else:
-        criterion = torch.nn.MSELoss()
 
     if optimize == 'rmsprop':
         optimizer = torch.optim.RMSprop(m.parameters(),
@@ -220,8 +215,10 @@ def main():
     # Model Transfer
     if device != "cpu":
         m = torch.nn.DataParallel(m).cuda()
+        criterion = torch.nn.MSELoss().cuda()
     else:
         m = torch.nn.DataParallel(m)
+        criterion = torch.nn.MSELoss()
 
     # Start Training
     for i in range(config.epochs)[begin_epoch:]:
@@ -231,8 +228,6 @@ def main():
             writer.add_histogram(
                 name, param.clone().data.to("cpu").numpy(), i)
 
-        # for mod in m.modules():
-        #     writer.add_histogram(str(mod), mod.weight.data)
 
         print('############# Starting Epoch {} #############'.format(i))
         log.write('############# Starting Epoch {} #############\n'.format(i))
