@@ -178,7 +178,7 @@ def main():
     flops = print_model_param_flops(m)
     print("FLOPs of current model is {}".format(flops))
     params = print_model_param_nums(m)
-    print("Parameters of current model is {}".format(flops))
+    print("Parameters of current model is {}".format(params))
 
     if pre_train_model:
         print('Loading Model from {}'.format(pre_train_model))
@@ -190,7 +190,7 @@ def main():
         print('Create new model')
         with open("log/{}.txt".format(save_folder), "a+") as f:
             f.write("FLOPs of current model is {}\n".format(flops))
-            f.write("Parameters of current model is {}".format(flops))
+            f.write("Parameters of current model is {}".format(params))
         if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
             try:
                 os.mkdir("exp/{}/{}".format(dataset, save_folder))
