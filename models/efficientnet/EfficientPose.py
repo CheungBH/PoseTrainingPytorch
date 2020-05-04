@@ -1,7 +1,7 @@
 
 import torch.nn as nn
 from models.duc.DUC import DUC
-from efficientnet_pytorch import EfficientNet
+# from efficientnet_pytorch import EfficientNet
 from models.efficientnet.efficientnet import EfficientNet
 from config.config import train_body_part
 

@@ -4,7 +4,7 @@ device = "cuda:0"
 
 backbone_ls = ["mobilenet", "seresnet101"]
 
-backbone = "mobilenet"
+backbone = "efficientnet-b0"
 seresnet_cfg = "config/pose_cfg/seresnet_cfg.txt"   # if origin, model_cfg = None
 mobile_setting = [[1, 14, 1, 1],
                 [6, 24, 2, 2],
@@ -16,7 +16,7 @@ mobile_setting = [[1, 14, 1, 1],
 DUCs = [640, 320]
 
 loadModel = None
-save_folder = "mob_enormous_hmprune_originDUC_sparseE-7"
+save_folder = "test"
 
 body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right ear", 6: "left shoulder",
                 7: "right shoulder", 8: "left elbow", 9: "right elbow", 10: "left wrist", 11: "right wrist",
@@ -28,8 +28,8 @@ sigma = 1
 hmGauss = 1
 
 train_data = "coco"
-train_data_path = "/media/hkuit164/新加卷/images"
-train_data_anno = "data/coco/annot_coco.h5"
+train_data_path = "../trainalpha/data/coco//images"
+train_data_anno = "../trainalpha/data/coco/annot_coco.h5"
 # print(os.path.isdir(train_data_path))
 
 sparse = True
@@ -51,5 +51,5 @@ val_num_worker = 3
 
 input_width = 256
 input_height = 320
-output_width = 2 * (len(DUCs)+1) * 10
-output_height = 2 * (len(DUCs)+1) * 8
+output_width = pow(2, (len(DUCs)+1)) * 8
+output_height = pow(2, (len(DUCs)+1)) * 10

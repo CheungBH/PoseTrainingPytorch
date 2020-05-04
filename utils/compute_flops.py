@@ -5,6 +5,7 @@ import torch
 import torchvision
 import torch.nn as nn
 from torch.autograd import Variable
+from config.config import device
 
 
 def print_model_param_nums(model=None, multiply_adds=True):
@@ -104,9 +105,13 @@ def print_model_param_flops(model=None, input_res=224, multiply_adds=True):
     if model == None:
         model = torchvision.models.alexnet()
     foo(model)
-    input = Variable(torch.rand(3, 3, input_res, input_res), requires_grad = True)
-    out = model(input)
+    if device != "cpu":
+        input = Variable(torch.rand(3, 3, input_res, input_res), requires_grad = True).cuda()
+        model = model.cuda()
+    else:
+        input = Variable(torch.rand(3, 3, input_res, input_res), requires_grad = True)
 
+    out = model(input)
 
     total_flops = (sum(list_conv) + sum(list_linear) + sum(list_bn) + sum(list_relu) + sum(list_pooling) + sum(list_upsample))
 
