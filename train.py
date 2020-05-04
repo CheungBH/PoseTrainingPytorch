@@ -23,9 +23,9 @@ if config.backbone == "mobilenet":
 elif config.backbone == "seresnet101":
     from models.seresnet.FastPose import createModel
     model_cfg = config.seresnet_cfg
-elif "efficient" in config.backbone:
+elif config.backbone == "efficientnet":
     from models.efficientnet.EfficientPose import createModel
-    model_cfg = config.backbone
+    model_cfg = "efficient_" + config.efficient_type
 elif config.backbone == "shufflenet":
     from models.shufflenet.ShufflePose import createModel
     model_cfg = ""
