@@ -6,7 +6,7 @@
 import torch
 import torch.utils.data
 import torch.nn as nn
-from dataset.coco_dataset import Mscoco
+from dataset.coco_dataset import Mscoco, MyDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, accuracy
 from utils.img import flip, shuffleLR
@@ -151,27 +151,43 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
 def main():
     # Prepare Dataset
-    if opt.dataset == 'coco':
-        train_dataset = Mscoco(train=True)
-        val_dataset = Mscoco(train=False)
 
+    train_dataset = MyDataset(config.train_info, train=True)
+    val_dataset = MyDataset(config.train_info, train=False)
+    # for k, v in config.train_info.items():
+    #     pass
+    # train_dataset = Mscoco(v, train=True)
+    # val_dataset = Mscoco(v, train=False)
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=config.train_batch, shuffle=True, num_workers=config.train_mum_worker, pin_memory=True)
-
-    #opt.nThreads
-
+        train_dataset, batch_size=config.train_batch, shuffle=True, num_workers=config.train_mum_worker,
+        pin_memory=True)
     val_loader = torch.utils.data.DataLoader(
         val_dataset, batch_size=config.val_batch, shuffle=False, num_workers=config.val_num_worker, pin_memory=True)
+
+    # for k, v in config.train_info.items():
+    #     train_dataset = Mscoco([v[0], v[1]], train=True, val_img_num=v[2])
+    #     val_dataset = Mscoco([v[0], v[1]], train=False, val_img_num=v[2])
+    #
+    # train_loaders[k] = torch.utils.data.DataLoader(
+    #     train_dataset, batch_size=config.train_batch, shuffle=True, num_workers=config.train_mum_worker,
+    #     pin_memory=True)
+    #
+    # val_loaders[k] = torch.utils.data.DataLoader(
+    #     val_dataset, batch_size=config.val_batch, shuffle=False, num_workers=config.val_num_worker, pin_memory=True)
+    #
+    # train_loader = torch.utils.data.DataLoader(
+    #         train_dataset, batch_size=config.train_batch, shuffle=True, num_workers=config.train_mum_worker,
+    #         pin_memory=True)
+    # val_loader = torch.utils.data.DataLoader(
+    #         val_dataset, batch_size=config.val_batch, shuffle=False, num_workers=config.val_num_worker, pin_memory=True)
+
+    # assert train_loaders != {}, "Your training data has not been specific! "
 
     # Model Initialize
     if device != "cpu":
         m = createModel(cfg=model_cfg).cuda()
     else:
         m = createModel(cfg=model_cfg).cpu()
-
-    # print(m)
-    # print(list(m.modules()))
-    # print(list(m.named_modules()))
 
     begin_epoch = 0
     pre_train_model = config.loadModel
@@ -231,13 +247,14 @@ def main():
     for i in range(config.epochs)[begin_epoch:]:
 
         log = open("log/{}.txt".format(save_folder), "a+")
+        print('############# Starting Epoch {} #############'.format(i))
+        log.write('############# Starting Epoch {} #############\n'.format(i))
+
         for name, param in m.named_parameters():
             writer.add_histogram(
                 name, param.clone().data.to("cpu").numpy(), i)
 
 
-        print('############# Starting Epoch {} #############'.format(i))
-        log.write('############# Starting Epoch {} #############\n'.format(i))
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
 
         print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
@@ -254,6 +271,21 @@ def main():
         opt.acc = acc
         opt.loss = loss
         m_dev = m.module
+
+        loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+
+        print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+            idx=i,
+            loss=loss,
+            acc=acc
+        ))
+        log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
+            idx=i,
+            loss=loss,
+            acc=acc
+        ))
+        log.close()
+
         if i % config.save_interval == 0:
             torch.save(
                 m_dev.state_dict(), 'exp/{}/{}/model_{}.pkl'.format(dataset, save_folder, i))
@@ -261,20 +293,6 @@ def main():
                 opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
             torch.save(
                 optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
-
-        loss, acc = valid(val_loader, m, criterion, optimizer, writer)
-
-        print('Valid-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        log.write('Valid-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        log.close()
 
     writer.close()
 

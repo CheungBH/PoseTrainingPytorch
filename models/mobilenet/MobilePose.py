@@ -14,7 +14,7 @@ def createModel(cfg=None):
 class MobilePose(nn.Module):
     def __init__(self, setting):
         super(MobilePose, self).__init__()
-        print(setting)
+        # print(setting)
         self.mobile = MobileNetV2(inverted_residual_setting=setting)
 
         self.suffle1 = nn.PixelShuffle(2)

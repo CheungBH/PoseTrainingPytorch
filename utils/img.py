@@ -40,6 +40,12 @@ def load_image(img_path):
     #return im_to_torch(imageio.imread(img_path, pilmode='RGB'))
 
 
+def load_gray_img(img_path):
+    img = cv2.imread(img_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+
 def to_numpy(tensor):
     if torch.is_tensor(tensor):
         return tensor.cpu().numpy()
