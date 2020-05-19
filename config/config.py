@@ -4,7 +4,7 @@ device = "cuda:0"
 
 backbone_ls = ["mobilenet", "seresnet101", "efficientnet-b0", "shufflenet"]
 
-backbone = "efficientnet-b0"
+backbone = "mobilenet"
 seresnet_cfg = "config/pose_cfg/seresnet_cfg.txt"   # if origin, model_cfg = None
 mobile_setting = [[1, 14, 1, 1],
                 [6, 24, 2, 2],
@@ -15,8 +15,8 @@ mobile_setting = [[1, 14, 1, 1],
                 [6, 318, 1, 1]]
 DUCs = [640, 320]
 
-loadModel = None
-save_folder = "test"
+loadModel = "exp/coco/mob_enormous_hmprune_OriginDUC_sparseE-7/model_38.pkl"
+save_folder = "mob_enormous_hmprune_OriginDUC_sparseE-7"
 
 body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right ear", 6: "left shoulder",
                 7: "right shoulder", 8: "left elbow", 9: "right elbow", 10: "left wrist", 11: "right wrist",
@@ -28,15 +28,15 @@ sigma = 1
 hmGauss = 1
 
 train_data = "coco"
-train_data_path = "../trainalpha/data/coco//images"
+train_data_path = "../trainalpha/data/coco/images"
 train_data_anno = "../trainalpha/data/coco/annot_coco.h5"
 # print(os.path.isdir(train_data_path))
 
 sparse = True
-sparse_s = 1e-7
+sparse_s = 5e-8
 
-train_batch = 64
-val_batch = 64
+train_batch = 128
+val_batch = 128
 epochs = 500
 save_interval = 1
 

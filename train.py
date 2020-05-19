@@ -190,7 +190,7 @@ def main():
         print('Create new model')
         with open("log/{}.txt".format(save_folder), "a+") as f:
             f.write("FLOPs of current model is {}\n".format(flops))
-            f.write("Parameters of current model is {}".format(params))
+            f.write("Parameters of current model is {}\n".format(params))
         if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
             try:
                 os.mkdir("exp/{}/{}".format(dataset, save_folder))
