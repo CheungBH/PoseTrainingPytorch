@@ -3,12 +3,12 @@ import torch.nn as nn
 from models.duc.DUC import DUC
 # from efficientnet_pytorch import EfficientNet
 from models.efficientnet.efficientnet import EfficientNet
-from config.config import train_body_part
+from config.config import train_body_part, DUCs
 
 n_classes = len(train_body_part)
 
-duc1 = 640
-duc2 = 320
+duc1 = DUCs[0]
+duc2 = DUCs[1]
 
 
 def createModel(cfg='efficientnet-b0'):
@@ -22,7 +22,7 @@ class EfficientPose(nn.Module):
         self.efficient = EfficientNet.from_name(cfg)
 
         self.suffle1 = nn.PixelShuffle(2)
-        self.duc1 = DUC(320, duc1, upscale_factor=2)
+        self.duc1 = DUC(int(duc1/2), duc1, upscale_factor=2)
         self.duc2 = DUC(int(duc1/4), duc2, upscale_factor=2)
         #self.duc3 = DUC(128, 256, upscale_factor=2)
         #self.duc4 = DUC(256, 512, upscale_factor=2)

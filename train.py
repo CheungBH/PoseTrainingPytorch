@@ -25,7 +25,7 @@ elif config.backbone == "seresnet101":
     model_cfg = config.seresnet_cfg
 elif config.backbone == "efficientnet":
     from models.efficientnet.EfficientPose import createModel
-    model_cfg = "efficient_" + config.efficient_type
+    model_cfg = "efficientnet-" + config.efficient_type
 elif config.backbone == "shufflenet":
     from models.shufflenet.ShufflePose import createModel
     model_cfg = ""
