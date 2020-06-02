@@ -1,12 +1,12 @@
 import os
 
-device = "cuda:0"
+device = "cpu"
 
 backbone_ls = ["mobilenet", "seresnet101", "efficientnet-b0", "shufflenet"]
 
-backbone = "mobilenet"
+backbone = "efficientnet"
 seresnet_cfg = "config/pose_cfg/seresnet_cfg.txt"   # if origin, model_cfg = None
-efficient_type = "b0"
+efficient_type = "b2"
 mobile_setting = None
     # [[1, 14, 1, 1],
     #             [6, 24, 2, 2],
@@ -15,10 +15,10 @@ mobile_setting = None
     #             [6, 72, 3, 1],
     #             [6, 120, 3, 2],
     #             [6, 318, 1, 1]]
-DUCs = [640, 320]
+DUCs = [704, 352]
 
 loadModel = None
-save_folder = "gray"
+save_folder = "efficientnet-b2-test"
 
 body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right ear", 6: "left shoulder",
                 7: "right shoulder", 8: "left elbow", 9: "right elbow", 10: "left wrist", 11: "right wrist",
@@ -33,7 +33,7 @@ train_data = "coco"
 train_info = {
     # "yoga": ["data/yoga/images", "data/yoga/test.h5", 2],
     "coco": ["../trainalpha/data/coco/images", "../trainalpha/data/coco/annot_coco.h5", 5887],
-    # "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/AI_challenger_anno.h5", 300]
+    "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 6000]
     # "../trainalpha/data/coco/images": "../trainalpha/data/coco/annot_coco.h5",
     # "data/yoga/images": "data/yoga/test.h5",
 }
@@ -41,8 +41,8 @@ train_info = {
 sparse = False
 sparse_s = 5e-8
 
-train_batch = 64
-val_batch = 128
+train_batch = 32
+val_batch = 32
 epochs = 500
 save_interval = 1
 
@@ -52,8 +52,8 @@ lr = 1e-3
 momentum = 0
 weightDecay = 0
 
-train_mum_worker = 4
-val_num_worker = 3
+train_mum_worker = 5
+val_num_worker = 2
 
 input_width = 256
 input_height = 320

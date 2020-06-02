@@ -11,7 +11,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.utils import model_zoo
-from torchvision import models
 
 ########################################################################
 ############### HELPERS FUNCTIONS FOR MODEL ARCHITECTURE ###############
@@ -53,8 +52,8 @@ class MemoryEfficientSwish(nn.Module):
         return SwishImplementation.apply(x)
 
 class Swish(nn.Module):
-    def forward(self, x):
-        return x * torch.sigmoid(x)
+    def forward(self, x, Beta=1):
+        return x * torch.sigmoid(Beta * x)
 
 
 def round_filters(filters, global_params):
@@ -164,10 +163,12 @@ def efficientnet_params(model_name):
     params_dict = {
         # Coefficients:   width,depth,res,dropout
         'efficientnet-b0': (1.0, 1.0, 224, 0.2),
+        'efficientnet-b0-epII': (1.0, 1.0, 180, 0.2),
         'efficientnet-b1': (1.0, 1.1, 240, 0.2),
         'efficientnet-b2': (1.1, 1.2, 260, 0.3),
         'efficientnet-b3': (1.2, 1.4, 300, 0.3),
-        'efficientnet-b4': (1.4, 1.8, 380, 0.4),
+        'efficientnet-b4': (1.4, 1.8, 360, 0.4),
+        'efficientnet-b4-epII': (1.4, 1.8, 360, 0.4),
         'efficientnet-b5': (1.6, 2.2, 456, 0.4),
         'efficientnet-b6': (1.8, 2.6, 528, 0.5),
         'efficientnet-b7': (2.0, 3.1, 600, 0.5),
@@ -253,7 +254,7 @@ class BlockDecoder(object):
 
 
 def efficientnet(width_coefficient=None, depth_coefficient=None, dropout_rate=0.2,
-                 drop_connect_rate=0.2, image_size=None, num_classes=1000):
+                 drop_connect_rate=0.2, image_size=None, num_classes=1000, block_required=7):
     """ Creates a efficientnet model. """
 
     blocks_args = [
@@ -262,6 +263,14 @@ def efficientnet(width_coefficient=None, depth_coefficient=None, dropout_rate=0.
         'r3_k5_s11_e6_i80_o112_se0.25', 'r4_k5_s22_e6_i112_o192_se0.25',
         'r1_k3_s11_e6_i192_o320_se0.25',
     ]
+
+    tmp_block_args = []
+
+    for i in range(block_required):
+        tmp_block_args.append(blocks_args[i])
+
+    blocks_args = tmp_block_args
+
     blocks_args = BlockDecoder.decode(blocks_args)
 
     global_params = GlobalParams(
@@ -281,13 +290,14 @@ def efficientnet(width_coefficient=None, depth_coefficient=None, dropout_rate=0.
     return blocks_args, global_params
 
 
-def get_model_params(model_name, override_params):
+def get_model_params(model_name, override_params,required_block):
     """ Get the block args and global params for a given model """
     if model_name.startswith('efficientnet'):
         w, d, s, p = efficientnet_params(model_name)
+        b = required_block
         # note: all models have drop connect rate = 0.2
         blocks_args, global_params = efficientnet(
-            width_coefficient=w, depth_coefficient=d, dropout_rate=p, image_size=s)
+            width_coefficient=w, depth_coefficient=d, dropout_rate=p, image_size=s, block_required=b)
     else:
         raise NotImplementedError('model name is not pre-defined: %s' % model_name)
     if override_params:

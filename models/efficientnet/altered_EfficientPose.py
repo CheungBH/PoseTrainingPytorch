@@ -1,16 +1,17 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from models.duc.DUC import DUC
 # from efficientnet_pytorch import EfficientNet
-from models.efficientnet.efficientnet import EfficientNet
+from models.efficientnet.altered_efficientnet import EfficientNet
 from config.config import train_body_part, DUCs
-
 from torch.autograd import Variable
 
 n_classes = len(train_body_part)
 
 duc1 = DUCs[0]
 duc2 = DUCs[1]
+
 
 
 def createModel(cfg='efficientnet-b0'):
@@ -21,7 +22,14 @@ class EfficientPose(nn.Module):
     def __init__(self, cfg):
         super(EfficientPose, self).__init__()
 
-        self.efficient = EfficientNet.from_name(cfg)
+        # self.conv1 = nn.Conv2d(in_channels=3, out_channels=32,
+        #                        kernel_size=3,
+        #                        stride=1,padding=1)
+        # self.conv1_bn = nn.BatchNorm2d(32)
+
+
+        self.efficient_highres = EfficientNet.from_name('efficientnet-b4-epII',required_block=3)
+        self.efficient_lowres = EfficientNet.from_name('efficientnet-b0-epII',required_block=2)
 
         self.shuffle1 = nn.PixelShuffle(2)
         self.duc1 = DUC(int(duc1/2), duc1, upscale_factor=2)
@@ -32,14 +40,20 @@ class EfficientPose(nn.Module):
             int(duc2/4), n_classes, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
-        out = self.efficient(x)
-        out = self.shuffle1(out)
-        out = self.duc1(out)
-        out = self.duc2(out)
+        # x = F.relu(self.conv1_bn(self.conv1(x)))
+        amp_resize = nn.AdaptiveAvgPool2d((180,180))
+        x_highres = x
+        x_lowres = amp_resize(x)
+        out1 = self.efficient_highres(x_highres)
+        out2 = self.efficient_lowres(x_lowres)
+        out = torch.cat((out1, out2), 1)
+        #out = self.shuffle1(out)
+        #out = self.duc1(out)
+        #out = self.duc2(out)
         #out = self.duc3(out)
         #out = self.duc4(out)
 
-        out = self.conv_out(out)
+        #out = self.conv_out(out)
         return out
 
 if __name__ == '__main__':
