@@ -25,7 +25,6 @@ def draw_kp(hm, pt1, pt2, boxes, img_path):
         cond = True
         kpv = KeyPointVisualizer()
         img = kpv.vis_ske(orig_img, kps, score)
-        # cv2.imwrite("img.jpg", img)
     else:
         img = orig_img
         cond = False

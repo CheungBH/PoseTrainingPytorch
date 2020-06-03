@@ -55,7 +55,7 @@ device = config.device
 opt.device = device
 save_folder = opt.expID
 dataset = opt.expFolder
-optimize = config.opt_method
+optimize = opt.optMethod
 
 os.makedirs("log/{}".format(dataset), exist_ok=True)
 
