@@ -285,9 +285,9 @@ class EfficientNet(nn.Module):
         return x
 
     @classmethod
-    def from_name(cls, model_name, override_params=None, required_block=7):
+    def from_name(cls, model_name, override_params=None):
         cls._check_model_name_is_valid(model_name)
-        blocks_args, global_params = get_model_params(model_name, override_params, required_block)
+        blocks_args, global_params = get_model_params(model_name, override_params)
         return cls(blocks_args, global_params)
 
     @classmethod

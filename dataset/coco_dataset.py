@@ -9,7 +9,7 @@ from functools import reduce
 import numpy as np
 import torch.utils.data as data
 from src.opt import opt
-# import config.config as config
+import config.config as config
 from utils.pose import generateSampleBox, choose_kps
 
 

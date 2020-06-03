@@ -64,7 +64,7 @@ parser.add_argument('--trainIters', default=0, type=int,
                     help='Total train iters')
 parser.add_argument('--valIters', default=0, type=int,
                     help='Total valid iters')
-parser.add_argument('--trainNW', default=2, type=int,
+parser.add_argument('--trainNW', default=5, type=int,
                     help='num worker of train')
 parser.add_argument('--valNW', default=1, type=int,
                     help='num worker of val')

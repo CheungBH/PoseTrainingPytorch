@@ -4,7 +4,7 @@
 # -----------------------------------------------------
 
 
-# CUDA_VISIBLE_DEVICES=0 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco --expID test
+# CUDA_VISIBLE_DEVICES=0 python train_opt.py --backbone mobilenet --struct 0 --expFolder test --expID test --trainBatch 32
 
 
 import torch
@@ -17,11 +17,11 @@ from utils.img import flip, shuffleLR
 from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
-# import config.config as config
+import config.config as config
 import argparse
 
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
-from test import draw_kps
+# from test import draw_kps
 
 
 if opt.backbone == "mobilenet":
@@ -40,6 +40,7 @@ else:
     raise ValueError("Your model name is wrong")
 
 model_cfg = model_ls[opt.struct]
+print(model_cfg)
 
 
 try:
@@ -174,10 +175,10 @@ def main():
     # train_dataset = Mscoco(v, train=True)
     # val_dataset = Mscoco(v, train=False)
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=opt.train_batch, shuffle=True, num_workers=opt.train_mum_worker,
+        train_dataset, batch_size=opt.trainBatch, shuffle=True, num_workers=opt.trainNW,
         pin_memory=True)
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=opt.val_batch, shuffle=False, num_workers=opt.val_num_worker, pin_memory=True)
+        val_dataset, batch_size=opt.validBatch, shuffle=False, num_workers=opt.valNW, pin_memory=True)
 
     # for k, v in config.train_info.items():
     #     train_dataset = Mscoco([v[0], v[1]], train=True, val_img_num=v[2])

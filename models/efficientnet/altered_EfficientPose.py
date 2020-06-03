@@ -28,8 +28,8 @@ class EfficientPose(nn.Module):
         # self.conv1_bn = nn.BatchNorm2d(32)
 
 
-        self.efficient_highres = EfficientNet.from_name('efficientnet-b4-epII',required_block=3)
-        self.efficient_lowres = EfficientNet.from_name('efficientnet-b0-epII',required_block=2)
+        self.efficient_highres = EfficientNet.from_name('efficientnet-b4-epII')
+        self.efficient_lowres = EfficientNet.from_name('efficientnet-b0-epII')
 
         self.shuffle1 = nn.PixelShuffle(2)
         self.duc1 = DUC(int(duc1/2), duc1, upscale_factor=2)
@@ -46,6 +46,7 @@ class EfficientPose(nn.Module):
         x_lowres = amp_resize(x)
         out1 = self.efficient_highres(x_highres)
         out2 = self.efficient_lowres(x_lowres)
+
         out = torch.cat((out1, out2), 1)
         #out = self.shuffle1(out)
         #out = self.duc1(out)

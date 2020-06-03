@@ -254,8 +254,9 @@ class BlockDecoder(object):
 
 
 def efficientnet(width_coefficient=None, depth_coefficient=None, dropout_rate=0.2,
-                 drop_connect_rate=0.2, image_size=None, num_classes=1000, block_required=7):
+                 drop_connect_rate=0.2, image_size=None, num_classes=1000,model_name="default"):
     """ Creates a efficientnet model. """
+
 
     blocks_args = [
         'r1_k3_s11_e1_i32_o16_se0.25', 'r2_k3_s22_e6_i16_o24_se0.25',
@@ -264,12 +265,27 @@ def efficientnet(width_coefficient=None, depth_coefficient=None, dropout_rate=0.
         'r1_k3_s11_e6_i192_o320_se0.25',
     ]
 
-    tmp_block_args = []
+    if model_name == "efficientnet-b0-epII":
+        blocks_args = [
+            'r1_k3_s11_e1_i32_o16_se0.25','r1_k3_s22_e6_i16_o24_se0.25',
+            'r1_k3_s11_e6_i24_o24_se0.25','r1_k3_s11_e6_i24_o40_se0.25'
+        ]
 
-    for i in range(block_required):
-        tmp_block_args.append(blocks_args[i])
+    # if model_name == "efficientnet-b4-epII":
+    #     blocks_args = [
+    #         'r1_k3_s11_e1_i48_o24_se0.25','r1_k3_s11_e1_i24_o32_se0.25',
+    #         'r1_k3_s22_e6_i32_o32_se0.25','r2_k3_s11_e6_i32_o32_se0.25',
+    #         'r1_k3_s11_e6_i32_o56_se0.25','r1_k5_s22_e6_i32_o56_se0.25',
+    #         'r3_k5_s11_e6_i56_o56_se0.25',
+    #     ]
 
-    blocks_args = tmp_block_args
+    if model_name == "efficientnet-b4-epII":
+        blocks_args = [
+            'r1_k3_s11_e1_i32_o16_se0.25','r1_k3_s11_e1_i16_o16_se0.25',
+            'r1_k3_s11_e1_i16_o24_se0.25','r1_k3_s22_e6_i24_o24_se0.25',
+            'r3_k3_s11_e6_i24_o24_se0.25','r1_k5_s22_e6_i24_o32_se0.25',
+            'r3_k5_s11_e6_i32_o32_se0.25',
+        ]
 
     blocks_args = BlockDecoder.decode(blocks_args)
 
@@ -290,14 +306,14 @@ def efficientnet(width_coefficient=None, depth_coefficient=None, dropout_rate=0.
     return blocks_args, global_params
 
 
-def get_model_params(model_name, override_params,required_block):
+def get_model_params(model_name, override_params):
     """ Get the block args and global params for a given model """
     if model_name.startswith('efficientnet'):
         w, d, s, p = efficientnet_params(model_name)
-        b = required_block
+        m = model_name
         # note: all models have drop connect rate = 0.2
         blocks_args, global_params = efficientnet(
-            width_coefficient=w, depth_coefficient=d, dropout_rate=p, image_size=s, block_required=b)
+            width_coefficient=w, depth_coefficient=d, dropout_rate=p, image_size=s, model_name=m)
     else:
         raise NotImplementedError('model name is not pre-defined: %s' % model_name)
     if override_params:
