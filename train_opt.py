@@ -270,6 +270,9 @@ def main():
         m = torch.nn.DataParallel(m)
         criterion = torch.nn.MSELoss()
 
+    # rnd_inps = torch.random([2, 3, 224, 224])
+    # writer.add_graph(m, (rnd_inps,))
+
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
 
@@ -283,7 +286,7 @@ def main():
             writer.add_histogram(
                 name, param.clone().data.to("cpu").numpy(), i)
 
-        loss, acc= train(train_loader, m, criterion, optimizer, writer)
+        loss, acc = train(train_loader, m, criterion, optimizer, writer)
 
         print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
@@ -301,6 +304,10 @@ def main():
         m_dev = m.module
 
         loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+
+        for mod in m.modules():
+            if isinstance(mod, nn.BatchNorm2d):
+                writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
 
         print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
