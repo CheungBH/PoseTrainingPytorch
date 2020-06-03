@@ -129,9 +129,10 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
         acc = accuracy(out.mul(setMask), labels, val_loader.dataset)
 
-        # if not draw_kp:
-        #     draw_kp = True
-        #     kps_img = draw_kps(out)
+        if not draw_kp:
+            draw_kp = True
+            kps_img = draw_kps(out)
+            writer.add
 
         lossLogger.update(loss.item(), inps.size(0))
         accLogger.update(acc[0], inps.size(0))
@@ -249,6 +250,9 @@ def main():
     else:
         m = torch.nn.DataParallel(m)
         criterion = torch.nn.MSELoss()
+
+    rnd_inps = torch.random([2, 3, 224, 224])
+    writer.add_graph(m, rnd_inps)
 
     # Start Training
     for i in range(config.epochs)[begin_epoch:]:

@@ -32,7 +32,8 @@ hmGauss = 1
 train_data = "coco"
 train_info = {
     # "yoga": ["data/yoga/images", "data/yoga/test.h5", 2],
-    "coco": ["../trainalpha/data/coco/images", "../trainalpha/data/coco/annot_coco.h5", 5887],
+    "test": ["data/data/images", "data/data/test.h5", 20]
+    # "coco": ["../trainalpha/data/coco/images", "../trainalpha/data/coco/annot_coco.h5", 5887],
     # "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 6000]
     # "../trainalpha/data/coco/images": "../trainalpha/data/coco/annot_coco.h5",
     # "data/yoga/images": "data/yoga/test.h5",
