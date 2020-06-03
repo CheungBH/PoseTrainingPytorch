@@ -8,10 +8,12 @@ import torch
 import numpy as np
 import random
 from src.opt import opt
-import config.config as config
+# import config.config as config
 
-inputResH, inputResW = config.input_height, config.input_width
-outputResH, outputResW = config.output_height, config.output_width
+inputResH = opt.inputResH
+inputResW = opt.inputResW
+outputResH = opt.outputResH
+outputResW = opt.outputResW
 
 
 def rnd(x):
@@ -123,7 +125,7 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
             hm_part = transformBox(
                 part[i], upLeft, bottomRight, inputResH, inputResW, outputResH, outputResW)
 
-            out[i] = drawGaussian(out[i], hm_part, config.hmGauss)
+            out[i] = drawGaussian(out[i], hm_part, opt.hmGauss)
 
         setMask[i].add_(1)
 
@@ -141,7 +143,7 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
             inp = cv_rotate(inp, r, inputResW, inputResH)
             out = cv_rotate(out, r, outputResW, outputResH)
 
-    return inp, out, setMask
+    return inp, out, setMask, (upLeft, bottomRight)
 
 
 def choose_kps(array, target):

@@ -9,7 +9,7 @@ from functools import reduce
 import numpy as np
 import torch.utils.data as data
 from src.opt import opt
-import config.config as config
+# import config.config as config
 from utils.pose import generateSampleBox, choose_kps
 
 
@@ -17,14 +17,14 @@ origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), 
 
 
 class Mscoco(data.Dataset):
-    def __init__(self, data_path, train=True, val_img_num=5887, sigma=config.sigma,
+    def __init__(self, data_path, train=True, val_img_num=5887, sigma=opt.hmGauss,
                  scale_factor=(0.2, 0.3), rot_factor=40, label_type='Gaussian'):
         self.img_folder = data_path[0]    # root image folders
         self.is_train = train           # training set or test set
-        self.inputResH = config.input_height
-        self.inputResW = config.input_width
-        self.outputResH = config.output_height
-        self.outputResW = config.output_width
+        self.inputResH = opt.inputResH
+        self.inputResW = opt.inputResW
+        self.outputResH = opt.outputResH
+        self.outputResW = opt.outputResW
         self.sigma = sigma
         self.scale_factor = scale_factor
         self.rot_factor = rot_factor
@@ -68,8 +68,9 @@ class Mscoco(data.Dataset):
         metaData = generateSampleBox(img_path, bndbox, part, len(self.accIdxs),
                                      config.train_data, sf, self, train=self.is_train)
 
-        inp, out, setMask = metaData
-        return inp, out, setMask, config.train_data
+        inp, out, setMask, (pt1, pt2) = metaData
+        kps_info = (pt1, pt2, bndbox, img_path)
+        return inp, out, setMask, kps_info
 
     def __len__(self):
         if self.is_train:
@@ -79,13 +80,13 @@ class Mscoco(data.Dataset):
 
 
 class MyDataset(data.Dataset):
-    def __init__(self, data_info, train=True, sigma=config.sigma,
+    def __init__(self, data_info, train=True, sigma=opt.hmGauss,
                  scale_factor=(0.2, 0.3), rot_factor=40, label_type='Gaussian'):
         self.is_train = train  # training set or test set
-        self.inputResH = config.input_height
-        self.inputResW = config.input_width
-        self.outputResH = config.output_height
-        self.outputResW = config.output_width
+        self.inputResH = opt.inputResH
+        self.inputResW = opt.inputResW
+        self.outputResH = opt.outputResH
+        self.outputResW = opt.outputResW
         self.sigma = sigma
         self.scale_factor = scale_factor
         self.rot_factor = rot_factor
@@ -132,8 +133,9 @@ class MyDataset(data.Dataset):
         metaData = generateSampleBox(imgname, bndbox, part, len(self.accIdxs),
                                      config.train_data, sf, self, train=self.is_train)
 
-        inp, out, setMask = metaData
-        return inp, out, setMask, config.train_data
+        inp, out, setMask, (pt1, pt2) = metaData
+        kps_info = (pt1, pt2, bndbox, imgname)
+        return inp, out, setMask, kps_info
 
     def __len__(self):
         if self.is_train:

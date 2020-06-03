@@ -1,10 +1,10 @@
 import os
 
-device = "cpu"
+device = "cuda:0"
 
 backbone_ls = ["mobilenet", "seresnet101", "efficientnet-b0", "shufflenet"]
 
-backbone = "efficientnet"
+backbone = "mobilenet"
 seresnet_cfg = "config/pose_cfg/seresnet_cfg.txt"   # if origin, model_cfg = None
 efficient_type = "b2"
 mobile_setting = None
@@ -15,7 +15,7 @@ mobile_setting = None
     #             [6, 72, 3, 1],
     #             [6, 120, 3, 2],
     #             [6, 318, 1, 1]]
-DUCs = [704, 352]
+DUCs = [640, 320]
 
 loadModel = None
 save_folder = "efficientnet-b2-test"
@@ -32,8 +32,8 @@ hmGauss = 1
 train_data = "coco"
 train_info = {
     # "yoga": ["data/yoga/images", "data/yoga/test.h5", 2],
-    "coco": ["../trainalpha/data/coco/images", "../trainalpha/data/coco/annot_coco.h5", 5887],
-    "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 6000]
+    "coco": ["E://trainalpha/data/coco/images", "E://trainalpha/data/coco/annot_coco.h5", 5887],
+    # "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 6000]
     # "../trainalpha/data/coco/images": "../trainalpha/data/coco/annot_coco.h5",
     # "data/yoga/images": "data/yoga/test.h5",
 }

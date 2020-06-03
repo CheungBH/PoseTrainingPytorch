@@ -15,6 +15,7 @@ from tensorboardX import SummaryWriter
 import os
 import config.config as config
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
+from test import draw_kps
 
 
 if config.backbone == "mobilenet":
@@ -53,7 +54,7 @@ def train(train_loader, m, criterion, optimizer, writer):
 
     train_loader_desc = tqdm(train_loader)
 
-    for i, (inps, labels, setMask, imgset) in enumerate(train_loader_desc):
+    for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
         if device != "cpu":
             inps = inps.cuda().requires_grad_()
             labels = labels.cuda()
@@ -103,13 +104,14 @@ def train(train_loader, m, criterion, optimizer, writer):
 
 
 def valid(val_loader, m, criterion, optimizer, writer):
+    draw_kp = False
     lossLogger = DataLogger()
     accLogger = DataLogger()
     m.eval()
 
     val_loader_desc = tqdm(val_loader)
 
-    for i, (inps, labels, setMask, imgset) in enumerate(val_loader_desc):
+    for i, (inps, labels, setMask, img_info) in enumerate(val_loader_desc):
         if device != "cpu":
             inps = inps.cuda()
             labels = labels.cuda()
@@ -126,6 +128,10 @@ def valid(val_loader, m, criterion, optimizer, writer):
             out = (flip_out + out) / 2
 
         acc = accuracy(out.mul(setMask), labels, val_loader.dataset)
+
+        # if not draw_kp:
+        #     draw_kp = True
+        #     kps_img = draw_kps(out)
 
         lossLogger.update(loss.item(), inps.size(0))
         accLogger.update(acc[0], inps.size(0))
@@ -162,7 +168,7 @@ def main():
         train_dataset, batch_size=config.train_batch, shuffle=True, num_workers=config.train_mum_worker,
         pin_memory=True)
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=config.val_batch, shuffle=False, num_workers=config.val_num_worker, pin_memory=True)
+        val_dataset, batch_size=config.val_batch, shuffle=True, num_workers=config.val_num_worker, pin_memory=True)
 
     # for k, v in config.train_info.items():
     #     train_dataset = Mscoco([v[0], v[1]], train=True, val_img_num=v[2])
@@ -200,6 +206,7 @@ def main():
         print('Loading Model from {}'.format(pre_train_model))
         m.load_state_dict(torch.load(pre_train_model))
         opt.trainIters = config.train_batch * (begin_epoch-1)
+        opt.valIters = config.val_batch * (begin_epoch-1)
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
         os.makedirs("exp/{}/{}".format(dataset, save_folder),exist_ok=True)
     else:
@@ -246,14 +253,13 @@ def main():
     # Start Training
     for i in range(config.epochs)[begin_epoch:]:
 
-        log = open("log/{}.txt".format(save_folder), "a+")
+        log = open("log/{}/{}.txt".format(dataset, save_folder), "a+")
         print('############# Starting Epoch {} #############'.format(i))
         log.write('############# Starting Epoch {} #############\n'.format(i))
 
         for name, param in m.named_parameters():
             writer.add_histogram(
                 name, param.clone().data.to("cpu").numpy(), i)
-
 
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
 

@@ -5,6 +5,7 @@ import shutil
 
 src_folder = "test_img/origin"
 kps_folder = "test_img/kps"
+
 yes_folder = "test_img/selected"
 unsure_folder = "test_img/unsure"
 no_folder = "test_img/unselected"
