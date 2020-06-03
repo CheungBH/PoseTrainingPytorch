@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import torch
 import numpy as np
-from config.config import train_body_part
+from config.config import train_body_part, device
 
 pose_classes = len(train_body_part)
 delta1 = 1
@@ -25,6 +25,7 @@ def pose_nms(bboxes, bbox_scores, pose_preds, pose_scores):
     #global ori_pose_preds, ori_pose_scores, ref_dists
 
     pose_scores[pose_scores == 0] = 1e-5
+    bboxes, bbox_scores, pose_preds, pose_scores = bboxes.cpu(), bbox_scores.cpu(), pose_preds.cpu(), pose_scores.cpu()
 
     final_result = []
     final_score = []
@@ -160,7 +161,9 @@ def get_parametric_distance(i, all_preds, keypoint_scores, ref_dist):
     mask = (dist <= 1)
 
     # Define a keypoints distance
+
     score_dists = torch.zeros(all_preds.shape[0], pose_classes)
+
     keypoint_scores.squeeze_()
     if keypoint_scores.dim() == 1:
         keypoint_scores.unsqueeze_(0)
@@ -172,6 +175,7 @@ def get_parametric_distance(i, all_preds, keypoint_scores, ref_dist):
     score_dists[mask] = torch.tanh(pred_scores[mask] / delta1) * torch.tanh(keypoint_scores[mask] / delta1)
 
     point_dist = torch.exp((-1) * dist / delta2)
+
     final_dist = torch.sum(score_dists, dim=1) + mu * torch.sum(point_dist, dim=1)
 
     return final_dist

@@ -132,7 +132,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
         if not draw_kp:
             draw_kp = True
             kps_img = draw_kps(out)
-            writer.add
+            # writer.add
 
         lossLogger.update(loss.item(), inps.size(0))
         accLogger.update(acc[0], inps.size(0))

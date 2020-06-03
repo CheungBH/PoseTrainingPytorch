@@ -8,6 +8,7 @@
 
 
 import torch
+import cv2
 import torch.utils.data
 import torch.nn as nn
 from dataset.coco_dataset import Mscoco, MyDataset
@@ -21,7 +22,7 @@ import config.config as config
 import argparse
 
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
-# from test import draw_kps
+from test import draw_kps
 
 
 if opt.backbone == "mobilenet":
@@ -49,10 +50,14 @@ try:
 except ImportError:
     mix_precision = False
 
+
 device = config.device
+opt.device = device
 save_folder = opt.expID
 dataset = opt.expFolder
 optimize = config.opt_method
+
+os.makedirs("log/{}".format(dataset), exist_ok=True)
 
 torch.backends.cudnn.benchmark = True
 
@@ -130,6 +135,15 @@ def valid(val_loader, m, criterion, optimizer, writer):
         with torch.no_grad():
             out = m(inps)
 
+            if not draw_kp:
+                kps_img, have_kp = draw_kps(out, img_info)
+                if have_kp:
+                    draw_kp = True
+                    writer.add_image("result of epoch {}".format(opt.epoch), cv2.imread("img.jpg")[:, :, ::-1],
+                                     dataformats='HWC')
+                else:
+                    pass
+
             loss = criterion(out.mul(setMask), labels)
 
             flip_out = m(flip(inps))
@@ -139,9 +153,6 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
         acc = accuracy(out.mul(setMask), labels, val_loader.dataset)
 
-        # if not draw_kp:
-        #     draw_kp = True
-        #     kps_img = draw_kps(out)
 
         lossLogger.update(loss.item(), inps.size(0))
         accLogger.update(acc[0], inps.size(0))
@@ -178,7 +189,7 @@ def main():
         train_dataset, batch_size=opt.trainBatch, shuffle=True, num_workers=opt.trainNW,
         pin_memory=True)
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=opt.validBatch, shuffle=False, num_workers=opt.valNW, pin_memory=True)
+        val_dataset, batch_size=opt.validBatch, shuffle=True, num_workers=opt.valNW, pin_memory=True)
 
     # for k, v in config.train_info.items():
     #     train_dataset = Mscoco([v[0], v[1]], train=True, val_img_num=v[2])
@@ -215,13 +226,13 @@ def main():
     if pre_train_model:
         print('Loading Model from {}'.format(pre_train_model))
         m.load_state_dict(torch.load(pre_train_model))
-        opt.trainIters = opt.train_batch * (begin_epoch-1)
-        opt.valIters = opt.val_batch * (begin_epoch-1)
+        opt.trainIters = opt.trainBatch * (begin_epoch-1)
+        opt.valIters = opt.validBatch * (begin_epoch-1)
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
         os.makedirs("exp/{}/{}".format(dataset, save_folder),exist_ok=True)
     else:
         print('Create new model')
-        with open("log/{}.txt".format(save_folder), "a+") as f:
+        with open("log/{}/{}.txt".format(dataset, save_folder), "a+") as f:
             f.write("FLOPs of current model is {}\n".format(flops))
             f.write("Parameters of current model is {}\n".format(params))
         if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
@@ -251,7 +262,6 @@ def main():
     writer = SummaryWriter(
         'tensorboard/{}/{}'.format(dataset, save_folder))
 
-
     # Model Transfer
     if device != "cpu":
         m = torch.nn.DataParallel(m).cuda()
@@ -263,7 +273,9 @@ def main():
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
 
-        log = open("log/{}.txt".format(save_folder), "a+")
+        opt.epoch = i
+
+        log = open("log/{}/{}.txt".format(dataset, save_folder), "a+")
         print('############# Starting Epoch {} #############'.format(i))
         log.write('############# Starting Epoch {} #############\n'.format(i))
 

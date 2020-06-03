@@ -3,6 +3,7 @@
 # Written by Jiefeng Li (jeff.lee.sjtu@gmail.com)
 # -----------------------------------------------------
 
+import cv2
 import os
 import h5py
 from functools import reduce
@@ -69,7 +70,7 @@ class Mscoco(data.Dataset):
                                      config.train_data, sf, self, train=self.is_train)
 
         inp, out, setMask, (pt1, pt2) = metaData
-        kps_info = (pt1, pt2, bndbox, img_path)
+        kps_info = (pt1, pt2, bndbox, cv2.imread(img_path))
         return inp, out, setMask, kps_info
 
     def __len__(self):
@@ -134,7 +135,7 @@ class MyDataset(data.Dataset):
                                      config.train_data, sf, self, train=self.is_train)
 
         inp, out, setMask, (pt1, pt2) = metaData
-        kps_info = (pt1, pt2, bndbox, imgname)
+        kps_info = (pt1, pt2, bndbox[0], imgname)
         return inp, out, setMask, kps_info
 
     def __len__(self):
