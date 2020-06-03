@@ -252,7 +252,7 @@ def main():
 
     # Start Training
     for i in range(config.epochs)[begin_epoch:]:
-
+        os.makedirs("log/{}".format(dataset), exist_ok=True)
         log = open("log/{}/{}.txt".format(dataset, save_folder), "a+")
         print('############# Starting Epoch {} #############'.format(i))
         log.write('############# Starting Epoch {} #############\n'.format(i))

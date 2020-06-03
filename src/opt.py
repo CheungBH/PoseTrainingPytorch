@@ -68,6 +68,8 @@ parser.add_argument('--trainNW', default=5, type=int,
                     help='num worker of train')
 parser.add_argument('--valNW', default=1, type=int,
                     help='num worker of val')
+parser.add_argument('--save_interval', default=1, type=int,
+                    help='interval')
 
 "----------------------------- Data options -----------------------------"
 parser.add_argument('--inputResH', default=320, type=int,
