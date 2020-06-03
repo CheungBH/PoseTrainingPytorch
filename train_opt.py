@@ -10,6 +10,8 @@
 import torch
 import cv2
 import torch.utils.data
+from torch.autograd import Variable
+import sys
 import torch.nn as nn
 from dataset.coco_dataset import Mscoco, MyDataset
 from tqdm import tqdm
@@ -19,6 +21,7 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
+from utils.utils import generate_cmd
 import argparse
 
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
@@ -177,6 +180,8 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
 
 def main():
+    cmd_ls = sys.argv[1:]
+    cmd = generate_cmd(cmd_ls)
     # Prepare Dataset
 
     train_dataset = MyDataset(config.train_info, train=True)
@@ -229,7 +234,8 @@ def main():
         opt.trainIters = opt.trainBatch * (begin_epoch-1)
         opt.valIters = opt.validBatch * (begin_epoch-1)
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
-        os.makedirs("exp/{}/{}".format(dataset, save_folder),exist_ok=True)
+        os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
+
     else:
         print('Create new model')
         with open("log/{}/{}.txt".format(dataset, save_folder), "a+") as f:
@@ -241,6 +247,8 @@ def main():
             except FileNotFoundError:
                 os.mkdir("exp/{}".format(dataset))
                 os.mkdir("exp/{}/{}".format(dataset, save_folder))
+        with open("exp/{}/{}/cmd.txt".format(dataset, save_folder), "w") as f:
+            f.write(cmd)
 
     if optimize == 'rmsprop':
         optimizer = torch.optim.RMSprop(m.parameters(),
@@ -260,7 +268,7 @@ def main():
         m, optimizer = amp.initialize(m, optimizer, opt_level="O1")
 
     writer = SummaryWriter(
-        'tensorboard/{}/{}'.format(dataset, save_folder))
+        'tensorboard/{}/{}'.format(dataset, save_folder), comment=cmd)
 
     # Model Transfer
     if device != "cpu":
@@ -270,8 +278,8 @@ def main():
         m = torch.nn.DataParallel(m)
         criterion = torch.nn.MSELoss()
 
-    # rnd_inps = torch.random([2, 3, 224, 224])
-    # writer.add_graph(m, (rnd_inps,))
+    # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
+    # writer.add_graph(m, rnd_inps)
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:

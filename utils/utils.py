@@ -14,5 +14,11 @@ def gather_bn_weights(module_list, prune_idx):
     return bn_weights
 
 
+def generate_cmd(ls):
+    string = ""
+    for idx, item in enumerate(ls):
+        string += item
+        string += " "
+    return string[:-1]
 
 
