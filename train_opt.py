@@ -25,7 +25,7 @@ from utils.utils import generate_cmd
 import argparse
 
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
-from test import draw_kps
+from test import draw_kps, draw_hms
 
 
 if opt.backbone == "mobilenet":
@@ -122,7 +122,7 @@ def train(train_loader, m, criterion, optimizer, writer):
 
 
 def valid(val_loader, m, criterion, optimizer, writer):
-    draw_kp = False
+    drawn_kp, drawn_hm = False, False
     lossLogger = DataLogger()
     accLogger = DataLogger()
     m.eval()
@@ -138,14 +138,17 @@ def valid(val_loader, m, criterion, optimizer, writer):
         with torch.no_grad():
             out = m(inps)
 
-            if not draw_kp:
+            if not drawn_kp:
                 kps_img, have_kp = draw_kps(out, img_info)
-                if have_kp:
-                    draw_kp = True
-                    writer.add_image("result of epoch {}".format(opt.epoch), cv2.imread("img.jpg")[:, :, ::-1],
-                                     dataformats='HWC')
-                else:
-                    pass
+                # if have_kp:
+                drawn_kp = True
+                writer.add_image("result of epoch {}".format(opt.epoch), cv2.imread("img.jpg")[:, :, ::-1],
+                                 dataformats='HWC')
+                # else:
+                #     pass
+                drawn_hm = True
+                hm = draw_hms(out[0])
+                writer.add_image("result of epoch {} --> heatmap".format(opt.epoch), hm)
 
             loss = criterion(out.mul(setMask), labels)
 

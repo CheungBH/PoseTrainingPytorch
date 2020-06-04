@@ -14,13 +14,14 @@ train_body_part = [1,6,7,8,9,10,11,12,13,14,15,16,17]
 train_data = "coco"
 train_info = {
     # "yoga": ["data/yoga/images", "data/yoga/test.h5", 2],
-    # "test": ["data/data/images", "data/data/test.h5", 20]
-    "coco": ["../trainalpha/data/coco/images", "../trainalpha/data/coco/annot_coco.h5", 5887],
+    "test": ["data/data/images", "data/data/test.h5", 20]
+    # "coco": ["../trainalpha/data/coco/images", "../trainalpha/data/coco/annot_coco.h5", 5887],
     # "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 6000]
     # "../trainalpha/data/coco/images": "../trainalpha/data/coco/annot_coco.h5",
     # "data/yoga/images": "data/yoga/test.h5",
 }
 
+lr_decay = {0.7: 0.1, 0.9: 0.01}
 
 
 # sparse = False

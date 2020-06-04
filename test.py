@@ -55,3 +55,20 @@ def draw_kps(hms, info):
     return predictions, drawn
 
 
+def draw_hms(hms):
+    hm_column = 6
+    hms = hms.cpu().numpy()
+    hm1 = np.concatenate((hms[0], hms[1], hms[2], hms[3], hms[4], hms[5]), axis=0)
+    hm2 = np.concatenate((hms[6], hms[7], hms[8], hms[9], hms[10], hms[11]), axis=0)
+    remain = len(hms) - hm_column * 2
+    hm3 = generate_white(hm_column-remain)
+    for num in range(remain):
+        hm3 = np.concatenate((hms[-num+1], hm3), axis=0)
+    hm = np.concatenate((hm1, hm2, hm3), axis=1)
+    return tensor(hm)
+
+def generate_white(num):
+    rand = np.zeros((opt.outputResH, opt.outputResW))
+    for _ in  range(num-1):
+        rand = np.concatenate((rand, np.zeros((opt.outputResH, opt.outputResW))), axis=0)
+    return rand
