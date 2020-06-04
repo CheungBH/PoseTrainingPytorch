@@ -66,7 +66,7 @@ def to_torch(ndarray):
 
 def drawGaussian(img, pt, sigma):
     img = to_numpy(img)
-    tmpSize = 3 * sigma
+    tmpSize = opt.ratio
     # Check that any part of the gaussian is in-bounds
     ul = [int(pt[0] - tmpSize), int(pt[1] - tmpSize)]
     br = [int(pt[0] + tmpSize + 1), int(pt[1] + tmpSize + 1)]
