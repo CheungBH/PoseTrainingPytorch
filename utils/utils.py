@@ -26,7 +26,7 @@ def generate_cmd(ls):
 def adjust_lr(optimizer, epoch, lr_dict, nEpoch):
     curr_ratio = epoch/nEpoch
     bound = list(lr_dict.keys())
-    if curr_ratio > bound[0] and curr_ratio < bound[1]:
+    if curr_ratio > bound[0] and curr_ratio <= bound[1]:
         lr = opt.LR * lr_dict[bound[0]]
     elif curr_ratio > bound[1]:
         lr = opt.LR * lr_dict[bound[1]]

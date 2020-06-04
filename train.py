@@ -242,7 +242,6 @@ def main():
     writer = SummaryWriter(
         'tensorboard/{}/{}'.format(dataset, save_folder))
 
-
     # Model Transfer
     if device != "cpu":
         m = torch.nn.DataParallel(m).cuda()
