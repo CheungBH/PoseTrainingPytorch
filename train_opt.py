@@ -232,11 +232,12 @@ def main():
     print("Parameters of current model is {}".format(params))
 
     if pre_train_model:
+        info = torch.load("exp/coco1/mob_origin_13kps/option.pkl")
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
         print('Loading Model from {}'.format(pre_train_model))
         m.load_state_dict(torch.load(pre_train_model))
-        opt.trainIters = opt.trainBatch * (begin_epoch-1)
-        opt.valIters = opt.validBatch * (begin_epoch-1)
+        opt.trainIters = info.trainIters
+        opt.valIters = info.valIters
         os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
 
     else:
