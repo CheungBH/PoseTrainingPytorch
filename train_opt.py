@@ -21,7 +21,7 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.utils import generate_cmd
+from utils.utils import generate_cmd, adjust_lr
 import argparse
 
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
@@ -296,6 +296,10 @@ def main():
         for name, param in m.named_parameters():
             writer.add_histogram(
                 name, param.clone().data.to("cpu").numpy(), i)
+
+        optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
+        writer.add_scalar("lr", lr, i)
+        print("epoch {}: lr {}".format(i, lr))
 
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
 
