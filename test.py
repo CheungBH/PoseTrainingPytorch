@@ -8,7 +8,7 @@ from src.opt import opt
 import math
 import numpy as np
 
-tensor = torch.DoubleTensor
+tensor = torch.FloatTensor
 max_img = 4
 img_num = min(opt.validBatch, max_img)
 column = 4
@@ -17,6 +17,7 @@ row = math.floor(img_num/column)
 
 def draw_kp(hm, pt1, pt2, boxes, img_path):
     scores = tensor([[0.999]]*(boxes.shape[0]))
+    boxes = boxes.float()
     preds_hm, preds_img, preds_scores = getPrediction(
         hm, pt1, pt2, opt.inputResH, opt.inputResW, opt.outputResH, opt.outputResW)
     kps, score = pose_nms(boxes, scores, preds_img, preds_scores)
