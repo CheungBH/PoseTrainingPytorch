@@ -16,6 +16,7 @@ import random
 
 
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
+open_source_dataset = ["coco", "ai_challenger"]
 
 
 class Mscoco(data.Dataset):
@@ -100,7 +101,10 @@ class MyDataset(data.Dataset):
         self.img_train, self.img_val, self.part_train, self.part_val, self.bbox_train, self.bbox_val = [], [], [], [], [], []
 
         for k, v in data_info.items():
-            result = extract_data(v)
+            if k in open_source_dataset:
+                result = extract_data(v)
+            else:
+                result = extract_customized_data(v)
             self.img_train += result[0]
             self.bbox_train += result[1]
             self.part_train += result[2]
@@ -158,7 +162,20 @@ def extract_customized_data(data_info):
             imgname = change_imgname(i)
             imgs.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), imgname))))
 
-    val_ls = random.sample(range(len(imgs)))
+    val_ls = random.sample(range(len(imgs)), val_num)
+
+    img_train, bbox_train, part_train, img_val, bbox_val, part_val = [], [], [], [], [], []
+    for i, (im, bbx, pt) in enumerate(zip(imgname, bndbox, part)):
+        if i not in val_ls:
+            img_train.append(im)
+            bbox_train.append(bbx)
+            part_train.append(pt)
+        else:
+            img_val.append(im)
+            bbox_val.append(bbx)
+            part_val.append(part)
+    
+    return [img_train, bbox_train, part_train, img_val, bbox_val, part_val]
 
 
 def extract_data(data_info):
@@ -195,3 +212,5 @@ def change_imgname(img_name):
     return temp
 
 
+if __name__ == '__main__':
+    print(random.sample(range(100), 10))
