@@ -232,7 +232,8 @@ def main():
     print("Parameters of current model is {}".format(params))
 
     if pre_train_model:
-        info = torch.load("exp/coco1/mob_origin_13kps/option.pkl")
+        info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
+        info = torch.load(info_path)
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
         print('Loading Model from {}'.format(pre_train_model))
         m.load_state_dict(torch.load(pre_train_model))
