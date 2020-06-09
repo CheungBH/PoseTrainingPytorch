@@ -8,7 +8,7 @@ from src.opt import opt
 import math
 import numpy as np
 
-tensor = torch.Tensor
+tensor = torch.FloatTensor
 max_img = 4
 img_num = min(opt.validBatch, max_img)
 column = 4

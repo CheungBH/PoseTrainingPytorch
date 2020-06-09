@@ -156,7 +156,26 @@ def extract_data(data_info):
         bndbox_val = annot['bndbox'][-val_num:].tolist()
         part_val = annot['part'][-val_num:].tolist()
 
-        img_train = [os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))) for i in imgname_train]
-        img_val = [os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))) for i in imgname_val]
+        img_train, img_val = [], []
+        for i in imgname_train:
+            imgname = change_imgname(i)
+            img_train.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), imgname))))
+
+        for i in imgname_val:
+            imgname = change_imgname(i)
+            img_val.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), imgname))))
+
+        # img_train = [os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))) for i in imgname_train]
+        # img_val = [os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))) for i in imgname_val]
 
     return [img_train, bndbox_train, part_train, img_val, bndbox_val, part_val]
+
+
+def change_imgname(img_name):
+    temp = np.array([])
+    for item in img_name:
+        if item != -1:
+            temp = np.append(temp, item)
+    return temp
+
+

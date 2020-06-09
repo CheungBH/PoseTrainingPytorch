@@ -231,7 +231,7 @@ def main():
     params = print_model_param_nums(m)
     print("Parameters of current model is {}".format(params))
 
-    if pre_train_model and "due" not in pre_train_model:
+    if pre_train_model and "duc" not in pre_train_model:
         info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
         info = torch.load(info_path)
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
