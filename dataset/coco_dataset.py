@@ -153,9 +153,9 @@ class MyDataset(data.Dataset):
 def extract_customized_data(data_info):
     data_folder, h5file, val_num = data_info[0], data_info[1], data_info[2]
     with h5py.File(h5file, 'r') as annot:
-        imgname= annot['imgname'].tolist()  #:-5887
-        bndbox = annot['bndbox'].tolist()
-        part = annot['part'].tolist()
+        imgname= annot['imgname'][:].tolist()  #:-5887
+        bndbox = annot['bndbox'][:].tolist()
+        part = annot['part'][:].tolist()
 
         imgs = []
         for i in imgname:
@@ -165,7 +165,7 @@ def extract_customized_data(data_info):
     val_ls = random.sample(range(len(imgs)), val_num)
 
     img_train, bbox_train, part_train, img_val, bbox_val, part_val = [], [], [], [], [], []
-    for i, (im, bbx, pt) in enumerate(zip(imgname, bndbox, part)):
+    for i, (im, bbx, pt) in enumerate(zip(imgs, bndbox, part)):
         if i not in val_ls:
             img_train.append(im)
             bbox_train.append(bbx)

@@ -4,6 +4,7 @@ from torch.autograd import Variable
 
 from .layers.SE_Resnet import SEResnet
 from models.duc.DUC import DUC
+from src.opt import opt
 from config.config import train_body_part
 
 
@@ -26,8 +27,11 @@ class FastPose(nn.Module):
         self.duc1 = DUC(512, 1024, upscale_factor=2)
         self.duc2 = DUC(256, 512, upscale_factor=2)
 
-        self.conv_out = nn.Conv2d(
-            self.DIM, len(train_body_part), kernel_size=3, stride=1, padding=1)
+        if "duc" in opt.loadModel:
+            self.conv_out = nn.Conv2d(self.DIM, 33, kernel_size=3, stride=1, padding=1)
+        else:
+            self.conv_out = nn.Conv2d(
+                self.DIM, len(train_body_part), kernel_size=3, stride=1, padding=1)
 
     def forward(self, x: Variable):
         out = self.preact(x)
