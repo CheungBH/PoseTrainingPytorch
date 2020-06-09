@@ -247,7 +247,10 @@ def main():
         opt.trainIters = info.trainIters
         opt.valIters = info.valIters
         os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
-
+    elif "duc" in pre_train_model:
+        print('Loading Model from {}'.format(pre_train_model))
+        m.load_state_dict(torch.load(pre_train_model))
+        os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     else:
         print('Create new model')
         with open("log/{}/{}.txt".format(dataset, save_folder), "a+") as f:
