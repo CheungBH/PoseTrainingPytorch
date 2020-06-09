@@ -231,15 +231,26 @@ def main():
     params = print_model_param_nums(m)
     print("Parameters of current model is {}".format(params))
 
-    if pre_train_model:
-        info = torch.load("exp/coco1/mob_origin_13kps/option.pkl")
+    if opt.freeze:
+        for n, p in m.named_parameters():
+            if "bn" in n:
+                p.requires_grad = False
+            elif "preact" in n:
+                p.requires_grad = False
+
+    if pre_train_model and "duc" not in pre_train_model:
+        info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
+        info = torch.load(info_path)
         begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
         print('Loading Model from {}'.format(pre_train_model))
         m.load_state_dict(torch.load(pre_train_model))
         opt.trainIters = info.trainIters
         opt.valIters = info.valIters
         os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
-
+    elif "duc" in pre_train_model:
+        print('Loading Model from {}'.format(pre_train_model))
+        m.load_state_dict(torch.load(pre_train_model))
+        os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     else:
         print('Create new model')
         with open("log/{}/{}.txt".format(dataset, save_folder), "a+") as f:

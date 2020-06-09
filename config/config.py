@@ -15,8 +15,9 @@ train_data = "coco"
 train_info = {
     # "yoga": ["data/yoga/images", "data/yoga/test.h5", 2],
     # "test": ["data/data/images", "data/data/test.h5", 20]
-    "coco": ["../trainalpha/data/coco/images", "../trainalpha/data/coco/annot_coco.h5", 5887],
-    # "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 6000]
+    # "coco": ["../trainalpha/data/coco/images", "../trainalpha/data/coco/annot_coco.h5", 5887],
+    # "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 6000],
+    "ceiling": ["data/ceiling/surface", "data/ceiling/ceiling_cameras_686.h5", 100]
     # "../trainalpha/data/coco/images": "../trainalpha/data/coco/annot_coco.h5",
     # "data/yoga/images": "data/yoga/test.h5",
 }
