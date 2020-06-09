@@ -231,6 +231,13 @@ def main():
     params = print_model_param_nums(m)
     print("Parameters of current model is {}".format(params))
 
+    if opt.freeze:
+        for n, p in m.named_parameters():
+            if "bn" in n:
+                p.requires_grad = False
+            elif "preact" in n:
+                p.requires_grad = False
+
     if pre_train_model and "duc" not in pre_train_model:
         info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
         info = torch.load(info_path)

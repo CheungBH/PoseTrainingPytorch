@@ -45,6 +45,8 @@ parser.add_argument('--eps', default=1e-8, type=float,
                     help='epsilon')
 parser.add_argument('--crit', default='MSE', type=str,
                     help='Criterion type')
+parser.add_argument('--freeze', default=False, type=bool,
+                    help='Criterion type')
 parser.add_argument('--optMethod', default='rmsprop', type=str,
                     help='Optimization method: rmsprop | sgd | nag | adadelta')
 parser.add_argument('--sparse_s', default=0, type=float,
