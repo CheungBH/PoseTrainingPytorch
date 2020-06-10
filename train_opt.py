@@ -72,10 +72,10 @@ def train(train_loader, m, criterion, optimizer, writer):
     m.train()
 
     train_loader_desc = tqdm(train_loader)
-    print("Training")
+    # print("Training")
 
     for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
-        print("{}".format(img_info[-1]))
+        # print("{}".format(img_info[-1]))
         if device != "cpu":
             inps = inps.cuda().requires_grad_()
             labels = labels.cuda()
@@ -130,12 +130,12 @@ def valid(val_loader, m, criterion, optimizer, writer):
     accLogger = DataLogger()
     m.eval()
 
-    print("Validating")
+    # print("Validating")
 
     val_loader_desc = tqdm(val_loader)
 
     for i, (inps, labels, setMask, img_info) in enumerate(val_loader_desc):
-        print("{}".format(img_info[-1]))
+        # print("{}".format(img_info[-1]))
         if device != "cpu":
             inps = inps.cuda()
             labels = labels.cuda()

@@ -71,6 +71,6 @@ def draw_hms(hms):
 
 def generate_white(num):
     rand = np.zeros((opt.outputResH, opt.outputResW))
-    for _ in  range(num-1):
+    for _ in range(num-1):
         rand = np.concatenate((rand, np.zeros((opt.outputResH, opt.outputResW))), axis=1)
     return rand
