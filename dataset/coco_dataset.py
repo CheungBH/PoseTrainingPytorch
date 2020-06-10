@@ -173,7 +173,7 @@ def extract_customized_data(data_info):
         else:
             img_val.append(im)
             bbox_val.append(bbx)
-            part_val.append(part)
+            part_val.append(pt)
     
     return [img_train, bbox_train, part_train, img_val, bbox_val, part_val]
 

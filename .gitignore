@@ -47,5 +47,5 @@ log
 Video
 exp
 data
-
-
+config/config.py
+train_cmd.py
