@@ -2,6 +2,7 @@ import os
 
 device = "cuda:0"
 backbone_ls = ["mobilenet", "seresnet101", "efficientnet-b0", "shufflenet"]
+open_source_dataset = ["coco", "ai_challenger"]
 
 DUCs = [640, 320]
 body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right ear", 6: "left shoulder",

@@ -22,7 +22,6 @@ from tensorboardX import SummaryWriter
 import os
 import config.config as config
 from utils.utils import generate_cmd, adjust_lr
-import argparse
 
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
 from test import draw_kps, draw_hms
@@ -59,6 +58,8 @@ opt.device = device
 save_folder = opt.expID
 dataset = opt.expFolder
 optimize = opt.optMethod
+open_sourec_dataset = config.open_source_dataset
+
 
 os.makedirs("log/{}".format(dataset), exist_ok=True)
 
@@ -71,8 +72,10 @@ def train(train_loader, m, criterion, optimizer, writer):
     m.train()
 
     train_loader_desc = tqdm(train_loader)
+    print("Training")
 
     for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
+        print("{}".format(img_info[-1]))
         if device != "cpu":
             inps = inps.cuda().requires_grad_()
             labels = labels.cuda()
@@ -127,9 +130,12 @@ def valid(val_loader, m, criterion, optimizer, writer):
     accLogger = DataLogger()
     m.eval()
 
+    print("Validating")
+
     val_loader_desc = tqdm(val_loader)
 
     for i, (inps, labels, setMask, img_info) in enumerate(val_loader_desc):
+        print("{}".format(img_info[-1]))
         if device != "cpu":
             inps = inps.cuda()
             labels = labels.cuda()
@@ -187,8 +193,17 @@ def main():
     cmd = generate_cmd(cmd_ls)
     # Prepare Dataset
 
+    shuffle_dataset = False
+    for k, v in config.train_info.items():
+        if k not in open_sourec_dataset:
+            shuffle_dataset = True
+
     train_dataset = MyDataset(config.train_info, train=True)
     val_dataset = MyDataset(config.train_info, train=False)
+    if shuffle_dataset:
+        val_dataset.img_val, val_dataset.bbox_val, val_dataset.part_val = \
+            train_dataset.img_val, train_dataset.bbox_val, train_dataset.part_val
+
     # for k, v in config.train_info.items():
     #     pass
     # train_dataset = Mscoco(v, train=True)
