@@ -252,6 +252,8 @@ def main():
                 p.requires_grad = False
             elif "preact" in n:
                 p.requires_grad = False
+            else:
+                p.requires_grad = True
 
     if pre_train_model and "duc" not in pre_train_model:
         info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
