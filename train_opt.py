@@ -255,19 +255,20 @@ def main():
             else:
                 p.requires_grad = True
 
-    if pre_train_model and "duc" not in pre_train_model:
-        info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
-        info = torch.load(info_path)
-        begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
-        print('Loading Model from {}'.format(pre_train_model))
-        m.load_state_dict(torch.load(pre_train_model))
-        opt.trainIters = info.trainIters
-        opt.valIters = info.valIters
-        os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
-    elif "duc" in pre_train_model:
-        print('Loading Model from {}'.format(pre_train_model))
-        m.load_state_dict(torch.load(pre_train_model))
-        os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
+    if pre_train_model:
+        if "duc" not in pre_train_model:
+            info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
+            info = torch.load(info_path)
+            begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
+            print('Loading Model from {}'.format(pre_train_model))
+            m.load_state_dict(torch.load(pre_train_model))
+            opt.trainIters = info.trainIters
+            opt.valIters = info.valIters
+            os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
+        else:
+            print('Loading Model from {}'.format(pre_train_model))
+            m.load_state_dict(torch.load(pre_train_model))
+            os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     else:
         print('Create new model')
         with open("log/{}/{}.txt".format(dataset, save_folder), "a+") as f:
@@ -312,6 +313,13 @@ def main():
 
     # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
     # writer.add_graph(m, rnd_inps)
+
+    loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+    print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+        idx=-1,
+        loss=loss,
+        acc=acc
+    ))
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
