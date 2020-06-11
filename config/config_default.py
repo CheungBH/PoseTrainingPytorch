@@ -2,14 +2,15 @@ import os
 
 device = "cuda:0"
 backbone_ls = ["mobilenet", "seresnet101", "efficientnet-b0", "shufflenet"]
+open_source_dataset = ["coco", "ai_challenger"]
 
 DUCs = [640, 320]
 body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right ear", 6: "left shoulder",
                 7: "right shoulder", 8: "left elbow", 9: "right elbow", 10: "left wrist", 11: "right wrist",
                 12: "left hip", 13: "right hip", 14: "left knee", 15: "right knee", 16: "left ankle", 17: "right ankle"}
 
-train_body_part = [1,6,7,8,9,10,11,12,13,14,15,16,17]
-# train_body_part = [i+1 for i in range(17)]
+# train_body_part = [1,6,7,8,9,10,11,12,13,14,15,16,17]
+train_body_part = [i+1 for i in range(17)]
 
 train_data = "coco"
 train_info = {
@@ -23,45 +24,3 @@ train_info = {
 }
 
 lr_decay = {0.7: 0.1, 0.9: 0.01}
-
-
-# sparse = False
-# sparse_s = 5e-8
-#
-# train_batch = 32
-# val_batch = 32
-# epochs = 500
-# save_interval = 1
-
-
-# opt_method = "adam"  # "rmsprop"
-# lr = 1e-3
-# momentum = 0
-# weightDecay = 0
-
-# train_mum_worker = 5
-# val_num_worker = 2
-
-# input_width = 256
-# input_height = 320
-# output_width = pow(2, (len(DUCs)+1)) * 8
-# output_height = pow(2, (len(DUCs)+1)) * 10
-
-# sigma = 1
-# hmGauss = 1
-
-
-# backbone = "mobilenet"
-# seresnet_cfg = "config/pose_cfg/seresnet_cfg.txt"   # if origin, model_cfg = None
-# efficient_type = "b2"
-# mobile_setting = None
-    # [[1, 14, 1, 1],
-    #             [6, 24, 2, 2],
-    #             [6, 28, 3, 2],
-    #             [6, 48, 4, 2],
-    #             [6, 72, 3, 1],
-    #             [6, 120, 3, 2],
-    #             [6, 318, 1, 1]]
-
-# loadModel = None
-# save_folder = "efficientnet-b2-test"

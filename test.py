@@ -22,7 +22,7 @@ def draw_kp(hm, pt1, pt2, boxes, img_path):
         hm, pt1, pt2, opt.inputResH, opt.inputResW, opt.outputResH, opt.outputResW)
     kps, score = pose_nms(boxes, scores, preds_img, preds_scores)
     orig_img = cv2.imread(img_path)
-    if kps:
+    if not kps:
         cond = True
         kpv = KeyPointVisualizer()
         img = kpv.vis_ske(orig_img, kps, score)
@@ -71,6 +71,6 @@ def draw_hms(hms):
 
 def generate_white(num):
     rand = np.zeros((opt.outputResH, opt.outputResW))
-    for _ in  range(num-1):
+    for _ in range(num-1):
         rand = np.concatenate((rand, np.zeros((opt.outputResH, opt.outputResW))), axis=1)
     return rand

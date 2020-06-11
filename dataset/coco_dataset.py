@@ -16,7 +16,7 @@ import random
 
 
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
-open_source_dataset = ["coco", "ai_challenger"]
+open_source_dataset = config.open_source_dataset
 
 
 class Mscoco(data.Dataset):
@@ -173,7 +173,7 @@ def extract_customized_data(data_info):
         else:
             img_val.append(im)
             bbox_val.append(bbx)
-            part_val.append(part)
+            part_val.append(pt)
     
     return [img_train, bbox_train, part_train, img_val, bbox_val, part_val]
 

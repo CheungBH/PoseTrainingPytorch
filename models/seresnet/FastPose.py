@@ -40,6 +40,9 @@ class FastPose(nn.Module):
         out = self.duc2(out)
 
         out = self.conv_out(out)
+        if "duc" in opt.loadModel:
+            out = out.narrow(1, 0, len(train_body_part))
+
         return out
 
 
