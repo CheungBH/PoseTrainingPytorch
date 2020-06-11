@@ -49,3 +49,8 @@ exp
 data
 config/config.py
 train_cmd.py
+tensorboard
+.tensorboard
+.ipynb_checkpoints/
+train_log.log
+img.jpg

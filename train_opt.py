@@ -58,7 +58,7 @@ opt.device = device
 save_folder = opt.expID
 dataset = opt.expFolder
 optimize = opt.optMethod
-open_sourec_dataset = config.open_source_dataset
+open_source_dataset = config.open_source_dataset
 
 
 os.makedirs("log/{}".format(dataset), exist_ok=True)
@@ -195,7 +195,7 @@ def main():
 
     shuffle_dataset = False
     for k, v in config.train_info.items():
-        if k not in open_sourec_dataset:
+        if k not in open_source_dataset:
             shuffle_dataset = True
 
     train_dataset = MyDataset(config.train_info, train=True)
