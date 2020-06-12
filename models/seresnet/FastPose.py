@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from .layers.SE_Resnet import SEResnet
 from models.duc.DUC import DUC
 from src.opt import opt
-from config.config import train_body_part
+from config.config import train_body_part, device
 
 
 class FastPose(nn.Module):
@@ -48,6 +48,29 @@ class FastPose(nn.Module):
 
 def createModel(cfg=None):
     return FastPose(cfg)
+
+
+class InferenNet_fast(nn.Module):
+    def __init__(self, kernel_size, dataset, cfg=None):
+        super(InferenNet_fast, self).__init__()
+        if device != "cpu":
+            model = createModel(cfg=cfg).cuda()
+        else:
+            model = createModel(cfg=cfg)
+        print('Loading pose model from {}'.format(opt.loadModel))
+        model.load_state_dict(torch.load(opt.loadModel, map_location=device))
+
+        model.eval()
+        self.pyranet = model
+
+        self.dataset = dataset
+
+    def forward(self, x):
+        out = self.pyranet(x)
+        if "duc" in opt.loadModel:
+            out = out.narrow(1, 0, 17)
+
+        return out
 
 
 def test():

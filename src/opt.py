@@ -30,7 +30,7 @@ parser.add_argument('--struct', default="0", type=str,
                     help='The structure of the model')
 parser.add_argument('--loadModel', default=None, type=str,
                     help='Provide full path to a previously trained model')
-parser.add_argument('--nClasses', default=33, type=int,
+parser.add_argument('--nClasses', default=17, type=int,
                     help='Number of output channel')
 
 
