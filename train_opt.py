@@ -314,12 +314,12 @@ def main():
     # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
     # writer.add_graph(m, rnd_inps)
 
-    loss, acc = valid(val_loader, m, criterion, optimizer, writer)
-    print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
-        idx=-1,
-        loss=loss,
-        acc=acc
-    ))
+    # loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+    # print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+    #     idx=-1,
+    #     loss=loss,
+    #     acc=acc
+    # ))
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
