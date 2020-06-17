@@ -42,8 +42,9 @@ class FastPose(nn.Module):
         out = self.duc2(out)
 
         out = self.conv_out(out)
-        # if "duc" in opt.loadModel:
-        #     out = out.narrow(1, 0, len(train_body_part))
+        if opt.loadModel:
+            if "duc" in opt.loadModel:
+                out = out.narrow(1, 0, 17)
 
         return out
 
@@ -53,7 +54,7 @@ def createModel(cfg=None):
 
 
 class InferenNet_fast(nn.Module):
-    def __init__(self, kernel_size, dataset, cfg=None):
+    def __init__(self, dataset="coco", cfg=None):
         super(InferenNet_fast, self).__init__()
         if device != "cpu":
             model = createModel(cfg=cfg).cuda()
