@@ -1,8 +1,4 @@
-# -----------------------------------------------------
-# Copyright (c) Shanghai Jiao Tong University. All rights reserved.
-# Written by Jiefeng Li (jeff.lee.sjtu@gmail.com)
-# -----------------------------------------------------
-
+import torch
 import cv2
 import os
 import h5py
@@ -13,10 +9,13 @@ from src.opt import opt
 import config.config as config
 from utils.pose import generateSampleBox, choose_kps
 import random
+from dataset.bbox_visualize import BBoxVisualizer
+from dataset.kps_visualize import KeyPointVisualizer
 
 
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
 open_source_dataset = config.open_source_dataset
+draw = False
 
 
 class Mscoco(data.Dataset):
@@ -154,7 +153,8 @@ def extract_customized_data(data_info):
     data_folder, h5file, val_num = data_info[0], data_info[1], data_info[2]
     with h5py.File(h5file, 'r') as annot:
         imgname= annot['imgname'][:].tolist()  #:-5887
-        bndbox = annot['bndbox'][:].tolist()
+        bndbox_raw = annot['bndbox'][:].tolist()
+        bndbox = [[xywh2xyxy(box[0])] for box in bndbox_raw]
         part = annot['part'][:].tolist()
 
         imgs = []
@@ -163,6 +163,15 @@ def extract_customized_data(data_info):
             imgs.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), imgname))))
 
     val_ls = random.sample(range(len(imgs)), val_num)
+
+    if draw:
+        BBV, KPV = BBoxVisualizer(), KeyPointVisualizer()
+        for idx, (im_name, box, p) in enumerate(zip(imgs, bndbox, part)):
+            img = cv2.imread(im_name)
+            img = BBV.visualize(box, img)
+            img = KPV.vis_ske(img, torch.FloatTensor([p]), KPV.scoredict2tensor(1))
+            cv2.imshow("res", img)
+            cv2.waitKey(100)
 
     img_train, bbox_train, part_train, img_val, bbox_val, part_val = [], [], [], [], [], []
     for i, (im, bbx, pt) in enumerate(zip(imgs, bndbox, part)):
@@ -204,6 +213,10 @@ def extract_data(data_info):
     return [img_train, bndbox_train, part_train, img_val, bndbox_val, part_val]
 
 
+def xywh2xyxy(box):
+    return [box[0], box[1], box[0]+box[2], box[1]+box[3]]
+
+
 def change_imgname(img_name):
     temp = np.array([])
     for item in img_name:
@@ -213,4 +226,4 @@ def change_imgname(img_name):
 
 
 if __name__ == '__main__':
-    print(random.sample(range(100), 10))
+    print(xywh2xyxy([1,2,1,2]))

@@ -4,7 +4,7 @@
 # -----------------------------------------------------
 
 
-# CUDA_VISIBLE_DEVICES=0 python train_opt.py --backbone mobilenet --struct 0 --expFolder test --expID test --trainBatch 32
+# CUDA_VISIBLE_DEVICES=0 python train_opt.py --backbone mobilenet --struct 0 --expFolder test --expID test --trainBatch 1 --validBatch 1 --loadModel exp/duc_se.pth
 
 
 import torch
