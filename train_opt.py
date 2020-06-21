@@ -257,13 +257,19 @@ def main():
 
     if pre_train_model:
         if "duc" not in pre_train_model:
-            info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
-            info = torch.load(info_path)
-            begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
+            try:
+                info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
+                info = torch.load(info_path)
+                opt.trainIters = info.trainIters
+                opt.valIters = info.valIters
+                begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
+            except:
+                begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
+                with open("exp/{}/{}/cmd.txt".format(dataset, save_folder), "w") as f:
+                    f.write(cmd)
             print('Loading Model from {}'.format(pre_train_model))
             m.load_state_dict(torch.load(pre_train_model))
-            opt.trainIters = info.trainIters
-            opt.valIters = info.valIters
+
             os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
         else:
             print('Loading Model from {}'.format(pre_train_model))
@@ -314,12 +320,12 @@ def main():
     # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
     # writer.add_graph(m, rnd_inps)
 
-    loss, acc = valid(val_loader, m, criterion, optimizer, writer)
-    print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
-        idx=-1,
-        loss=loss,
-        acc=acc
-    ))
+    # loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+    # print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+    #     idx=-1,
+    #     loss=loss,
+    #     acc=acc
+    # ))
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
