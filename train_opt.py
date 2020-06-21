@@ -257,6 +257,7 @@ def main():
 
     if pre_train_model:
         if "duc" not in pre_train_model:
+            os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
             try:
                 info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
                 info = torch.load(info_path)
@@ -269,8 +270,6 @@ def main():
                     f.write(cmd)
             print('Loading Model from {}'.format(pre_train_model))
             m.load_state_dict(torch.load(pre_train_model))
-
-            os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
         else:
             print('Loading Model from {}'.format(pre_train_model))
             m.load_state_dict(torch.load(pre_train_model))
