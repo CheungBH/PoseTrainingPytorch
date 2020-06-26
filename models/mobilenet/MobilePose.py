@@ -1,9 +1,11 @@
-
+from src.opt import opt
 import torch.nn as nn
 from models.duc.DUC import DUC
 from models.mobilenet.mobilenet import MobileNetV2
-from config.config import train_body_part, DUCs
+from config.config import train_body_part
+from config.model_cfg import DUC_cfg
 
+DUCs = DUC_cfg[opt.DUC]
 n_classes = len(train_body_part)
 
 

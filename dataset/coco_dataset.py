@@ -159,8 +159,8 @@ def extract_customized_data(data_info):
 
         imgs = []
         for i in imgname:
-            imgname = change_imgname(i)
-            imgs.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), imgname))))
+            # imgname = change_imgname(i)
+            imgs.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))))
 
     val_ls = random.sample(range(len(imgs)), val_num)
 
