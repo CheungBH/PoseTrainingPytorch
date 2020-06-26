@@ -200,12 +200,12 @@ def extract_data(data_info):
 
         img_train, img_val = [], []
         for i in imgname_train:
-            imgname = change_imgname(i)
-            img_train.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), imgname))))
+            # imgname = change_imgname(i)
+            img_train.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))))
 
         for i in imgname_val:
-            imgname = change_imgname(i)
-            img_val.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), imgname))))
+            # imgname = change_imgname(i)
+            img_val.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))))
 
         # img_train = [os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))) for i in imgname_train]
         # img_val = [os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))) for i in imgname_val]
