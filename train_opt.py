@@ -55,7 +55,7 @@ optimize = opt.optMethod
 open_source_dataset = config.open_source_dataset
 
 
-os.makedirs("log/{}".format(dataset), exist_ok=True)
+# os.makedirs("log/{}".format(dataset), exist_ok=True)
 
 torch.backends.cudnn.benchmark = True
 
@@ -185,6 +185,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
 def main():
     cmd_ls = sys.argv[1:]
     cmd = generate_cmd(cmd_ls)
+    log_name = "exp/{}/{}/log.txt".format(dataset, save_folder)
     # Prepare Dataset
 
     shuffle_dataset = False
@@ -249,9 +250,9 @@ def main():
             else:
                 p.requires_grad = True
 
+    os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     if pre_train_model:
         if "duc" not in pre_train_model:
-            os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
             try:
                 info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
                 info = torch.load(info_path)
@@ -260,7 +261,7 @@ def main():
                 begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
             except:
                 begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
-                with open("exp/{}/{}/cmd.txt".format(dataset, save_folder), "w") as f:
+                with open(log_name, "a+") as f:
                     f.write(cmd)
             print('Loading Model from {}'.format(pre_train_model))
             m.load_state_dict(torch.load(pre_train_model))
@@ -270,17 +271,10 @@ def main():
             os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     else:
         print('Create new model')
-        with open("log/{}/{}.txt".format(dataset, save_folder), "a+") as f:
+        with open(log_name, "a+") as f:
+            f.write(cmd)
             f.write("FLOPs of current model is {}\n".format(flops))
             f.write("Parameters of current model is {}\n".format(params))
-        if not os.path.exists("exp/{}/{}".format(dataset, save_folder)):
-            try:
-                os.mkdir("exp/{}/{}".format(dataset, save_folder))
-            except FileNotFoundError:
-                os.mkdir("exp/{}".format(dataset))
-                os.mkdir("exp/{}/{}".format(dataset, save_folder))
-        with open("exp/{}/{}/cmd.txt".format(dataset, save_folder), "w") as f:
-            f.write(cmd)
 
     if optimize == 'rmsprop':
         optimizer = torch.optim.RMSprop(m.parameters(),
@@ -325,7 +319,7 @@ def main():
 
         opt.epoch = i
 
-        log = open("log/{}/{}.txt".format(dataset, save_folder), "a+")
+        log = open(log_name, "a+")
         print('############# Starting Epoch {} #############'.format(i))
         log.write('############# Starting Epoch {} #############\n'.format(i))
 

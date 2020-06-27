@@ -20,7 +20,7 @@ def generate_cmd(ls):
     for idx, item in enumerate(ls):
         string += item
         string += " "
-    return string[:-1]
+    return string[:-1] + "\n"
 
 
 def adjust_lr(optimizer, epoch, lr_dict, nEpoch):
