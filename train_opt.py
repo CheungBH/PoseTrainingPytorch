@@ -185,7 +185,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
 def main():
     cmd_ls = sys.argv[1:]
     cmd = generate_cmd(cmd_ls)
-    log_name = "exp/{}/{}/log.txt".format(dataset, save_folder)
+    log_name = "exp/{0}/{1}/{1}.txt".format(dataset, save_folder)
     # Prepare Dataset
 
     shuffle_dataset = False
