@@ -280,7 +280,7 @@ def main():
         pyfile.write("import os\n")
         pyfile.write("os.system('conda init bash')\n")
         pyfile.write("os.system('conda activate py36')\n")
-        pyfile.write("os.system('tensorboard --logdir=../tensorboard/{}/{}')".format(dataset, save_folder))
+        pyfile.write("os.system('tensorboard --logdir=../../../tensorboard/{}/{}')".format(dataset, save_folder))
 
     if optimize == 'rmsprop':
         optimizer = torch.optim.RMSprop(m.parameters(),
