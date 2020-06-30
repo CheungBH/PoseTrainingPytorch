@@ -70,7 +70,7 @@ mobile_opt = {"0": None,
 
 
 seresnet_cfg = {"0": None,
-                "1": "config/pose_cfg/seresnet_cfg.txt",
+                "cfg1": "config/pose_cfg/seresnet_cfg.txt",
                 }
 
 
@@ -80,7 +80,7 @@ shufflenet_cfg = {0: ""}
 
 
 DUC_cfg = {0: [640, 320],
-            1: [480, 240],
-            2: [320, 160]
+           1: [480, 240],
+           2: [320, 160],
            }
 

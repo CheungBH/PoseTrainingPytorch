@@ -260,7 +260,7 @@ def main():
                 opt.valIters = info.valIters
                 begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
             except:
-                begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
+                # begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
                 with open(log_name, "a+") as f:
                     f.write(cmd)
             print('Loading Model from {}'.format(pre_train_model))
@@ -275,6 +275,12 @@ def main():
             f.write(cmd)
             f.write("FLOPs of current model is {}\n".format(flops))
             f.write("Parameters of current model is {}\n".format(params))
+
+    with open("exp/{0}/{1}/tb.py".format(dataset, save_folder), "w") as pyfile:
+        pyfile.write("import os\n")
+        pyfile.write("os.system('conda init bash')\n")
+        pyfile.write("os.system('conda activate py36')\n")
+        pyfile.write("os.system('tensorboard --logdir=../tensorboard/{}/{}')".format(dataset, save_folder))
 
     if optimize == 'rmsprop':
         optimizer = torch.optim.RMSprop(m.parameters(),
