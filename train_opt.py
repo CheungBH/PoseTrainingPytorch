@@ -252,7 +252,7 @@ def main():
 
     os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     if pre_train_model:
-        if "duc" not in pre_train_model:
+        if "duc_se.pth" not in pre_train_model:
             try:
                 info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
                 info = torch.load(info_path)
