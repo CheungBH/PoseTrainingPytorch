@@ -1,4 +1,5 @@
 from torch import nn
+import numpy
 
 
 __all__ = ['MobileNetV2', 'mobilenet_v2']
@@ -30,6 +31,10 @@ def _make_divisible(v, divisor, min_value=None):
 
 
 class ConvBNReLU(nn.Sequential):
+    # def swish(x, beta = 1.0):
+    #     ex = np.exp(beta * x)
+    #     return (ex / (ex + 1)) * x
+
     def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         padding = (kernel_size - 1) // 2
         super(ConvBNReLU, self).__init__(

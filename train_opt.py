@@ -3,6 +3,7 @@
 
 import torch
 import cv2
+import csv
 import torch.utils.data
 from torch.autograd import Variable
 import sys
@@ -321,56 +322,67 @@ def main():
     # ))
 
     # Start Training
+    dict = ['wdir', 'Epoch', 'lr', 'train_acc', 'train_loss', 'val_acc', 'val_loss', 'models']
+    f = open('train.csv', 'a', encoding='utf-8')
+    csv_writer = csv.writer(f)
+    csv_writer.writerow(dict)
+
     for i in range(opt.nEpochs)[begin_epoch:]:
 
         opt.epoch = i
 
-        log = open(log_name, "a+")
-        print('############# Starting Epoch {} #############'.format(i))
-        log.write('############# Starting Epoch {} #############\n'.format(i))
+        # log = open(log_name, "a+")
+        # print('############# Starting Epoch {} #############'.format(i))
+        # log.write('############# Starting Epoch {} #############\n'.format(i))
 
-        for name, param in m.named_parameters():
-            writer.add_histogram(
-                name, param.clone().data.to("cpu").numpy(), i)
+        # for name, param in m.named_parameters():
+        #     writer.add_histogram(
+        #         name, param.clone().data.to("cpu").numpy(), i)
 
         optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
-        writer.add_scalar("lr", lr, i)
-        print("epoch {}: lr {}".format(i, lr))
+        # writer.add_scalar("lr", lr, i)
+        # print("epoch {}: lr {}".format(i, lr))
 
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
 
-        print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        log.write('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
+        # print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+        #     idx=i,
+        #     loss=loss,
+        #     acc=acc
+        # ))
+        # log.write('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
+        #     idx=i,
+        #     loss=loss,
+        #     acc=acc
+        # ))
         #
         opt.acc = acc
         opt.loss = loss
         m_dev = m.module
 
-        loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+        loss1, acc1 = valid(val_loader, m, criterion, optimizer, writer)
 
-        for mod in m.modules():
-            if isinstance(mod, nn.BatchNorm2d):
-                writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
+        value = [log_name, i, lr, acc, loss, acc1, loss1, opt.backbone]
+        f = open('train.csv', 'a', encoding='utf-8')
+        csv_writer = csv.writer(f)
+        csv_writer.writerow(value)
+        f.close()
 
-        print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        log.close()
+        # for mod in m.modules():
+        #     if isinstance(mod, nn.BatchNorm2d):
+        #         writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
+        #
+        # print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+        #     idx=i,
+        #     loss=loss,
+        #     acc=acc
+        # ))
+        # log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
+        #     idx=i,
+        #     loss=loss,
+        #     acc=acc
+        # ))
+        # log.close()
 
         if i % opt.save_interval == 0:
             torch.save(
