@@ -394,8 +394,8 @@ def main():
     with open("result.txt", "a") as f:
         if not exist:
             f.write("backbone,structure,params,flops,time,addDPG,kps,batch_size,optimizer,freeze,sparse,epoch_num,LR,"
-                    "weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}"
+                    "weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch\n")
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}\n"
                 .format(opt.backbone, opt.struct, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
                         opt.optMethod, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.weightDecay, config.computer,
                         os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss, best_epoch))
