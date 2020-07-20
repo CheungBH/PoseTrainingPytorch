@@ -374,7 +374,7 @@ def main():
 
         if i % opt.save_interval == 0:
             torch.save(
-                m_dev.state_dict(), 'exp/{}/{}/model_{}.pkl'.format(dataset, save_folder, i))
+                m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(dataset, save_folder, i))
             torch.save(
                 opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
             torch.save(
