@@ -1,6 +1,6 @@
 # python train_opt.py --backbone mobilenet --struct huge_bigt --expFolder coco_mobile_pruned --expID 13kps_huge_bigt_DUC2_dpg --trainBatch 32 --validBatch 32 --kps 13 --DUC 2 --addDPG --LR 1e-3
 
-
+import matplotlib.pyplot as plt
 import torch
 import cv2
 import torch.utils.data
@@ -185,6 +185,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
 def main():
     cmd_ls = sys.argv[1:]
     cmd = generate_cmd(cmd_ls)
+    exp_dir = os.path.join("exp/{}/{}".format(dataset, save_folder))
     log_name = "exp/{0}/{1}/{1}.txt".format(dataset, save_folder)
     # Prepare Dataset
 
@@ -323,10 +324,13 @@ def main():
     # ))
 
     train_acc, val_acc, train_loss, val_loss, best_epoch = 0, 0, float("inf"), float("inf"), 0
+    train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls = [], [], [], [], []
+
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
 
         opt.epoch = i
+        epoch_ls.append(i)
 
         log = open(log_name, "a+")
         print('############# Starting Epoch {} #############'.format(i))
@@ -341,6 +345,8 @@ def main():
         print("epoch {}: lr {}".format(i, lr))
 
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
+        train_acc_ls.append(acc)
+        train_loss_ls.append(loss)
         train_acc = acc if acc > train_acc else train_acc
         train_loss = loss if loss < train_loss else train_loss
 
@@ -360,6 +366,8 @@ def main():
         m_dev = m.module
 
         loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+        val_acc_ls.append(acc)
+        val_loss_ls.append(loss)
         if acc > val_acc:
             best_epoch = i
             val_acc = acc
@@ -389,16 +397,39 @@ def main():
             torch.save(
                 optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
 
-    result = "result.txt"
+    os.makedirs("result", exist_ok=True)
+    result = os.path.join("result", "{}_result.txt".format(opt.expFolder))
     exist = os.path.exists(result)
     with open("result.txt", "a") as f:
         if not exist:
             f.write("backbone,structure,params,flops,time,addDPG,kps,batch_size,optimizer,freeze,sparse,epoch_num,LR,"
-                    "weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch\n")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}\n"
+                    "Gaussian,thresh,weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,val_loss,"
+                    "best_epoch\n")
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}\n"
                 .format(opt.backbone, opt.struct, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
-                        opt.optMethod, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.weightDecay, config.computer,
-                        os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss, best_epoch))
+                        opt.optMethod, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio,
+                        opt.weightDecay, config.computer, os.path.join(opt.expFolder, save_folder), train_acc,
+                        train_loss, val_acc, val_loss, best_epoch))
+
+    os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
+    
+    ln1, = plt.plot(epoch_ls, train_loss_ls, color='red', linewidth=3.0, linestyle='--')
+    ln2, = plt.plot(epoch_ls, val_loss_ls, color='blue', linewidth=3.0, linestyle='-.')
+    plt.title("Loss")
+    plt.legend(handles=[ln1, ln2], labels=['train_loss', 'val_loss'])
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    plt.savefig(os.path.join(exp_dir, "graphs"," acc.jpg"))
+
+    ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
+    ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
+    plt.title("Acc")
+    plt.legend(handles=[ln1, ln2], labels=['train_acc', 'val_acc'])
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    plt.savefig(os.path.join(exp_dir, "graphs", "acc.jpg"))
 
     writer.close()
 
