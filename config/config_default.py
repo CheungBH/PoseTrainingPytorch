@@ -1,6 +1,7 @@
 import os
 from src.opt import opt
 
+computer = "server2"
 device = "cuda:0"
 backbone_ls = ["mobilenet", "seresnet101", "efficientnet-b0", "shufflenet"]
 open_source_dataset = ["coco"]

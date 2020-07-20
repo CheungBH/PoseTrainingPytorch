@@ -17,7 +17,7 @@ import os
 import config.config as config
 from utils.utils import generate_cmd, adjust_lr
 
-from utils.compute_flops import print_model_param_flops, print_model_param_nums
+from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from test import draw_kps, draw_hms
 
 
@@ -240,6 +240,8 @@ def main():
     print("FLOPs of current model is {}".format(flops))
     params = print_model_param_nums(m)
     print("Parameters of current model is {}".format(params))
+    inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
+    print("Inference time is {}".format(inf_time))
 
     if opt.freeze:
         for n, p in m.named_parameters():
@@ -320,6 +322,7 @@ def main():
     #     acc=acc
     # ))
 
+    train_acc, val_acc, train_loss, val_loss, best_epoch = 0, 0, float("inf"), float("inf"), 0
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
 
@@ -338,6 +341,8 @@ def main():
         print("epoch {}: lr {}".format(i, lr))
 
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
+        train_acc = acc if acc > train_acc else train_acc
+        train_loss = loss if loss < train_loss else train_loss
 
         print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
@@ -355,6 +360,10 @@ def main():
         m_dev = m.module
 
         loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+        if acc > val_acc:
+            best_epoch = i
+            val_acc = acc
+        val_loss = loss if loss < val_loss else val_loss
 
         for mod in m.modules():
             if isinstance(mod, nn.BatchNorm2d):
@@ -379,6 +388,17 @@ def main():
                 opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
             torch.save(
                 optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
+
+    result = "result.txt"
+    exist = os.path.exists(result)
+    with open("result.txt", "a") as f:
+        if not exist:
+            f.write("backbone,structure,params,flops,time,addDPG,kps,batch_size,optimizer,freeze,sparse,epoch_num,LR,"
+                    "weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch")
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}"
+                .format(opt.backbone, opt.struct, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
+                        opt.optMethod, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.weightDecay, config.computer,
+                        os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss, best_epoch))
 
     writer.close()
 
