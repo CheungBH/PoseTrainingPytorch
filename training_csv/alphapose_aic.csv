@@ -1,4 +1,4 @@
-backbone,structure,DUC,addDPG,kps,validBatch,trainBatch,optimizer,freeze,sparse,epoch_num,LR,Gaussian,thresh,weightDecay
+backbone,structure,DUC,addDPG,kps,validBatch,trainBatch,optimizer,freeze,sparse,nEpochs,LR,Gaussian,thresh,weightDecay
 mobilenet,0,0,TRUE,13,32,32,,,,100,,,,
 mobilenet,middle,0,TRUE,13,32,32,,,,100,,,,
 mobilenet,huge,0,TRUE,13,32,32,,,,100,,,,
