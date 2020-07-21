@@ -20,10 +20,10 @@ for mdl in data[1:]:
         tmp += o
         tmp += " "
         tmp += m
-        tmp += ""
-    cmd = begin + tmp + "'"
+        tmp += " "
+    cmd = begin + tmp + "'\n"
     cmds.append(cmd)
 
-with open("cmds.txt", "f") as out:
+with open("cmds.txt", "w") as out:
     for c in cmds:
         out.write(c)
