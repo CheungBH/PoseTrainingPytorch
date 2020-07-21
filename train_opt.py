@@ -186,7 +186,9 @@ def main():
     cmd_ls = sys.argv[1:]
     cmd = generate_cmd(cmd_ls)
     exp_dir = os.path.join("exp/{}/{}".format(dataset, save_folder))
-    log_name = "exp/{0}/{1}/{1}.txt".format(dataset, save_folder)
+    log_dir = os.path.join(exp_dir, "{}".format(save_folder))
+    os.makedirs(log_dir, exist_ok=True)
+    log_name = os.path.join(log_dir, "{}.txt".format(save_folder))
     # Prepare Dataset
 
     shuffle_dataset = False
@@ -279,11 +281,11 @@ def main():
             f.write("FLOPs of current model is {}\n".format(flops))
             f.write("Parameters of current model is {}\n".format(params))
 
-    with open("exp/{0}/{1}/tb.py".format(dataset, save_folder), "w") as pyfile:
+    with open(os.path.join(log_dir, "tb.py"), "w") as pyfile:
         pyfile.write("import os\n")
         pyfile.write("os.system('conda init bash')\n")
         pyfile.write("os.system('conda activate py36')\n")
-        pyfile.write("os.system('tensorboard --logdir=../../../tensorboard/{}/{}')".format(dataset, save_folder))
+        pyfile.write("os.system('tensorboard --logdir=../../../../tensorboard/{}/{}')".format(dataset, save_folder))
 
     if optimize == 'rmsprop':
         optimizer = torch.optim.RMSprop(m.parameters(),
@@ -400,13 +402,13 @@ def main():
     os.makedirs("result", exist_ok=True)
     result = os.path.join("result", "{}_result.txt".format(opt.expFolder))
     exist = os.path.exists(result)
-    with open("result.txt", "a") as f:
+    with open(result, "a+") as f:
         if not exist:
-            f.write("backbone,structure,params,flops,time,addDPG,kps,batch_size,optimizer,freeze,sparse,epoch_num,LR,"
-                    "Gaussian,thresh,weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,val_loss,"
-                    "best_epoch\n")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}\n"
-                .format(opt.backbone, opt.struct, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
+            f.write("backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze,sparse,epoch_num,"
+                    "LR,Gaussian,thresh,weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,"
+                    "val_loss,best_epoch\n")
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}\n"
+                .format(opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
                         opt.optMethod, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio,
                         opt.weightDecay, config.computer, os.path.join(opt.expFolder, save_folder), train_acc,
                         train_loss, val_acc, val_loss, best_epoch))
@@ -420,7 +422,8 @@ def main():
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(exp_dir, "loss.jpg"))
+    plt.savefig(os.path.join(log_dir, "loss.jpg"))
+    plt.cla()
 
     ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
@@ -429,7 +432,7 @@ def main():
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(exp_dir, "acc.jpg"))
+    plt.savefig(os.path.join(log_dir, "acc.jpg"))
 
     writer.close()
 
