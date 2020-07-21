@@ -2,7 +2,7 @@ import csv    #加载csv包便于读取csv文件
 
 include_cuda = True
 
-csv_name = 'training_csv/alphapose_aic_new.csv'
+csv_name = 'training_csv/alphapose_aic.csv'
 out_name = csv_name[:-4] + ".txt"
 csv_file = open(csv_name)    #打开csv文件
 csv_reader_lines = csv.reader(csv_file)   #逐行读取csv文件
