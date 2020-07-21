@@ -411,8 +411,8 @@ def main():
                         opt.weightDecay, config.computer, os.path.join(opt.expFolder, save_folder), train_acc,
                         train_loss, val_acc, val_loss, best_epoch))
 
-    os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
-    
+    # os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
+
     ln1, = plt.plot(epoch_ls, train_loss_ls, color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls, val_loss_ls, color='blue', linewidth=3.0, linestyle='-.')
     plt.title("Loss")
@@ -420,7 +420,7 @@ def main():
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(exp_dir, "graphs"," acc.jpg"))
+    plt.savefig(os.path.join(exp_dir, "loss.jpg"))
 
     ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
@@ -429,7 +429,7 @@ def main():
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(exp_dir, "graphs", "acc.jpg"))
+    plt.savefig(os.path.join(exp_dir, "acc.jpg"))
 
     writer.close()
 
