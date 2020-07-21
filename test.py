@@ -7,6 +7,7 @@ from utils.visualize import KeyPointVisualizer
 from src.opt import opt
 import math
 import numpy as np
+import os
 
 tensor = torch.FloatTensor
 max_img = 4
@@ -51,7 +52,7 @@ def draw_kps(hms, info):
     # for r in range(row):
     #     row_img = [img_ls[r*4+c] for c in range(column)]
     #     predictions = np.concatenate((row_img[0], row_img[1], row_img[2], row_img[3]), axis=0)
-    cv2.imwrite("img.jpg", predictions)
+    cv2.imwrite(os.path.join("exp", opt.expFolder, opt.expID, "img.jpg"), predictions)
 
     return predictions, drawn
 

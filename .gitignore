@@ -54,3 +54,5 @@ tensorboard
 .ipynb_checkpoints/
 train_log.log
 img.jpg
+result.txt
+train.csv
