@@ -56,3 +56,5 @@ train_log.log
 img.jpg
 result.txt
 train.csv
+tmp.txt
+apex
