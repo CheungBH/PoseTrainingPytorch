@@ -23,7 +23,7 @@ for idx, mdl in enumerate(data[1:]):
             tmp += " "
             tmp += m
             tmp += " "
-    tmp += "--expID {}".format(idx)
+    tmp += "--expID {}".format(idx+1)
     cmd = begin + tmp + "'\n"
     cmds.append(cmd)
 
