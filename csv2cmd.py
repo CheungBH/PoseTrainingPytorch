@@ -14,7 +14,7 @@ else:
     begin = "'python train_opt.py "
 
 cmds = []
-for mdl in data[1:]:
+for idx, mdl in enumerate(data[1:]):
     tmp = ""
     for o, m in zip(opt, mdl):
         if m != "":
@@ -23,6 +23,7 @@ for mdl in data[1:]:
             tmp += " "
             tmp += m
             tmp += " "
+    tmp += "--expID {}".format(idx)
     cmd = begin + tmp + "'\n"
     cmds.append(cmd)
 
