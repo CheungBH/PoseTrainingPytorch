@@ -11,3 +11,14 @@ with open(model_txt, "r") as f:
 
 print(len(models))
 
+trained_txt = "result/aic_origin_result.txt"
+
+with open(trained_txt, "r") as t:
+    trained = []
+    for line in t.readlines()[1:]:
+        trained.append(int((line.split(",")[-6]).split("/")[-1]))
+
+print(trained)
+
+rest = [item for item in models if item not in trained]
+print(rest)
