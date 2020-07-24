@@ -373,6 +373,8 @@ def main():
         if acc > val_acc:
             best_epoch = i
             val_acc = acc
+            torch.save(
+                m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
         val_loss = loss if loss < val_loss else val_loss
 
         for mod in m.modules():
