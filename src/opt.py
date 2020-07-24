@@ -20,7 +20,7 @@ parser.add_argument('--snapshot', default=1, type=int,
                     help='How often to take a snapshot of the model (0 = never)')
 
 "----------------------------- AlphaPose options -----------------------------"
-parser.add_argument('--addDPG', default=False, dest='addDPG',
+parser.add_argument('--addDPG', default=False, type=bool,
                     help='Train with data augmentation', action='store_true')
 
 "----------------------------- Model options -----------------------------"
