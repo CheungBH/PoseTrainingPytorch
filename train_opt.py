@@ -67,6 +67,7 @@ def train(train_loader, m, criterion, optimizer, writer):
 
     train_loader_desc = tqdm(train_loader)
     s = get_sparse_value()
+    print("sparse value is {} in epoch {}".format(s, opt.epoch))
     # print("Training")
 
     for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
@@ -142,7 +143,8 @@ def valid(val_loader, m, criterion, optimizer, writer):
                 kps_img, have_kp = draw_kps(out, img_info)
                 # if have_kp:
                 drawn_kp = True
-                writer.add_image("result of epoch {}".format(opt.epoch), cv2.imread("img.jpg")[:, :, ::-1],
+                writer.add_image("result of epoch {}".format(opt.epoch),
+                                 cv2.imread(os.path.join("exp", dataset, save_folder, "img.jpg"))[:, :, ::-1],
                                  dataformats='HWC')
                 # else:
                 #     pass
@@ -392,11 +394,8 @@ def main():
         val_loss = loss if loss < val_loss else val_loss
 
         for mod in m.modules():
-            try:
-                if len(mod.weight.shape) == 1:
-                    writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
-            except:
-                continue
+            if isinstance(mod, nn.BatchNorm2d):
+                writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
 
         print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
@@ -424,12 +423,12 @@ def main():
     with open(result, "a+") as f:
         if not exist:
             f.write("backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze_bn,freeze,sparse,"
-                    "epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, folder_name,train_acc,"
-                    "train_loss,val_acc,val_loss,best_epoch\n")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
+                    "sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, folder_name,"
+                    "train_acc,train_loss,val_acc,val_loss,best_epoch\n")
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
                 .format(opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
-                        opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.hmGauss,
-                        opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                        opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay, opt.nEpochs, opt.LR,
+                        opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
                         os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss, best_epoch))
 
     # os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
