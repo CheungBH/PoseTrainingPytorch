@@ -248,7 +248,7 @@ def main():
 
     if opt.freeze:
         for n, p in m.named_parameters():
-            if "bn" in n:
+            if "bn" in n and opt.freeze_bn:
                 p.requires_grad = False
             elif "preact" in n:
                 p.requires_grad = False
@@ -406,14 +406,14 @@ def main():
     exist = os.path.exists(result)
     with open(result, "a+") as f:
         if not exist:
-            f.write("backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze,sparse,epoch_num,"
-                    "LR,Gaussian,thresh,weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,"
-                    "val_loss,best_epoch\n")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}\n"
+            f.write("backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze_bn,freeze,sparse,"
+                    "epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, folder_name,train_acc,"
+                    "train_loss,val_acc,val_loss,best_epoch\n")
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
                 .format(opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
-                        opt.optMethod, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio,
-                        opt.weightDecay, config.computer, os.path.join(opt.expFolder, save_folder), train_acc,
-                        train_loss, val_acc, val_loss, best_epoch))
+                        opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.hmGauss,
+                        opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                        os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss, best_epoch))
 
     # os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
 
