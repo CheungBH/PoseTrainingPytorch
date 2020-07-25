@@ -66,6 +66,7 @@ def train(train_loader, m, criterion, optimizer, writer):
     m.train()
 
     train_loader_desc = tqdm(train_loader)
+    s = get_sparse_value()
     # print("Training")
 
     for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
@@ -92,8 +93,6 @@ def train(train_loader, m, criterion, optimizer, writer):
                 scaled_loss.backward()
         else:
             loss.backward()
-
-        s = get_sparse_value()
 
         for mod in m.modules():
             if isinstance(mod, nn.BatchNorm2d):
