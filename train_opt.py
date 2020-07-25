@@ -205,7 +205,7 @@ def main():
     print("FLOPs of current model is {}".format(flops))
     params = print_model_param_nums(m)
     print("Parameters of current model is {}".format(params))
-    inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW,repeat=1)
+    inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
     print("Inference time is {}".format(inf_time))
 
     if opt.freeze > 0:
