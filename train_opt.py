@@ -199,6 +199,7 @@ def main():
         m = createModel(cfg=model_cfg).cuda()
     else:
         m = createModel(cfg=model_cfg).cpu()
+    print(m, file=open("model.txt", "w"))
 
     begin_epoch = 0
     pre_train_model = opt.loadModel
@@ -395,9 +396,13 @@ def main():
                 m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
         val_loss = loss if loss < val_loss else val_loss
 
+        bn_num = 0
         for mod in m.modules():
             if isinstance(mod, nn.BatchNorm2d):
+                print(mod)
+                bn_num += 1
                 writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
+        print(bn_num)
 
         print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
