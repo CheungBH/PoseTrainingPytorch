@@ -15,7 +15,7 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.utils import generate_cmd, adjust_lr
+from utils.utils import generate_cmd, adjust_lr, get_sparse_value
 
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from test import draw_kps, draw_hms
@@ -66,6 +66,8 @@ def train(train_loader, m, criterion, optimizer, writer):
     m.train()
 
     train_loader_desc = tqdm(train_loader)
+    s = get_sparse_value()
+    print("sparse value is {} in epoch {}".format(s, opt.epoch))
     # print("Training")
 
     for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
@@ -93,10 +95,9 @@ def train(train_loader, m, criterion, optimizer, writer):
         else:
             loss.backward()
 
-        if opt.sparse_s != 0:
-            for mod in m.modules():
-                if isinstance(mod, nn.BatchNorm2d):
-                    mod.weight.grad.data.add_(opt.sparse_s * torch.sign(mod.weight.data))
+        for mod in m.modules():
+            if isinstance(mod, nn.BatchNorm2d):
+                mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))
 
         optimizer.step()
         opt.trainIters += 1
@@ -142,7 +143,8 @@ def valid(val_loader, m, criterion, optimizer, writer):
                 kps_img, have_kp = draw_kps(out, img_info)
                 # if have_kp:
                 drawn_kp = True
-                writer.add_image("result of epoch {}".format(opt.epoch), cv2.imread("img.jpg")[:, :, ::-1],
+                writer.add_image("result of epoch {}".format(opt.epoch),
+                                 cv2.imread(os.path.join("exp", dataset, save_folder, "img.jpg"))[:, :, ::-1],
                                  dataformats='HWC')
                 # else:
                 #     pass
@@ -191,6 +193,44 @@ def main():
     log_name = os.path.join(log_dir, "{}.txt".format(save_folder))
     # Prepare Dataset
 
+    # Model Initialize
+    if device != "cpu":
+        m = createModel(cfg=model_cfg).cuda()
+    else:
+        m = createModel(cfg=model_cfg).cpu()
+
+    begin_epoch = 0
+    pre_train_model = opt.loadModel
+    flops = print_model_param_flops(m)
+    print("FLOPs of current model is {}".format(flops))
+    params = print_model_param_nums(m)
+    print("Parameters of current model is {}".format(params))
+    inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
+    print("Inference time is {}".format(inf_time))
+
+    if opt.freeze > 0:
+        if opt.backbone == "mobilenet":
+            feature_layer_num = 155
+            feature_layer_name = "features"
+        elif opt.backbone == "seresnet101":
+            feature_layer_num = 327
+            feature_layer_name = "preact"
+        elif opt.backbone == "shufflenet":
+            feature_layer_num = 167
+            feature_layer_name = "shuffle"
+        else:
+            raise ValueError("Not a correct name")
+
+        feature_num = int(opt.freeze * feature_layer_num)
+
+        for idx, (n, p) in enumerate(m.named_parameters()):
+            if len(p.shape) == 1 and opt.freeze_bn:
+                p.requires_grad = False
+            elif feature_layer_name in n and idx < feature_num:
+                p.requires_grad = False
+            else:
+                p.requires_grad = True
+
     shuffle_dataset = False
     for k, v in config.train_info.items():
         if k not in open_source_dataset:
@@ -231,33 +271,9 @@ def main():
 
     # assert train_loaders != {}, "Your training data has not been specific! "
 
-    # Model Initialize
-    if device != "cpu":
-        m = createModel(cfg=model_cfg).cuda()
-    else:
-        m = createModel(cfg=model_cfg).cpu()
-
-    begin_epoch = 0
-    pre_train_model = opt.loadModel
-    flops = print_model_param_flops(m)
-    print("FLOPs of current model is {}".format(flops))
-    params = print_model_param_nums(m)
-    print("Parameters of current model is {}".format(params))
-    inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
-    print("Inference time is {}".format(inf_time))
-
-    if opt.freeze:
-        for n, p in m.named_parameters():
-            if "bn" in n:
-                p.requires_grad = False
-            elif "preact" in n:
-                p.requires_grad = False
-            else:
-                p.requires_grad = True
-
     os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     if pre_train_model:
-        if "duc" not in pre_train_model:
+        if "duc_se.pth" not in pre_train_model:
             try:
                 info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
                 info = torch.load(info_path)
@@ -338,9 +354,9 @@ def main():
         print('############# Starting Epoch {} #############'.format(i))
         log.write('############# Starting Epoch {} #############\n'.format(i))
 
-        for name, param in m.named_parameters():
-            writer.add_histogram(
-                name, param.clone().data.to("cpu").numpy(), i)
+        # for name, param in m.named_parameters():
+        #     writer.add_histogram(
+        #         name, param.clone().data.to("cpu").numpy(), i)
 
         optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
         writer.add_scalar("lr", lr, i)
@@ -373,6 +389,8 @@ def main():
         if acc > val_acc:
             best_epoch = i
             val_acc = acc
+            torch.save(
+                m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
         val_loss = loss if loss < val_loss else val_loss
 
         for mod in m.modules():
@@ -404,14 +422,14 @@ def main():
     exist = os.path.exists(result)
     with open(result, "a+") as f:
         if not exist:
-            f.write("backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze,sparse,epoch_num,"
-                    "LR,Gaussian,thresh,weightDecay, ,model_location, folder_name,train_acc,train_loss,val_acc,"
-                    "val_loss,best_epoch\n")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}," ",{},{},{},{},{},{},{}\n"
+            f.write("backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze_bn,freeze,sparse,"
+                    "sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, folder_name,"
+                    "train_acc,train_loss,val_acc,val_loss,best_epoch\n")
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
                 .format(opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
-                        opt.optMethod, opt.freeze, opt.sparse_s, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio,
-                        opt.weightDecay, config.computer, os.path.join(opt.expFolder, save_folder), train_acc,
-                        train_loss, val_acc, val_loss, best_epoch))
+                        opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay, opt.nEpochs, opt.LR,
+                        opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                        os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss, best_epoch))
 
     # os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
 

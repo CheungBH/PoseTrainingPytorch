@@ -30,3 +30,4 @@ train_info = {
 }
 
 lr_decay = {0.7: 0.1, 0.9: 0.01}
+sparse_decay_time = 0.5

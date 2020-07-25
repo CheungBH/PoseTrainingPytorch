@@ -2,7 +2,7 @@ S.DS_Store
 debug*
 datasets/
 checkpoints/
-results/
+result/
 build/
 dist/
 *.png

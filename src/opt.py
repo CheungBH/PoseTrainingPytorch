@@ -20,8 +20,8 @@ parser.add_argument('--snapshot', default=1, type=int,
                     help='How often to take a snapshot of the model (0 = never)')
 
 "----------------------------- AlphaPose options -----------------------------"
-parser.add_argument('--addDPG', default=False, dest='addDPG',
-                    help='Train with data augmentation', action='store_true')
+parser.add_argument('--addDPG', default=False, type=bool,
+                    help='Train with data augmentation')
 
 "----------------------------- Model options -----------------------------"
 parser.add_argument('--backbone', default="seresnet101", type=str,
@@ -33,7 +33,7 @@ parser.add_argument('--loadModel', default=None, type=str,
 parser.add_argument('--kps', default=17, type=int,
                     help='Number of output channel')
 parser.add_argument('--DUC', default=0, type=int,
-                    help='Number of output channel')
+                    help='DUC')
 
 "----------------------------- Hyperparameter options -----------------------------"
 parser.add_argument('--LR', default=1e-3, type=float,
@@ -46,12 +46,16 @@ parser.add_argument('--eps', default=1e-8, type=float,
                     help='epsilon')
 parser.add_argument('--crit', default='MSE', type=str,
                     help='Criterion type')
-parser.add_argument('--freeze', default=False, type=bool,
-                    help='Criterion type')
+parser.add_argument('--freeze', default=0, type=float,
+                    help='freeze backbone')
+parser.add_argument('--freeze_bn', default=False, type=bool,
+                    help='freeze bn')
 parser.add_argument('--optMethod', default='rmsprop', type=str,
                     help='Optimization method: rmsprop | sgd | nag | adadelta')
 parser.add_argument('--sparse_s', default=0, type=float,
                     help='sparse')
+parser.add_argument('--sparse_decay', default=1, type=float,
+                    help='sparse_decay')
 
 
 "----------------------------- Training options -----------------------------"
