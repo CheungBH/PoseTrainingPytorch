@@ -185,6 +185,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
 
 def main():
+    print(opt)
     cmd_ls = sys.argv[1:]
     cmd = generate_cmd(cmd_ls)
     exp_dir = os.path.join("exp/{}/{}".format(dataset, save_folder))
@@ -294,6 +295,7 @@ def main():
         print('Create new model')
         with open(log_name, "a+") as f:
             f.write(cmd)
+            print(opt, file=f)
             f.write("FLOPs of current model is {}\n".format(flops))
             f.write("Parameters of current model is {}\n".format(params))
 
