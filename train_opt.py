@@ -378,7 +378,7 @@ def main():
         val_loss = loss if loss < val_loss else val_loss
 
         for mod in m.modules():
-            if isinstance(mod, nn.BatchNorm2d):
+            if len(mod.weight.shape) == 1:
                 writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
 
         print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(

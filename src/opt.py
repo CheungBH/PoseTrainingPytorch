@@ -21,7 +21,7 @@ parser.add_argument('--snapshot', default=1, type=int,
 
 "----------------------------- AlphaPose options -----------------------------"
 parser.add_argument('--addDPG', default=False, type=bool,
-                    help='Train with data augmentation', action='store_true')
+                    help='Train with data augmentation')
 
 "----------------------------- Model options -----------------------------"
 parser.add_argument('--backbone', default="seresnet101", type=str,
