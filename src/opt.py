@@ -54,6 +54,8 @@ parser.add_argument('--optMethod', default='rmsprop', type=str,
                     help='Optimization method: rmsprop | sgd | nag | adadelta')
 parser.add_argument('--sparse_s', default=0, type=float,
                     help='sparse')
+parser.add_argument('--sparse_decay', default=1, type=float,
+                    help='sparse_decay')
 
 
 "----------------------------- Training options -----------------------------"

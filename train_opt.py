@@ -15,7 +15,7 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.utils import generate_cmd, adjust_lr
+from utils.utils import generate_cmd, adjust_lr, get_sparse_value
 
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from test import draw_kps, draw_hms
@@ -93,10 +93,11 @@ def train(train_loader, m, criterion, optimizer, writer):
         else:
             loss.backward()
 
-        if opt.sparse_s != 0:
-            for mod in m.modules():
-                if isinstance(mod, nn.BatchNorm2d):
-                    mod.weight.grad.data.add_(opt.sparse_s * torch.sign(mod.weight.data))
+        s = get_sparse_value()
+
+        for mod in m.modules():
+            if isinstance(mod, nn.BatchNorm2d):
+                mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))
 
         optimizer.step()
         opt.trainIters += 1
