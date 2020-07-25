@@ -1,9 +1,11 @@
-
+from src.opt import opt
 import torch.nn as nn
 from models.duc.DUC import DUC
 from models.shufflenet.shufflenet import shufflenet_v2_x1_0
-from config.config import train_body_part, DUCs
+from config.config import train_body_part
+from config.model_cfg import DUC_cfg
 
+DUCs = DUC_cfg[opt.DUC]
 n_classes = len(train_body_part)
 
 
@@ -17,7 +19,7 @@ class ShufflePose(nn.Module):
         self.shuffle = shufflenet_v2_x1_0()
 
         self.suffle1 = nn.PixelShuffle(2)
-        self.duc1 = DUC(320, DUCs[0], upscale_factor=2)
+        self.duc1 = DUC(256, DUCs[0], upscale_factor=2)
         self.duc2 = DUC(int(DUCs[0]/4), DUCs[1], upscale_factor=2)
         #self.duc3 = DUC(128, 256, upscale_factor=2)
         #self.duc4 = DUC(256, 512, upscale_factor=2)

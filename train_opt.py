@@ -191,6 +191,44 @@ def main():
     log_name = os.path.join(log_dir, "{}.txt".format(save_folder))
     # Prepare Dataset
 
+    # Model Initialize
+    if device != "cpu":
+        m = createModel(cfg=model_cfg).cuda()
+    else:
+        m = createModel(cfg=model_cfg).cpu()
+
+    begin_epoch = 0
+    pre_train_model = opt.loadModel
+    flops = print_model_param_flops(m)
+    print("FLOPs of current model is {}".format(flops))
+    params = print_model_param_nums(m)
+    print("Parameters of current model is {}".format(params))
+    inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW,repeat=1)
+    print("Inference time is {}".format(inf_time))
+
+    if opt.freeze > 0:
+        if opt.backbone == "mobilenet":
+            feature_layer_num = 155
+            feature_layer_name = "features"
+        elif opt.backbone == "seresnet101":
+            feature_layer_num = 327
+            feature_layer_name = "preact"
+        elif opt.backbone == "shufflenet":
+            feature_layer_num = 167
+            feature_layer_name = "shuffle"
+        else:
+            raise ValueError("Not a correct name")
+
+        feature_num = int(opt.freeze * feature_layer_num)
+
+        for idx, (n, p) in enumerate(m.named_parameters()):
+            if len(p.shape) == 1 and opt.freeze_bn:
+                p.requires_grad = False
+            elif feature_layer_name in n and idx < feature_num:
+                p.requires_grad = False
+            else:
+                p.requires_grad = True
+
     shuffle_dataset = False
     for k, v in config.train_info.items():
         if k not in open_source_dataset:
@@ -230,30 +268,6 @@ def main():
     #         val_dataset, batch_size=config.val_batch, shuffle=False, num_workers=config.val_num_worker, pin_memory=True)
 
     # assert train_loaders != {}, "Your training data has not been specific! "
-
-    # Model Initialize
-    if device != "cpu":
-        m = createModel(cfg=model_cfg).cuda()
-    else:
-        m = createModel(cfg=model_cfg).cpu()
-
-    begin_epoch = 0
-    pre_train_model = opt.loadModel
-    flops = print_model_param_flops(m)
-    print("FLOPs of current model is {}".format(flops))
-    params = print_model_param_nums(m)
-    print("Parameters of current model is {}".format(params))
-    inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
-    print("Inference time is {}".format(inf_time))
-
-    if opt.freeze:
-        for n, p in m.named_parameters():
-            if "bn" in n and opt.freeze_bn:
-                p.requires_grad = False
-            elif "preact" in n:
-                p.requires_grad = False
-            else:
-                p.requires_grad = True
 
     os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     if pre_train_model:
