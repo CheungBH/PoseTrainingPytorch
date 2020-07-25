@@ -352,9 +352,9 @@ def main():
         print('############# Starting Epoch {} #############'.format(i))
         log.write('############# Starting Epoch {} #############\n'.format(i))
 
-        for name, param in m.named_parameters():
-            writer.add_histogram(
-                name, param.clone().data.to("cpu").numpy(), i)
+        # for name, param in m.named_parameters():
+        #     writer.add_histogram(
+        #         name, param.clone().data.to("cpu").numpy(), i)
 
         optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
         writer.add_scalar("lr", lr, i)
@@ -392,8 +392,11 @@ def main():
         val_loss = loss if loss < val_loss else val_loss
 
         for mod in m.modules():
-            if len(mod.weight.shape) == 1:
-                writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
+            try:
+                if len(mod.weight.shape) == 1:
+                    writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
+            except:
+                continue
 
         print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
