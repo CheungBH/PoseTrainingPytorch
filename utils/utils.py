@@ -1,5 +1,6 @@
 import torch
 from src.opt import opt
+from config import config
 
 
 def gather_bn_weights(module_list, prune_idx):
@@ -36,3 +37,9 @@ def adjust_lr(optimizer, epoch, lr_dict, nEpoch):
     for pg in optimizer.param_groups:
         pg["lr"] = lr
     return optimizer, lr
+
+
+def get_sparse_value():
+    if opt.epoch > opt.nEpochs * config.sparse_decay_time:
+        return opt.sparse_s * opt.sparse_decay
+    return opt.sparse_s

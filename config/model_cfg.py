@@ -76,7 +76,7 @@ seresnet_cfg = {"0": None,
 
 efficientnet_cfg = {str(i): "b"+str(i) for i in range(9)}
 
-shufflenet_cfg = {0: ""}
+shufflenet_cfg = {"0": None}
 
 
 DUC_cfg = {0: [640, 320],
