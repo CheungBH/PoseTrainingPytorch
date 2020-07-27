@@ -140,9 +140,13 @@ def valid(val_loader, m, criterion, optimizer, writer):
             out = m(inps)
 
             if not drawn_kp:
-                kps_img, have_kp = draw_kps(out, img_info)
+                try:
+                    kps_img, have_kp = draw_kps(out, img_info)
+
                 # if have_kp:
-                drawn_kp = True
+                    drawn_kp = True
+                except:
+                    pass
                 writer.add_image("result of epoch {}".format(opt.epoch),
                                  cv2.imread(os.path.join("exp", dataset, save_folder, "img.jpg"))[:, :, ::-1],
                                  dataformats='HWC')
