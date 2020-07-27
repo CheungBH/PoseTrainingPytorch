@@ -429,18 +429,19 @@ def main():
                 optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
 
     os.makedirs("result", exist_ok=True)
-    result = os.path.join("result", "{}_result.txt".format(opt.expFolder))
+    result = os.path.join("result", "{}_{}_result.txt".format(config.computer, opt.expFolder))
     exist = os.path.exists(result)
     with open(result, "a+") as f:
         if not exist:
-            f.write("backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze_bn,freeze,sparse,"
-                    "sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, folder_name,"
-                    "train_acc,train_loss,val_acc,val_loss,best_epoch\n")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
-                .format(opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG, opt.kps, opt.trainBatch,
-                        opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay, opt.nEpochs, opt.LR,
-                        opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-                        os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss, best_epoch))
+            f.write("id,backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze_bn,freeze,"
+                    "sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, "
+                    "folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch\n")
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
+                .format(opt.save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG,
+                        opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s,
+                        opt.sparse_decay, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel,
+                        config.computer, os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc,
+                        val_loss, best_epoch))
 
     # os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
 
