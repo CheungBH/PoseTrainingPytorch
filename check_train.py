@@ -18,7 +18,6 @@ with open(trained_txt, "r") as t:
     for line in t.readlines()[1:]:
         trained.append(int((line.split(",")[-6]).split("/")[-1]))
 
-print(trained)
-
+print(sorted(trained))
 rest = [item for item in models if item not in trained]
 print(rest)
