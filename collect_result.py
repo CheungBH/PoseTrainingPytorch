@@ -9,7 +9,9 @@ os.makedirs(dest_folder, exist_ok=True)
 for folder in os.listdir(src_folder):
     result_folder = os.path.join(src_folder, folder, folder)
     if os.path.exists(os.path.join(result_folder, "loss.jpg")):
-        shutil.copytree(result_folder, os.path.join(dest_folder, folder))
-
+        try:
+            shutil.copytree(result_folder, os.path.join(dest_folder, folder))
+        except FileExistsError:
+            pass
 
 

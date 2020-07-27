@@ -1,8 +1,8 @@
 with open("training_csv/alphapose_aic.txt", "r") as f:
     lines = [line for line in f.readlines()]
 
-train_begin, train_end = 100, 102
-CUDA = 2
+train_begin, train_end = 17, 17
+CUDA = -1
 target_cmds = lines[train_begin-1: train_end]
 
 if CUDA != -1:
