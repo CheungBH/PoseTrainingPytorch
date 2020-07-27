@@ -140,9 +140,13 @@ def valid(val_loader, m, criterion, optimizer, writer):
             out = m(inps)
 
             if not drawn_kp:
-                kps_img, have_kp = draw_kps(out, img_info)
+                try:
+                    kps_img, have_kp = draw_kps(out, img_info)
+
                 # if have_kp:
-                drawn_kp = True
+                    drawn_kp = True
+                except:
+                    pass
                 writer.add_image("result of epoch {}".format(opt.epoch),
                                  cv2.imread(os.path.join("exp", dataset, save_folder, "img.jpg"))[:, :, ::-1],
                                  dataformats='HWC')
@@ -399,10 +403,10 @@ def main():
         bn_num = 0
         for mod in m.modules():
             if isinstance(mod, nn.BatchNorm2d):
-                print(mod)
+                # print(mod)
                 bn_num += 1
                 writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
-        print(bn_num)
+        # print(bn_num)
 
         print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
