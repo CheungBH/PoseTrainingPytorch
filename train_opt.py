@@ -148,7 +148,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
                 except:
                     pass
                 writer.add_image("result of epoch {}".format(opt.epoch),
-                                 cv2.imread(os.path.join("exp", dataset, save_folder, "img.jpg"))[:, :, ::-1],
+                                 cv2.imread(os.path.join("exp", opt.expFolder, opt.expID, opt.expID, "img.jpg"))[:, :, ::-1],
                                  dataformats='HWC')
                 # else:
                 #     pass
