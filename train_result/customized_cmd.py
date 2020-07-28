@@ -1,4 +1,6 @@
-with open("training_csv/alphapose_aic.txt", "r") as f:
+from .config import models_name
+
+with open("{}.txt".format(models_name), "r") as f:
     lines = [line for line in f.readlines()]
 
 train_begin, train_end = 17, 17

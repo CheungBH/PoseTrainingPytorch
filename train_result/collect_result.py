@@ -1,7 +1,8 @@
 import os
 import shutil
+from .config import models_name
 
-folder_name = "aic_origin"
+folder_name = models_name
 src_folder = os.path.join("exp", folder_name)
 dest_folder = os.path.join("result", folder_name)
 os.makedirs(dest_folder, exist_ok=True)
