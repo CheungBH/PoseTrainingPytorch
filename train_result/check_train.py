@@ -1,5 +1,6 @@
+from .config import models_name
 
-model_txt = "alphapose_aic/alphapose_aic.txt"
+model_txt = "{0}/{0}.txt".format(models_name)
 
 models = []
 with open(model_txt, "r") as f:
@@ -11,7 +12,7 @@ with open(model_txt, "r") as f:
 
 # print(models)
 
-trained_folder = "alphapose_aic/aic_origin"
+trained_folder = "{}/result/log_result".format(models_name)
 
 import os
 trained = [int(file) for file in os.listdir(trained_folder)]

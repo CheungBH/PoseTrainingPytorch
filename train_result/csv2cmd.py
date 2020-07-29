@@ -1,8 +1,9 @@
 import csv    #加载csv包便于读取csv文件
+from .config import models_name
 
 include_cuda = True
 
-csv_name = 'alphapose_aic/alphapose_aic.csv'
+csv_name = '{0}/{0}.csv'.format(models_name)
 out_name = csv_name[:-4] + ".txt"
 csv_file = open(csv_name)    #打开csv文件
 csv_reader_lines = csv.reader(csv_file)   #逐行读取csv文件
