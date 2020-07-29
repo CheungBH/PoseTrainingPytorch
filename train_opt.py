@@ -437,7 +437,7 @@ def main():
                     "sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, "
                     "folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch\n")
         f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
-                .format(opt.save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG,
+                .format(save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG,
                         opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s,
                         opt.sparse_decay, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel,
                         config.computer, os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc,
