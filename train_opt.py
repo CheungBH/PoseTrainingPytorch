@@ -363,7 +363,7 @@ def main():
     early_stopping = EarlyStopping(patience=opt.patient, verbose=True)
     train_acc, val_acc, train_loss, val_loss, best_epoch, = 0, 0, float("inf"), float("inf"), 0,
     train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls, lr_ls = [], [], [], [], [], []
-    decay, decay_epoch, lr = 3, [], opt.LR
+    decay, decay_epoch, lr, i = 3, [], opt.LR, begin_epoch
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
@@ -453,17 +453,19 @@ def main():
     os.makedirs("result", exist_ok=True)
     result = os.path.join("result", "{}_{}_result.txt".format(config.computer, opt.expFolder))
     exist = os.path.exists(result)
+
     with open(result, "a+") as f:
         if not exist:
             f.write("id,backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze_bn,freeze,"
                     "sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, "
-                    "folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch\n")
+                    "folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch,final_epoch,decay_epoch_1, "
+                    "decay_epoch_2, decay_epoch_3\n")
         f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
                 .format(save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG,
                         opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s,
                         opt.sparse_decay, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel,
                         config.computer, os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc,
-                        val_loss, best_epoch))
+                        val_loss, best_epoch, i, decay_epoch[0], decay_epoch[1], decay_epoch[2]))
 
     # os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
 
