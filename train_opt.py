@@ -316,7 +316,7 @@ def main():
         pyfile.write("os.system('tensorboard --logdir=../../../../tensorboard/{}/{}')".format(dataset, save_folder))
 
     params_to_update, layers = [], 0
-    for name, param in model.named_parameters():
+    for name, param in m.named_parameters():
         layers += 1
         if param.requires_grad:
             params_to_update.append(param)
