@@ -417,9 +417,9 @@ def main():
         early_stopping(val_acc)
         if early_stopping.early_stop:
             optimizer, lr = lr_decay(optimizer, lr)
-            writer.add_scalar("lr", lr, i)
             decay += 1
             decay_epoch.append(i)
+        writer.add_scalar("lr", lr, i)
         print("epoch {}: lr {}".format(i, lr))
 
         bn_num = 0
