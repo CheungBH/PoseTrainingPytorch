@@ -39,6 +39,13 @@ def adjust_lr(optimizer, epoch, lr_dict, nEpoch):
     return optimizer, lr
 
 
+def lr_decay(optimizer, lr):
+    lr = lr * 0.1
+    for pg in optimizer.param_groups:
+        pg["lr"] = lr
+    return optimizer, lr
+
+
 def get_sparse_value():
     if opt.epoch > opt.nEpochs * config.sparse_decay_time:
         return opt.sparse_s * opt.sparse_decay

@@ -15,7 +15,8 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.utils import generate_cmd, adjust_lr, get_sparse_value
+from utils.utils import generate_cmd, lr_decay, get_sparse_value
+from utils.pytorchtools import EarlyStopping
 
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from test import draw_kps, draw_hms
@@ -242,6 +243,13 @@ def main():
             else:
                 p.requires_grad = True
 
+
+    writer = SummaryWriter(
+        'tensorboard/{}/{}'.format(dataset, save_folder), comment=cmd)
+
+    rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
+    writer.add_graph(m, rnd_inps)
+
     shuffle_dataset = False
     for k, v in config.train_info.items():
         if k not in open_source_dataset:
@@ -335,9 +343,6 @@ def main():
     if mix_precision:
         m, optimizer = amp.initialize(m, optimizer, opt_level="O1")
 
-    writer = SummaryWriter(
-        'tensorboard/{}/{}'.format(dataset, save_folder), comment=cmd)
-
     # Model Transfer
     if device != "cpu":
         m = torch.nn.DataParallel(m).cuda()
@@ -346,8 +351,7 @@ def main():
         m = torch.nn.DataParallel(m)
         criterion = torch.nn.MSELoss()
 
-    # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
-    # writer.add_graph(m, rnd_inps)
+
 
     # loss, acc = valid(val_loader, m, criterion, optimizer, writer)
     # print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
@@ -356,11 +360,17 @@ def main():
     #     acc=acc
     # ))
 
-    train_acc, val_acc, train_loss, val_loss, best_epoch = 0, 0, float("inf"), float("inf"), 0
+    early_stopping = EarlyStopping(patience=opt.patient, verbose=True)
+    train_acc, val_acc, train_loss, val_loss, best_epoch, = 0, 0, float("inf"), float("inf"), 0,
     train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls = [], [], [], [], []
+    decay, decay_epoch, lr = 3, [], opt.LR
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
+
+        if decay == opt.lr_decay_time:
+            print("Training finished at epoch {}".format(i))
+            break
 
         opt.epoch = i
         epoch_ls.append(i)
@@ -369,13 +379,9 @@ def main():
         print('############# Starting Epoch {} #############'.format(i))
         log.write('############# Starting Epoch {} #############\n'.format(i))
 
-        # for name, param in m.named_parameters():
-        #     writer.add_histogram(
-        #         name, param.clone().data.to("cpu").numpy(), i)
-
-        optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
-        writer.add_scalar("lr", lr, i)
-        print("epoch {}: lr {}".format(i, lr))
+        # optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
+        # writer.add_scalar("lr", lr, i)
+        # print("epoch {}: lr {}".format(i, lr))
 
         loss, acc = train(train_loader, m, criterion, optimizer, writer)
         train_acc_ls.append(acc)
@@ -407,6 +413,14 @@ def main():
             torch.save(
                 m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
         val_loss = loss if loss < val_loss else val_loss
+
+        early_stopping(val_acc)
+        if early_stopping.early_stop:
+            optimizer, lr = lr_decay(optimizer, lr)
+            writer.add_scalar("lr", lr, i)
+            decay += 1
+            decay_epoch.append(i)
+        print("epoch {}: lr {}".format(i, lr))
 
         bn_num = 0
         for mod in m.modules():
