@@ -192,6 +192,11 @@ def main():
     print(opt)
     cmd_ls = sys.argv[1:]
     cmd = generate_cmd(cmd_ls)
+    if "--freeze_bn False" in cmd:
+        opt.freeze_bn = False
+    if "--addDPG False" in cmd:
+        opt.addDPG = False
+
     exp_dir = os.path.join("exp/{}/{}".format(dataset, save_folder))
     log_dir = os.path.join(exp_dir, "{}".format(save_folder))
     os.makedirs(log_dir, exist_ok=True)
@@ -214,7 +219,7 @@ def main():
     inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
     print("Inference time is {}".format(inf_time))
 
-    if opt.freeze > 0:
+    if opt.freeze > 0 or opt.freeze_bn:
         if opt.backbone == "mobilenet":
             feature_layer_num = 155
             feature_layer_name = "features"
@@ -310,17 +315,20 @@ def main():
         pyfile.write("os.system('conda activate py36')\n")
         pyfile.write("os.system('tensorboard --logdir=../../../../tensorboard/{}/{}')".format(dataset, save_folder))
 
+    params_to_update, layers = [], 0
+    for name, param in model.named_parameters():
+        layers += 1
+        if param.requires_grad:
+            params_to_update.append(param)
+            print("\t", name)
+    print("Training {} layers out of {}".format(len(params_to_update), layers))
+
     if optimize == 'rmsprop':
-        optimizer = torch.optim.RMSprop(m.parameters(),
-                                        lr=opt.LR,
-                                        momentum=opt.momentum,
-                                        weight_decay=opt.weightDecay)
+        optimizer = torch.optim.RMSprop(params_to_update, lr=opt.LR, momentum=opt.momentum, weight_decay=opt.weightDecay)
     elif optimize == 'adam':
-        optimizer = torch.optim.Adam(
-            m.parameters(),
-            lr=opt.LR,
-            weight_decay=opt.weightDecay
-        )
+        optimizer = torch.optim.Adam(params_to_update, lr=opt.LR, weight_decay=opt.weightDecay)
+    elif optimize == 'sgd':
+        optimizer = torch.optim.SGD(params_to_update, lr=opt.LR, momentum=opt.momentum, weight_decay=opt.weightDecay)
     else:
         raise Exception
 

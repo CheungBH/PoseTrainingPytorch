@@ -11,8 +11,6 @@ with open(model_txt, "r") as f:
         except:
             continue
 
-# print(models)
-
 trained_folder = "{}/result/log_result".format(models_name)
 
 import os

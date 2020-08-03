@@ -2,7 +2,6 @@ from utils.eval import getPrediction
 from utils.nms import pose_nms
 import torch
 import cv2
-from config import config
 from utils.visualize import KeyPointVisualizer
 from src.opt import opt
 import math

@@ -1,5 +1,5 @@
 import csv    #加载csv包便于读取csv文件
-from .config import models_name
+from train_result.config import models_name
 
 include_cuda = True
 
