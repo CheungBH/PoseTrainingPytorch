@@ -243,12 +243,16 @@ def main():
             else:
                 p.requires_grad = True
 
-
     writer = SummaryWriter(
         'tensorboard/{}/{}'.format(dataset, save_folder), comment=cmd)
 
-    rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
-    writer.add_graph(m, rnd_inps)
+    if device != "cpu":
+        # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True).cuda()
+        rnd_inps = torch.rand(3, 3, 224, 224).cuda()
+    else:
+        rnd_inps = torch.rand(3, 3, 224, 224)
+        # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
+    writer.add_graph(m, (rnd_inps,))
 
     shuffle_dataset = False
     for k, v in config.train_info.items():
@@ -363,7 +367,7 @@ def main():
     early_stopping = EarlyStopping(patience=opt.patient, verbose=True)
     train_acc, val_acc, train_loss, val_loss, best_epoch, = 0, 0, float("inf"), float("inf"), 0,
     train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls, lr_ls = [], [], [], [], [], []
-    decay, decay_epoch, lr, i = 3, [], opt.LR, begin_epoch
+    decay, decay_epoch, lr, i = 0, [], opt.LR, begin_epoch
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
