@@ -362,7 +362,7 @@ def main():
 
     early_stopping = EarlyStopping(patience=opt.patient, verbose=True)
     train_acc, val_acc, train_loss, val_loss, best_epoch, = 0, 0, float("inf"), float("inf"), 0,
-    train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls = [], [], [], [], []
+    train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls, lr_ls = [], [], [], [], [], []
     decay, decay_epoch, lr = 3, [], opt.LR
 
     # Start Training
@@ -469,8 +469,9 @@ def main():
 
     ln1, = plt.plot(epoch_ls[10:], train_loss_ls[10:], color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls[10:], val_loss_ls[10:], color='blue', linewidth=3.0, linestyle='-.')
+    ln3, = plt.plot(epoch_ls[10:], lr_ls[10:], color='green', linewidth=3.0, linestyle='..')
     plt.title("Loss")
-    plt.legend(handles=[ln1, ln2], labels=['train_loss', 'val_loss'])
+    plt.legend(handles=[ln1, ln2, ln3], labels=['train_loss', 'val_loss', "lr"])
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
@@ -479,8 +480,10 @@ def main():
 
     ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
+    ln3, = plt.plot(epoch_ls, lr_ls, color='green', linewidth=3.0, linestyle='..')
+
     plt.title("Acc")
-    plt.legend(handles=[ln1, ln2], labels=['train_acc', 'val_acc'])
+    plt.legend(handles=[ln1, ln2, ln3], labels=['train_loss', 'val_loss', "lr"])
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
