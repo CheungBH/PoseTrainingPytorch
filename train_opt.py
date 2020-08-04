@@ -423,16 +423,15 @@ def main():
             optimizer, lr = lr_decay(optimizer, lr)
             decay += 1
             decay_epoch.append(i)
+            early_stopping.counter = 0
         writer.add_scalar("lr", lr, i)
         print("epoch {}: lr {}".format(i, lr))
 
         bn_num = 0
         for mod in m.modules():
             if isinstance(mod, nn.BatchNorm2d):
-                # print(mod)
                 bn_num += 1
                 writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
-        # print(bn_num)
 
         print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
             idx=i,
