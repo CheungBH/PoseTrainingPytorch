@@ -444,6 +444,8 @@ def main():
             if early_stopping.early_stop:
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
+                torch.save(
+                    m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
                 decay_epoch.append(i)
                 early_stopping.reset()
         
