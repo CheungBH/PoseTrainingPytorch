@@ -438,7 +438,7 @@ def main():
         log.close()
 
         if i < warm_up_epoch:
-            optimizer, lr = warm_up_lr(optimizer, lr)
+            optimizer, lr = warm_up_lr(optimizer, i)
         else:
             early_stopping(acc)
             if early_stopping.early_stop:
