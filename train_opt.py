@@ -15,7 +15,7 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.utils import generate_cmd, lr_decay, get_sparse_value
+from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr
 from utils.pytorchtools import EarlyStopping
 
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
@@ -54,7 +54,7 @@ save_folder = opt.expID
 dataset = opt.expFolder
 optimize = opt.optMethod
 open_source_dataset = config.open_source_dataset
-
+warm_up_epoch = max(config.warm_up.keys())
 
 # os.makedirs("log/{}".format(dataset), exist_ok=True)
 
@@ -437,12 +437,16 @@ def main():
         ))
         log.close()
 
-        early_stopping(acc)
-        if early_stopping.early_stop:
-            optimizer, lr = lr_decay(optimizer, lr)
-            decay += 1
-            decay_epoch.append(i)
-            early_stopping.reset()
+        if i < warm_up_epoch:
+            optimizer, lr = warm_up_lr(optimizer, lr)
+        else:
+            early_stopping(acc)
+            if early_stopping.early_stop:
+                optimizer, lr = lr_decay(optimizer, lr)
+                decay += 1
+                decay_epoch.append(i)
+                early_stopping.reset()
+        
         writer.add_scalar("lr", lr, i)
         print("epoch {}: lr {}".format(i, lr))
         lr_ls.append(lr)

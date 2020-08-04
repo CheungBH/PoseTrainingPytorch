@@ -46,6 +46,20 @@ def lr_decay(optimizer, lr):
     return optimizer, lr
 
 
+def warm_up_lr(optimizer, epoch):
+    bound = sorted(list(config.warm_up.keys()))
+    if epoch < bound[0]:
+        lr = opt.LR * config.warm_up[bound[0]]
+    elif epoch < bound[1]:
+        lr = opt.LR * config.warm_up[bound[1]]
+    else:
+        lr = opt.LR
+
+    for pg in optimizer.param_groups:
+        pg["lr"] = lr
+    return optimizer, lr
+
+
 def get_sparse_value():
     if opt.epoch > opt.nEpochs * config.sparse_decay_time:
         return opt.sparse_s * opt.sparse_decay
