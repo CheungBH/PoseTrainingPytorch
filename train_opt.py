@@ -418,14 +418,6 @@ def main():
                 m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
         val_loss = loss if loss < val_loss else val_loss
 
-        early_stopping(val_acc)
-        if early_stopping.early_stop:
-            optimizer, lr = lr_decay(optimizer, lr)
-            decay += 1
-            decay_epoch.append(i)
-            early_stopping.counter = 0
-        writer.add_scalar("lr", lr, i)
-        print("epoch {}: lr {}".format(i, lr))
 
         bn_num = 0
         for mod in m.modules():
@@ -444,6 +436,16 @@ def main():
             acc=acc
         ))
         log.close()
+
+        early_stopping(acc)
+        if early_stopping.early_stop:
+            optimizer, lr = lr_decay(optimizer, lr)
+            decay += 1
+            decay_epoch.append(i)
+            early_stopping.reset()
+        writer.add_scalar("lr", lr, i)
+        print("epoch {}: lr {}".format(i, lr))
+        lr_ls.append(lr)
 
         if i % opt.save_interval == 0:
             torch.save(
@@ -474,7 +476,7 @@ def main():
 
     ln1, = plt.plot(epoch_ls[10:], train_loss_ls[10:], color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls[10:], val_loss_ls[10:], color='blue', linewidth=3.0, linestyle='-.')
-    ln3, = plt.plot(epoch_ls[10:], lr_ls[10:], color='green', linewidth=3.0, linestyle='..')
+    ln3, = plt.plot(epoch_ls[10:], lr_ls[10:], color='green', linewidth=3.0, linestyle='-')
     plt.title("Loss")
     plt.legend(handles=[ln1, ln2, ln3], labels=['train_loss', 'val_loss', "lr"])
     ax = plt.gca()
@@ -485,10 +487,10 @@ def main():
 
     ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
-    ln3, = plt.plot(epoch_ls, lr_ls, color='green', linewidth=3.0, linestyle='..')
+    ln3, = plt.plot(epoch_ls, lr_ls, color='green', linewidth=3.0, linestyle='-')
 
     plt.title("Acc")
-    plt.legend(handles=[ln1, ln2, ln3], labels=['train_loss', 'val_loss', "lr"])
+    plt.legend(handles=[ln1, ln2, ln3], labels=['train_acc', 'val_acc', "lr"])
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
