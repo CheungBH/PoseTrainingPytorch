@@ -29,5 +29,5 @@ train_info = {
     # "data/yoga/images": "data/yoga/test.h5",
 }
 
-lr_decay = {0.7: 0.1, 0.9: 0.01}
 sparse_decay_time = 0.5
+warm_up = {5: 0.01, 10:0.1}
