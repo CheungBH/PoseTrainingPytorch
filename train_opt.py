@@ -18,6 +18,7 @@ import os
 import config.config as config
 from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title
 from utils.pytorchtools import EarlyStopping
+import shutil
 
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from test import draw_kps, draw_hms
@@ -470,6 +471,10 @@ def main():
         log.close()
         csv_writer.writerow(train_log_tmp)
 
+        writer.add_scalar("lr", lr, i)
+        print("epoch {}: lr {}".format(i, lr))
+        lr_ls.append(lr)
+
         if i < warm_up_epoch:
             optimizer, lr = warm_up_lr(optimizer, i)
         elif i == warm_up_epoch:
@@ -482,12 +487,10 @@ def main():
                 decay += 1
                 torch.save(
                     m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
+                shutil.move('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
+                            'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
                 decay_epoch.append(i)
                 early_stopping.reset()
-        
-        writer.add_scalar("lr", lr, i)
-        print("epoch {}: lr {}".format(i, lr))
-        lr_ls.append(lr)
 
         if i % opt.save_interval == 0:
             torch.save(
