@@ -67,7 +67,8 @@ torch.backends.cudnn.benchmark = True
 def train(train_loader, m, criterion, optimizer, writer):
     lossLogger = DataLogger()
     accLogger = DataLogger()
-    body_part_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_loss_Loggers = {i: DataLogger() for i in range(opt.kps)}
     m.train()
 
     train_loader_desc = tqdm(train_loader)
@@ -90,15 +91,18 @@ def train(train_loader, m, criterion, optimizer, writer):
         for cons, idx_ls in loss_params.items():
             loss += cons * criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
+        # for idx, logger in pts_loss_Loggers.items():
+        #     logger.update(criterion(out.mul(setMask)[:, [idx], :, :], labels[:, [idx], :, :]), inps.size(0))
+
         acc = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset)
 
-        for k, v in body_part_Loggers.items():
-            body_part_Loggers[k].update(acc[k+1], inps.size(0))
+        optimizer.zero_grad()
 
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
 
-        optimizer.zero_grad()
+        for k, v in pts_acc_Loggers.items():
+            pts_acc_Loggers[k].update(acc[k+1], inps.size(0))
 
         if mix_precision:
             with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -125,17 +129,19 @@ def train(train_loader, m, criterion, optimizer, writer):
                 acc=accLogger.avg * 100)
         )
 
-    body_path_acc = [Logger.avg for k, Logger in body_part_Loggers.items()]
+    body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
+    body_part_loss = [Logger.avg for k, Logger in pts_loss_Loggers.items()]
     train_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg, body_path_acc
+    return lossLogger.avg, accLogger.avg, body_part_acc, body_part_loss
 
 
 def valid(val_loader, m, criterion, optimizer, writer):
     drawn_kp, drawn_hm = False, False
     lossLogger = DataLogger()
     accLogger = DataLogger()
-    body_part_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_loss_Loggers = {i: DataLogger() for i in range(opt.kps)}
     m.eval()
 
     # print("Validating")
@@ -171,6 +177,9 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
             loss = criterion(out.mul(setMask), labels)
 
+            # for idx, logger in pts_loss_Loggers.items():
+            #     logger.update(criterion(out.mul(setMask)[:,[idx],:,:], labels[:,[idx],:,:]), inps.size(0))
+
             flip_out = m(flip(inps))
             flip_out = flip(shuffleLR(flip_out, val_loader.dataset))
 
@@ -181,8 +190,8 @@ def valid(val_loader, m, criterion, optimizer, writer):
         lossLogger.update(loss.item(), inps.size(0))
         accLogger.update(acc[0], inps.size(0))
 
-        for k, v in body_part_Loggers.items():
-            body_part_Loggers[k].update(acc[k+1], inps.size(0))
+        for k, v in pts_acc_Loggers.items():
+            pts_acc_Loggers[k].update(acc[k+1], inps.size(0))
 
         opt.valIters += 1
 
@@ -198,10 +207,11 @@ def valid(val_loader, m, criterion, optimizer, writer):
                 acc=accLogger.avg * 100)
         )
 
-    body_path_acc = [Logger.avg for k, Logger in body_part_Loggers.items()]
+    body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
+    body_part_loss = [Logger.avg for k, Logger in pts_loss_Loggers.items()]
     val_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg, body_path_acc
+    return lossLogger.avg, accLogger.avg, body_part_acc, body_part_loss
 
 
 def main():
@@ -409,7 +419,7 @@ def main():
         # writer.add_scalar("lr", lr, i)
         # print("epoch {}: lr {}".format(i, lr))
 
-        loss, acc, pt_acc = train(train_loader, m, criterion, optimizer, writer)
+        loss, acc, pt_acc, pt_loss = train(train_loader, m, criterion, optimizer, writer)
         train_log_tmp.append(" ")
         train_log_tmp.append(loss)
         train_log_tmp.append(acc.tolist())
@@ -436,7 +446,7 @@ def main():
         opt.loss = loss
         m_dev = m.module
 
-        loss, acc, pt_acc = valid(val_loader, m, criterion, optimizer, writer)
+        loss, acc, pt_acc, pt_loss = valid(val_loader, m, criterion, optimizer, writer)
         train_log_tmp.append(" ")
         train_log_tmp.insert(5, loss)
         train_log_tmp.insert(6, acc.tolist())
