@@ -439,6 +439,9 @@ def main():
 
         if i < warm_up_epoch:
             optimizer, lr = warm_up_lr(optimizer, i)
+        elif i == warm_up_epoch:
+            lr = opt.LR
+            early_stopping(acc)
         else:
             early_stopping(acc)
             if early_stopping.early_stop:
