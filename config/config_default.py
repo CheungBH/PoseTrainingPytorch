@@ -16,6 +16,7 @@ elif opt.kps == 13:
     train_body_part = [1,6,7,8,9,10,11,12,13,14,15,16,17]
 else:
     raise ValueError("This keypoint num doesn't exist")
+body_part_name = [body_parts[no] for no in train_body_part]
 
 
 train_data = "coco"
