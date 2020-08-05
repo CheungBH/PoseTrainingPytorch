@@ -409,10 +409,11 @@ def main():
         # print("epoch {}: lr {}".format(i, lr))
 
         loss, acc, pt_acc = train(train_loader, m, criterion, optimizer, writer)
+        train_log_tmp.append(" ")
         train_log_tmp.append(loss)
-        train_log_tmp.append(acc)
+        train_log_tmp.append(acc.tolist())
         for item in pt_acc:
-            train_log_tmp.append(item)
+            train_log_tmp.append(item.tolist())
 
         train_acc_ls.append(acc)
         train_loss_ls.append(loss)
@@ -436,10 +437,11 @@ def main():
 
         loss, acc, pt_acc = valid(val_loader, m, criterion, optimizer, writer)
         train_log_tmp.append(" ")
-        train_log_tmp.append(loss)
-        train_log_tmp.append(acc)
+        train_log_tmp.insert(5, loss)
+        train_log_tmp.insert(6, acc.tolist())
+        train_log_tmp.insert(7, " ")
         for item in pt_acc:
-            train_log_tmp.append(item)
+            train_log_tmp.append(item.tolist())
 
         val_acc_ls.append(acc)
         val_loss_ls.append(loss)

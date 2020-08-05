@@ -30,4 +30,12 @@ train_info = {
 }
 
 sparse_decay_time = 0.5
-warm_up = {5: 0.01, 10:0.1}
+warm_up = {5: 0.01, 10: 0.1}
+
+if opt.loss_allocate == 0:
+    loss_param = {1: list(range(opt.kps))}
+elif opt.loss_allocate == 1:
+    loss_param = {3: [-1, -2, -7, -8, -11, -12]}
+    loss_param[1] = [-item for item in list(range(opt.kps + 1))[1:] if -item not in loss_param[3]]
+else:
+    raise ValueError
