@@ -4,18 +4,19 @@ import matplotlib.pyplot as plt
 import torch
 import cv2
 import torch.utils.data
+import csv
 from torch.autograd import Variable
 import sys
 import torch.nn as nn
 from dataset.coco_dataset import Mscoco, MyDataset
 from tqdm import tqdm
-from utils.eval import DataLogger, accuracy, part_accuracy
+from utils.eval import DataLogger, accuracy
 from utils.img import flip, shuffleLR
 from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr
+from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title
 from utils.pytorchtools import EarlyStopping
 
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
@@ -215,6 +216,7 @@ def main():
     log_dir = os.path.join(exp_dir, "{}".format(save_folder))
     os.makedirs(log_dir, exist_ok=True)
     log_name = os.path.join(log_dir, "{}.txt".format(save_folder))
+    train_log_name = os.path.join(log_dir, "{}_train.xlsx".format(save_folder))
     # Prepare Dataset
 
     # Model Initialize
@@ -371,8 +373,6 @@ def main():
         m = torch.nn.DataParallel(m)
         criterion = torch.nn.MSELoss()
 
-
-
     # loss, acc = valid(val_loader, m, criterion, optimizer, writer)
     # print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
     #     idx=-1,
@@ -385,6 +385,10 @@ def main():
     train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls, lr_ls = [], [], [], [], [], []
     decay, decay_epoch, lr, i = 0, [], opt.LR, begin_epoch
 
+    train_log = open(train_log_name, "w", newline="")
+    csv_writer = csv.writer(train_log)
+    csv_writer.writerow(write_csv_title())
+
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
 
@@ -394,6 +398,7 @@ def main():
 
         opt.epoch = i
         epoch_ls.append(i)
+        train_log_tmp = [i, lr]
 
         log = open(log_name, "a+")
         print('############# Starting Epoch {} #############'.format(i))
@@ -404,6 +409,11 @@ def main():
         # print("epoch {}: lr {}".format(i, lr))
 
         loss, acc, pt_acc = train(train_loader, m, criterion, optimizer, writer)
+        train_log_tmp.append(loss)
+        train_log_tmp.append(acc)
+        for item in pt_acc:
+            train_log_tmp.append(item)
+
         train_acc_ls.append(acc)
         train_loss_ls.append(loss)
         train_acc = acc if acc > train_acc else train_acc
@@ -425,6 +435,11 @@ def main():
         m_dev = m.module
 
         loss, acc, pt_acc = valid(val_loader, m, criterion, optimizer, writer)
+        train_log_tmp.append(loss)
+        train_log_tmp.append(acc)
+        for item in pt_acc:
+            train_log_tmp.append(item)
+
         val_acc_ls.append(acc)
         val_loss_ls.append(loss)
         if acc > val_acc:
@@ -451,6 +466,7 @@ def main():
             acc=acc
         ))
         log.close()
+        csv_writer.writerow(train_log_tmp)
 
         if i < warm_up_epoch:
             optimizer, lr = warm_up_lr(optimizer, i)
@@ -478,6 +494,7 @@ def main():
                 opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
             torch.save(
                 optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
+
 
     os.makedirs("result", exist_ok=True)
     result = os.path.join("result", "{}_{}_result.txt".format(config.computer, opt.expFolder))
@@ -521,7 +538,7 @@ def main():
     plt.savefig(os.path.join(log_dir, "acc.jpg"))
 
     writer.close()
-
+    train_log.close()
 
 if __name__ == '__main__':
     main()

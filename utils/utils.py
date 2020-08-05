@@ -64,3 +64,18 @@ def get_sparse_value():
     if opt.epoch > opt.nEpochs * config.sparse_decay_time:
         return opt.sparse_s * opt.sparse_decay
     return opt.sparse_s
+
+
+def write_csv_title():
+    title = ["epoch", "lr", "train_loss", "train_acc"]
+    title += csv_body_part("train")
+    title += ["val_loss", "val_acc"]
+    title += csv_body_part("val")
+    return title
+
+
+def csv_body_part(phase):
+    ls = []
+    for item in config.body_part_name:
+        ls.append(phase+"_"+item)
+    return ls
