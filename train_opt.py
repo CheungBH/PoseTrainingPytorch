@@ -435,6 +435,7 @@ def main():
         m_dev = m.module
 
         loss, acc, pt_acc = valid(val_loader, m, criterion, optimizer, writer)
+        train_log_tmp.append(" ")
         train_log_tmp.append(loss)
         train_log_tmp.append(acc)
         for item in pt_acc:
@@ -445,8 +446,7 @@ def main():
         if acc > val_acc:
             best_epoch = i
             val_acc = acc
-            torch.save(
-                m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
+            torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
         val_loss = loss if loss < val_loss else val_loss
 
         bn_num = 0
