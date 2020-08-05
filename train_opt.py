@@ -520,13 +520,13 @@ def main():
 
     with open(result, "a+") as f:
         if not exist:
-            f.write("id,backbone,structure,DUC,params,flops,time,addDPG,kps,batch_size,optimizer,freeze_bn,freeze,"
-                    "sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, "
+            f.write("id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer,freeze_bn,"
+                    "freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, "
                     "folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch,final_epoch,decay_epoch_1, "
                     "decay_epoch_2, decay_epoch_3\n")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
-                .format(save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.addDPG,
-                        opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s,
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
+                .format(save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_param,
+                        opt.addDPG, opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s,
                         opt.sparse_decay, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel,
                         config.computer, os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc,
                         val_loss, best_epoch, i, decay_epoch[0], decay_epoch[1], decay_epoch[2]))
@@ -554,8 +554,6 @@ def main():
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
     plt.savefig(os.path.join(log_dir, "acc.jpg"))
-
-
 
 if __name__ == '__main__':
     main()
