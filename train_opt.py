@@ -488,7 +488,7 @@ def main():
                 torch.save(
                     m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
                 shutil.move('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
-                            'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
+                            'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
                 decay_epoch.append(i)
                 early_stopping.reset()
 
@@ -500,6 +500,9 @@ def main():
             torch.save(
                 optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
 
+
+    writer.close()
+    train_log.close()
 
     os.makedirs("result", exist_ok=True)
     result = os.path.join("result", "{}_{}_result.txt".format(config.computer, opt.expFolder))
@@ -542,8 +545,7 @@ def main():
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
     plt.savefig(os.path.join(log_dir, "acc.jpg"))
 
-    writer.close()
-    train_log.close()
+
 
 if __name__ == '__main__':
     main()
