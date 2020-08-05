@@ -46,6 +46,10 @@ def accuracy(output, label, dataset, out_offset=None):
         return heatmapAccuracy(output.cpu().data, label.cpu().data, dataset.accIdxs)
 
 
+def part_accuracy(output, label, idx, out_offset=None):
+    return heatmapAccuracy(output.cpu().data, label.cpu().data, idx)
+
+
 def heatmapAccuracy(output, label, idxs):
     preds = getPreds(output)
     gt = getPreds(label)

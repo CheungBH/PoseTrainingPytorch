@@ -9,7 +9,7 @@ import sys
 import torch.nn as nn
 from dataset.coco_dataset import Mscoco, MyDataset
 from tqdm import tqdm
-from utils.eval import DataLogger, accuracy
+from utils.eval import DataLogger, accuracy, part_accuracy
 from utils.img import flip, shuffleLR
 from src.opt import opt
 from tensorboardX import SummaryWriter
@@ -55,6 +55,7 @@ dataset = opt.expFolder
 optimize = opt.optMethod
 open_source_dataset = config.open_source_dataset
 warm_up_epoch = max(config.warm_up.keys())
+loss_params = config.loss_param
 
 # os.makedirs("log/{}".format(dataset), exist_ok=True)
 
@@ -64,6 +65,7 @@ torch.backends.cudnn.benchmark = True
 def train(train_loader, m, criterion, optimizer, writer):
     lossLogger = DataLogger()
     accLogger = DataLogger()
+    body_part_Loggers = {i: DataLogger() for i in range(opt.kps)}
     m.train()
 
     train_loader_desc = tqdm(train_loader)
@@ -81,9 +83,15 @@ def train(train_loader, m, criterion, optimizer, writer):
             inps = inps.requires_grad_()
         out = m(inps)
 
-        loss = criterion(out.mul(setMask), labels)
+        # loss = criterion(out.mul(setMask), labels)
+        loss = torch.zeros(1).cuda()
+        for cons, idx_ls in loss_params.items():
+            loss += cons * criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
         acc = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset)
+
+        for k, v in body_part_Loggers.items():
+            body_part_Loggers[k].update(acc[k+1], inps.size(0))
 
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
@@ -115,15 +123,17 @@ def train(train_loader, m, criterion, optimizer, writer):
                 acc=accLogger.avg * 100)
         )
 
+    body_path_acc = [Logger.avg for k, Logger in body_part_Loggers.items()]
     train_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg
+    return lossLogger.avg, accLogger.avg, body_path_acc
 
 
 def valid(val_loader, m, criterion, optimizer, writer):
     drawn_kp, drawn_hm = False, False
     lossLogger = DataLogger()
     accLogger = DataLogger()
+    body_part_Loggers = {i: DataLogger() for i in range(opt.kps)}
     m.eval()
 
     # print("Validating")
@@ -166,9 +176,11 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
         acc = accuracy(out.mul(setMask), labels, val_loader.dataset)
 
-
         lossLogger.update(loss.item(), inps.size(0))
         accLogger.update(acc[0], inps.size(0))
+
+        for k, v in body_part_Loggers.items():
+            body_part_Loggers[k].update(acc[k+1], inps.size(0))
 
         opt.valIters += 1
 
@@ -184,9 +196,10 @@ def valid(val_loader, m, criterion, optimizer, writer):
                 acc=accLogger.avg * 100)
         )
 
+    body_path_acc = [Logger.avg for k, Logger in body_part_Loggers.items()]
     val_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg
+    return lossLogger.avg, accLogger.avg, body_path_acc
 
 
 def main():
@@ -252,7 +265,10 @@ def main():
     else:
         rnd_inps = torch.rand(3, 3, 224, 224)
         # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True)
-    writer.add_graph(m, (rnd_inps,))
+    try:
+        writer.add_graph(m, (rnd_inps,))
+    except:
+        pass
 
     shuffle_dataset = False
     for k, v in config.train_info.items():
@@ -387,7 +403,7 @@ def main():
         # writer.add_scalar("lr", lr, i)
         # print("epoch {}: lr {}".format(i, lr))
 
-        loss, acc = train(train_loader, m, criterion, optimizer, writer)
+        loss, acc, pt_acc = train(train_loader, m, criterion, optimizer, writer)
         train_acc_ls.append(acc)
         train_loss_ls.append(loss)
         train_acc = acc if acc > train_acc else train_acc
@@ -408,7 +424,7 @@ def main():
         opt.loss = loss
         m_dev = m.module
 
-        loss, acc = valid(val_loader, m, criterion, optimizer, writer)
+        loss, acc, pt_acc = valid(val_loader, m, criterion, optimizer, writer)
         val_acc_ls.append(acc)
         val_loss_ls.append(loss)
         if acc > val_acc:
@@ -417,7 +433,6 @@ def main():
             torch.save(
                 m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
         val_loss = loss if loss < val_loss else val_loss
-
 
         bn_num = 0
         for mod in m.modules():
