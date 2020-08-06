@@ -1,1 +1,1 @@
-models_name = "alphapose_aic"
+models_name = "aic_underwater"

@@ -1,9 +1,9 @@
-from .config import models_name
+from train_result.config import models_name
 
-with open("{}.txt".format(models_name), "r") as f:
+with open("{0}/{0}.txt".format(models_name), "r") as f:
     lines = [line for line in f.readlines()]
 
-train_begin, train_end = 17, 17
+train_begin, train_end = 1, 12
 CUDA = -1
 target_cmds = lines[train_begin-1: train_end]
 
