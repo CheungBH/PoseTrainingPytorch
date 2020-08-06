@@ -407,6 +407,11 @@ def main():
             print("Training finished at epoch {}".format(i))
             break
 
+        for epo, ac in config.bad_epochs.items():
+            if i == epo:
+                if val_acc < ac:
+                    break
+
         opt.epoch = i
         epoch_ls.append(i)
         train_log_tmp = [i, lr]
@@ -554,6 +559,7 @@ def main():
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
     plt.savefig(os.path.join(log_dir, "acc.jpg"))
+
 
 if __name__ == '__main__':
     main()

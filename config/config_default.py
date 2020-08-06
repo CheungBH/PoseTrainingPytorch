@@ -40,3 +40,6 @@ elif opt.loss_allocate == 1:
     loss_param[1] = [-item for item in list(range(opt.kps + 1))[1:] if -item not in loss_param[3]]
 else:
     raise ValueError
+
+bad_epochs = {30: 10}
+
