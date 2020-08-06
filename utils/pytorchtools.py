@@ -41,8 +41,9 @@ class EarlyStopping:
             # self.save_checkpoint(val_loss, model)
             self.counter = 0
 
-    def reset(self):
+    def reset(self, new_patience):
         self.counter = 0
+        self.patience = new_patience
         self.early_stop = False
 
     def save_checkpoint(self, val_loss, model):

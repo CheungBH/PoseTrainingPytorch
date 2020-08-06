@@ -5,10 +5,9 @@ import torch
 import cv2
 import torch.utils.data
 import csv
-from torch.autograd import Variable
 import sys
 import torch.nn as nn
-from dataset.coco_dataset import Mscoco, MyDataset
+from dataset.coco_dataset import MyDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, accuracy
 from utils.img import flip, shuffleLR
@@ -19,7 +18,6 @@ import config.config as config
 from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title
 from utils.pytorchtools import EarlyStopping
 import shutil
-
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from test import draw_kps, draw_hms
 
@@ -58,6 +56,7 @@ optimize = opt.optMethod
 open_source_dataset = config.open_source_dataset
 warm_up_epoch = max(config.warm_up.keys())
 loss_params = config.loss_param
+patience_decay = config.patience_decay
 
 # os.makedirs("log/{}".format(dataset), exist_ok=True)
 
@@ -391,7 +390,7 @@ def main():
     #     acc=acc
     # ))
 
-    early_stopping = EarlyStopping(patience=opt.patient, verbose=True)
+    early_stopping = EarlyStopping(patience=opt.patience, verbose=True)
     train_acc, val_acc, train_loss, val_loss, best_epoch, = 0, 0, float("inf"), float("inf"), 0,
     train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls, lr_ls = [], [], [], [], [], []
     decay, decay_epoch, lr, i = 0, [], opt.LR, begin_epoch
@@ -508,7 +507,7 @@ def main():
                 shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
                             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
                 decay_epoch.append(i)
-                early_stopping.reset()
+                early_stopping.reset(int(opt.patience * patience_decay[decay]))
 
         if i % opt.save_interval == 0:
             torch.save(

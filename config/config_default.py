@@ -42,4 +42,5 @@ else:
     raise ValueError
 
 bad_epochs = {30: 10}
+patience_decay = {1: 0.75, 2: 0.5}
 
