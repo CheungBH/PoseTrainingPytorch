@@ -1,1 +1,1 @@
-models_name = "aic_underwater"
+models_name = "aic_ceiling"
