@@ -497,7 +497,7 @@ def main():
                 decay += 1
                 torch.save(
                     m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
-                shutil.move('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
+                shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
                             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
                 decay_epoch.append(i)
                 early_stopping.reset()
