@@ -109,9 +109,9 @@ def train(train_loader, m, criterion, optimizer, writer):
         else:
             loss.backward()
 
-        for mod in m.modules():
-            if isinstance(mod, nn.BatchNorm2d):
-                mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))
+        # for mod in m.modules():
+        #     if isinstance(mod, nn.BatchNorm2d):
+        #         mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))
 
         optimizer.step()
         opt.trainIters += 1
