@@ -109,9 +109,9 @@ def train(train_loader, m, criterion, optimizer, writer):
         else:
             loss.backward()
 
-        for mod in m.modules():
-            if isinstance(mod, nn.BatchNorm2d):
-                mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))
+        # for mod in m.modules():
+        #     if isinstance(mod, nn.BatchNorm2d):
+        #         mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))
 
         optimizer.step()
         opt.trainIters += 1
@@ -214,13 +214,13 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
 
 def main():
-    print(opt)
     cmd_ls = sys.argv[1:]
     cmd = generate_cmd(cmd_ls)
     if "--freeze_bn False" in cmd:
         opt.freeze_bn = False
     if "--addDPG False" in cmd:
         opt.addDPG = False
+    print(opt)
 
     exp_dir = os.path.join("exp/{}/{}".format(dataset, save_folder))
     log_dir = os.path.join(exp_dir, "{}".format(save_folder))
