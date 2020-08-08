@@ -15,7 +15,8 @@ from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title
+from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title, write_decay_title, \
+    write_decay_info, draw_graph
 from utils.pytorchtools import EarlyStopping
 import shutil
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
@@ -325,16 +326,18 @@ def main():
     os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
     if pre_train_model:
         if "duc_se.pth" not in pre_train_model:
-            try:
-                info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
-                info = torch.load(info_path)
-                opt.trainIters = info.trainIters
-                opt.valIters = info.valIters
-                begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
-            except:
-                # begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
-                with open(log_name, "a+") as f:
-                    f.write(cmd)
+            if "pretrain" not in pre_train_model:
+                try:
+                    info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
+                    info = torch.load(info_path)
+                    opt.trainIters = info.trainIters
+                    opt.valIters = info.valIters
+                    begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
+                except:
+                    # begin_epoch = int(pre_train_model.split("_")[-1][:-4]) + 1
+                    with open(log_name, "a+") as f:
+                        f.write(cmd)
+
             print('Loading Model from {}'.format(pre_train_model))
             m.load_state_dict(torch.load(pre_train_model))
         else:
@@ -402,17 +405,6 @@ def main():
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
-
-        if decay == opt.lr_decay_time:
-            print("Training finished at epoch {}".format(i))
-            stop = True
-
-        for epo, ac in config.bad_epochs.items():
-            if i == epo and val_acc < ac:
-                stop = True
-
-        if stop:
-            break
 
         opt.epoch = i
         epoch_ls.append(i)
@@ -492,6 +484,14 @@ def main():
         print("epoch {}: lr {}".format(i, lr))
         lr_ls.append(lr)
 
+        if i % opt.save_interval == 0 and i != 0:
+            torch.save(
+                m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(dataset, save_folder, i))
+            torch.save(
+                opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
+            torch.save(
+                optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
+
         if i < warm_up_epoch:
             optimizer, lr = warm_up_lr(optimizer, i)
         elif i == warm_up_epoch:
@@ -506,20 +506,24 @@ def main():
                     m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
                 shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
                             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
-                decay_epoch.append(i)
-                early_stopping.reset(int(opt.patience * patience_decay[decay]))
 
-        if i % opt.save_interval == 0:
-            torch.save(
-                m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(dataset, save_folder, i))
-            torch.save(
-                opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
-            torch.save(
-                optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
+                if decay > opt.lr_decay_time:
+                    stop = True
+                else:
+                    decay_epoch.append(i)
+                    early_stopping.reset(int(opt.patience * patience_decay[decay]))
 
+        for epo, ac in config.bad_epochs.items():
+            if i == epo and val_acc < ac:
+                stop = True
+        if stop:
+            print("Training finished at epoch {}".format(i))
+            break
 
     writer.close()
     train_log.close()
+
+    draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, log_dir)
 
     os.makedirs("result", exist_ok=True)
     result = os.path.join("result", "{}_{}_result.txt".format(config.computer, opt.expFolder))
@@ -527,40 +531,42 @@ def main():
 
     with open(result, "a+") as f:
         if not exist:
-            f.write("id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer,freeze_bn,"
-                    "freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel,model_location, "
-                    "folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch,final_epoch,decay_epoch_1, "
-                    "decay_epoch_2, decay_epoch_3\n")
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{}\n"
-                .format(save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate,
-                        opt.addDPG, opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s,
-                        opt.sparse_decay, opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel,
-                        config.computer, os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc,
-                        val_loss, best_epoch, i, decay_epoch[0], decay_epoch[1], decay_epoch[2]))
+            title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
+                        "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
+                        "model_location, folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch,final_epoch"
+            title_str = write_decay_title(len(decay_epoch), title_str)
+            f.write(title_str)
+        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n".format(
+            save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+            opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+            opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+            os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss, best_epoch, i)
+        info_str = write_decay_info(decay_epoch, info_str)
+        f.write(info_str)
 
     # os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
-
-    ln1, = plt.plot(epoch_ls[10:], train_loss_ls[10:], color='red', linewidth=3.0, linestyle='--')
-    ln2, = plt.plot(epoch_ls[10:], val_loss_ls[10:], color='blue', linewidth=3.0, linestyle='-.')
-    ln3, = plt.plot(epoch_ls[10:], lr_ls[10:], color='green', linewidth=3.0, linestyle='-')
-    plt.title("Loss")
-    plt.legend(handles=[ln1, ln2, ln3], labels=['train_loss', 'val_loss', "lr"])
-    ax = plt.gca()
-    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
-    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(log_dir, "loss.jpg"))
-    plt.cla()
-
-    ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
-    ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
-    ln3, = plt.plot(epoch_ls, lr_ls, color='green', linewidth=3.0, linestyle='-')
-
-    plt.title("Acc")
-    plt.legend(handles=[ln1, ln2, ln3], labels=['train_acc', 'val_acc', "lr"])
-    ax = plt.gca()
-    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
-    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(log_dir, "acc.jpg"))
+    #
+    # ln1, = plt.plot(epoch_ls[10:], train_loss_ls[10:], color='red', linewidth=3.0, linestyle='--')
+    # ln2, = plt.plot(epoch_ls[10:], val_loss_ls[10:], color='blue', linewidth=3.0, linestyle='-.')
+    # ln3, = plt.plot(epoch_ls[10:], lr_ls[10:], color='green', linewidth=3.0, linestyle='-')
+    # plt.title("Loss")
+    # plt.legend(handles=[ln1, ln2, ln3], labels=['train_loss', 'val_loss', "lr"])
+    # ax = plt.gca()
+    # ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    # ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    # plt.savefig(os.path.join(log_dir, "loss.jpg"))
+    # plt.cla()
+    #
+    # ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
+    # ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
+    # ln3, = plt.plot(epoch_ls, lr_ls, color='green', linewidth=3.0, linestyle='-')
+    #
+    # plt.title("Acc")
+    # plt.legend(handles=[ln1, ln2, ln3], labels=['train_acc', 'val_acc', "lr"])
+    # ax = plt.gca()
+    # ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    # ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    # plt.savefig(os.path.join(log_dir, "acc.jpg"))
 
 
 if __name__ == '__main__':

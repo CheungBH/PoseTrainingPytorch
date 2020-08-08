@@ -1,6 +1,8 @@
 import torch
 from src.opt import opt
 from config import config
+import os
+import matplotlib.pyplot as plt
 
 
 def gather_bn_weights(module_list, prune_idx):
@@ -79,3 +81,42 @@ def csv_body_part(phase):
         ls.append(phase+"_"+item)
     ls.append(" ")
     return ls
+
+
+def write_decay_title(num, char):
+    char = char[:-1]
+    for n in range(num):
+        char += ",decay"
+        char += str(n+1)
+    char += "\n"
+    return char
+
+
+def write_decay_info(decays, char):
+    char = char[:-1]
+    for d in decays:
+        char += ","
+        char += str(d)
+    char += "\n"
+    return char
+
+
+def draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, log_dir):
+    ln1, = plt.plot(epoch_ls, train_loss_ls, color='red', linewidth=3.0, linestyle='--')
+    ln2, = plt.plot(epoch_ls, val_loss_ls, color='blue', linewidth=3.0, linestyle='-.')
+    plt.title("Loss")
+    plt.legend(handles=[ln1, ln2], labels=['train_loss', 'val_loss'])
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    plt.savefig(os.path.join(log_dir, "loss.jpg"))
+    plt.cla()
+
+    ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
+    ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
+    plt.title("Acc")
+    plt.legend(handles=[ln1, ln2], labels=['train_acc', 'val_acc'])
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    plt.savefig(os.path.join(log_dir, "acc.jpg"))
