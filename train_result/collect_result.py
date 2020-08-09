@@ -1,8 +1,8 @@
 import os
 import shutil
-# from train_result.config import models_name
+from train_result.config import task_folder, batch_folder
 
-folder_name = "aic_origin"
+folder_name = "{}-{}".format(task_folder, batch_folder)
 src_folder = os.path.join("../exp", folder_name)
 dest_folder = os.path.join("../result", folder_name)
 os.makedirs(dest_folder, exist_ok=True)

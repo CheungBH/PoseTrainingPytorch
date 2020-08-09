@@ -1,9 +1,10 @@
 import csv    #加载csv包便于读取csv文件
-from train_result.config import models_name
+import os
+from train_result.config import task_folder, batch_folder
 
 include_cuda = True
 
-csv_name = '{0}/{0}.csv'.format(models_name)
+csv_name = "{}.csv".format(os.path.join(task_folder, batch_folder, batch_folder))
 out_name = csv_name[:-4] + ".txt"
 csv_file = open(csv_name)    #打开csv文件
 csv_reader_lines = csv.reader(csv_file)   #逐行读取csv文件
@@ -16,6 +17,16 @@ if include_cuda:
 else:
     begin = "'python train_opt.py "
 
+
+def change_name(name):
+    if name == "TRUE":
+        return 'True'
+    elif name == "FALSE":
+        return "False"
+    else:
+        return name
+
+
 cmds = []
 for idx, mdl in enumerate(data[1:]):
     tmp = ""
@@ -25,7 +36,10 @@ for idx, mdl in enumerate(data[1:]):
             tmp += "--"
             tmp += o
             tmp += " "
-            tmp += m
+            if o == "expFolder":
+                tmp += "{}-{}".format(task_folder, batch_folder)
+            else:
+                tmp += change_name(m)
             tmp += " "
             valid = True
     tmp += "--expID {}".format(idx+1)

@@ -1,4 +1,4 @@
-from train_result.config import models_name
+from train_result.config import task_folder, batch_folder
 import openpyxl
 
 model_txt = "{0}/{0}.txt".format(models_name)
