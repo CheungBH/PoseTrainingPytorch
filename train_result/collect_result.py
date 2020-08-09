@@ -1,6 +1,7 @@
 import os
 import shutil
 from train_result.config import task_folder, batch_folder
+from src.config import computer
 
 folder_name = "{}-{}".format(task_folder, batch_folder)
 src_folder = os.path.join("../exp", folder_name)
@@ -14,5 +15,8 @@ for folder in os.listdir(src_folder):
             shutil.copytree(result_folder, os.path.join(dest_folder, folder))
         except FileExistsError:
             pass
+
+shutil.copy(os.path.join("../result", folder_name+"_result_{}.csv".format(computer)),
+            os.path.join("../result", folder_name, folder_name+"_result_{}.csv".format(computer)))
 
 

@@ -526,7 +526,7 @@ def main():
     draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, log_dir)
 
     os.makedirs("result", exist_ok=True)
-    result = os.path.join("result", "{}_{}_result.csv".format(config.computer, opt.expFolder))
+    result = os.path.join("result", "{}_result_{}.csv".format(opt.expFolder, config.computer))
     exist = os.path.exists(result)
 
     with open(result, "a+") as f:
