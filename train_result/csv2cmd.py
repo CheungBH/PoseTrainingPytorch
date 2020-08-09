@@ -36,12 +36,11 @@ for idx, mdl in enumerate(data[1:]):
             tmp += "--"
             tmp += o
             tmp += " "
-            if o == "expFolder":
-                tmp += "{}-{}".format(task_folder, batch_folder)
-            else:
-                tmp += change_name(m)
+            tmp += change_name(m)
             tmp += " "
             valid = True
+
+    tmp += "--expFolder {}-{}".format(task_folder, batch_folder)
     tmp += "--expID {}".format(idx+1)
     cmd = begin + tmp + "'\n"
     if valid:
