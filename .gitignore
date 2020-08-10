@@ -13,13 +13,8 @@ torch/csrc/generic/TensorMethods.cpp
 torch/lib/*.so*
 torch/lib/*.dylib*
 torch/lib/*.h
-torch/lib/build
-torch/lib/tmp_install
-torch/lib/include
-torch/lib/torch_shm_manager
-torch/csrc/cudnn/cuDNN.cpp
-torch/csrc/nn/THNN.cwrap
-torch/csrc/nn/THNN.cpp
+train_result/alphapose/alphapose_aic/
+train_result/underwater/aic_underwater/
 torch/csrc/nn/THCUNN.cwrap
 torch/csrc/nn/THCUNN.cpp
 torch/csrc/nn/THNN_generic.cwrap
@@ -45,6 +40,7 @@ yolo
 SPPE
 log
 Video
+__pycache__
 exp
 data
 config/config.py

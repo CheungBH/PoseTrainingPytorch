@@ -1,7 +1,7 @@
 import os
 import shutil
 from train_result.config import task_folder, batch_folder
-from src.config import computer
+from config.config import computer
 
 folder_name = "{}-{}".format(task_folder, batch_folder)
 src_folder = os.path.join("../exp", folder_name)
