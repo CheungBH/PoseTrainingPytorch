@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import torch
+import time
 import cv2
 import torch.utils.data
 import copy
@@ -404,6 +405,7 @@ def main():
     train_log = open(train_log_name, "w", newline="")
     csv_writer = csv.writer(train_log)
     csv_writer.writerow(write_csv_title())
+    begin_time = time.time()
 
     # Start Training
     for i in range(opt.nEpochs)[begin_epoch:]:
@@ -524,6 +526,7 @@ def main():
             print("Training finished at epoch {}".format(i))
             break
 
+    training_time = time.time() - begin_time
     writer.close()
     train_log.close()
 
@@ -537,15 +540,16 @@ def main():
         if not exist:
             title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
                         "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
-                        "model_location, ,folder_name,train_acc,train_loss,val_acc,val_loss,best_epoch,final_epoch"
+                        "model_location, ,folder_name,train_acc,train_loss,val_acc,val_loss,training_time, " \
+                        "best_epoch,final_epoch"
             title_str = write_decay_title(len(decay_epoch), title_str)
             f.write(title_str)
-        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{}\n".\
+        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{}\n".\
             format(save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate,
                    opt.addDPG, opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s,
                    opt.sparse_decay,opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel,
                    config.computer, os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss,
-                   best_epoch, i)
+                   training_time, best_epoch, i)
         info_str = write_decay_info(decay_epoch, info_str)
         f.write(info_str)
 
