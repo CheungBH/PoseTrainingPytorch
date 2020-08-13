@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 import cv2
 import torch.utils.data
+import copy
 import csv
 import sys
 import torch.nn as nn
@@ -398,6 +399,7 @@ def main():
     train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls, lr_ls = [], [], [], [], [], []
     decay, decay_epoch, lr, i = 0, [], opt.LR, begin_epoch
     stop = False
+    m_best = m
 
     train_log = open(train_log_name, "w", newline="")
     csv_writer = csv.writer(train_log)
@@ -459,6 +461,7 @@ def main():
             best_epoch = i
             val_acc = acc
             torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
+            m_best = copy.deepcopy(m)
         val_loss = loss if loss < val_loss else val_loss
 
         bn_num = 0
@@ -489,8 +492,8 @@ def main():
                 m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(dataset, save_folder, i))
             torch.save(
                 opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
-            torch.save(
-                optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
+            # torch.save(
+            #     optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
 
         if i < warm_up_epoch:
             optimizer, lr = warm_up_lr(optimizer, i)
@@ -502,16 +505,17 @@ def main():
             if early_stopping.early_stop:
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
-                torch.save(
-                    m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
-                shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
-                            'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
+                # shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
+                #             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
 
                 if decay > opt.lr_decay_time:
                     stop = True
                 else:
                     decay_epoch.append(i)
                     early_stopping.reset(int(opt.patience * patience_decay[decay]))
+                    torch.save(
+                        m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
+                    m = m_best
 
         for epo, ac in config.bad_epochs.items():
             if i == epo and val_acc < ac:
