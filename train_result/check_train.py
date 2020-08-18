@@ -1,7 +1,10 @@
 from train_result.config import task_folder, batch_folder, computer
 import os
 
-result_path = os.path.join("../result", "{}-{}_result_{}.csv".format(task_folder, batch_folder, computer))
+result_path = os.path.join("../result", "{0}-{1}/{0}-{1}_result.csv".format(task_folder, batch_folder))
+if not os.path.exists(result_path):
+    result_path = os.path.join("../result", "{}-{}_result_{}.csv".format(task_folder, batch_folder, computer))
+
 trained_models = []
 with open(result_path, "r") as f:
     for line in f.readlines():
