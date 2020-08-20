@@ -12,4 +12,3 @@ for folder in os.listdir(src_folder):
                 os.remove(file_path)
             else:
                 continue
-
