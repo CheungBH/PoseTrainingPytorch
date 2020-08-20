@@ -489,11 +489,12 @@ def main():
         print("epoch {}: lr {}".format(i, lr))
         lr_ls.append(lr)
 
+        torch.save(
+            opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
         if i % opt.save_interval == 0 and i != 0:
             torch.save(
                 m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(dataset, save_folder, i))
-            torch.save(
-                opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
+
             # torch.save(
             #     optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
 
