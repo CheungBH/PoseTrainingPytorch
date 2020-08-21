@@ -91,7 +91,7 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
 
     # Doing Random Crop
     if opt.addDPG:
-        if jointNum > 13 and train:
+        if jointNum > nJoints * 0.8 and train:
             switch = random.uniform(0, 1)
             if switch > 0.96:
                 bottomRight[0] = (upLeft[0] + bottomRight[0]) / 2
