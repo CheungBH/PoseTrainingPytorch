@@ -20,7 +20,6 @@ import config.config as config
 from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title, write_decay_title, \
     write_decay_info, draw_graph
 from utils.pytorchtools import EarlyStopping
-import shutil
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from test import draw_kps, draw_hms
 
@@ -41,7 +40,7 @@ else:
     raise ValueError("Your model name is wrong")
 
 model_cfg = model_ls[opt.struct]
-print(model_cfg)
+# print(model_cfg)
 
 
 try:
@@ -53,15 +52,14 @@ except ImportError:
 
 device = config.device
 opt.device = device
-save_folder = opt.expID
-dataset = opt.expFolder
+save_ID = opt.expID
+folder = opt.expFolder
 optimize = opt.optMethod
 open_source_dataset = config.open_source_dataset
 warm_up_epoch = max(config.warm_up.keys())
 loss_params = config.loss_param
 patience_decay = config.patience_decay
 
-# os.makedirs("log/{}".format(dataset), exist_ok=True)
 
 torch.backends.cudnn.benchmark = True
 
@@ -223,13 +221,27 @@ def main():
         opt.freeze_bn = False
     if "--addDPG False" in cmd:
         opt.addDPG = False
-    print(opt)
 
-    exp_dir = os.path.join("exp/{}/{}".format(dataset, save_folder))
-    log_dir = os.path.join(exp_dir, "{}".format(save_folder))
+    print("----------------------------------------------------------------------------------------------------")
+    print("This is the model with id {}".format(save_ID))
+    print(opt)
+    print("Training backbone is: {}".format(opt.backbone))
+    dataset_str = ""
+    for k, v in config.train_info.items():
+        dataset_str += k
+        dataset_str += ","
+    print("Training data is: {}".format(dataset_str[:-1]))
+    print("Warm up end at {}".format(warm_up_epoch))
+    for k, v in config.bad_epochs.items():
+        if v > 1:
+            raise ValueError("Wrong stopping accuracy!")
+    print("----------------------------------------------------------------------------------------------------")
+
+    exp_dir = os.path.join("exp/{}/{}".format(folder, save_ID))
+    log_dir = os.path.join(exp_dir, "{}".format(save_ID))
     os.makedirs(log_dir, exist_ok=True)
-    log_name = os.path.join(log_dir, "{}.txt".format(save_folder))
-    train_log_name = os.path.join(log_dir, "{}_train.xlsx".format(save_folder))
+    log_name = os.path.join(log_dir, "{}.txt".format(save_ID))
+    train_log_name = os.path.join(log_dir, "{}_train.xlsx".format(save_ID))
     # Prepare Dataset
 
     # Model Initialize
@@ -247,6 +259,7 @@ def main():
     print("Parameters of current model is {}".format(params))
     inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
     print("Inference time is {}".format(inf_time))
+    print("----------------------------------------------------------------------------------------------------")
 
     if opt.freeze > 0 or opt.freeze_bn:
         if opt.backbone == "mobilenet":
@@ -271,8 +284,7 @@ def main():
             else:
                 p.requires_grad = True
 
-    writer = SummaryWriter(
-        'tensorboard/{}/{}'.format(dataset, save_folder), comment=cmd)
+    writer = SummaryWriter('exp/{}/{}'.format(folder, save_ID), comment=cmd)
 
     if device != "cpu":
         # rnd_inps = Variable(torch.rand(3, 3, 224, 224), requires_grad=True).cuda()
@@ -296,10 +308,6 @@ def main():
         val_dataset.img_val, val_dataset.bbox_val, val_dataset.part_val = \
             train_dataset.img_val, train_dataset.bbox_val, train_dataset.part_val
 
-    # for k, v in config.train_info.items():
-    #     pass
-    # train_dataset = Mscoco(v, train=True)
-    # val_dataset = Mscoco(v, train=False)
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=opt.trainBatch, shuffle=True, num_workers=opt.trainNW,
         pin_memory=True)
@@ -325,12 +333,12 @@ def main():
 
     # assert train_loaders != {}, "Your training data has not been specific! "
 
-    os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
+    os.makedirs("exp/{}/{}".format(folder, save_ID), exist_ok=True)
     if pre_train_model:
         if "duc_se.pth" not in pre_train_model:
             if "pretrain" not in pre_train_model:
                 try:
-                    info_path = os.path.join("exp", dataset, save_folder, "option.pkl")
+                    info_path = os.path.join("exp", folder, save_ID, "option.pkl")
                     info = torch.load(info_path)
                     opt.trainIters = info.trainIters
                     opt.valIters = info.valIters
@@ -343,9 +351,11 @@ def main():
             print('Loading Model from {}'.format(pre_train_model))
             m.load_state_dict(torch.load(pre_train_model))
         else:
+            with open(log_name, "a+") as f:
+                f.write(cmd)
             print('Loading Model from {}'.format(pre_train_model))
             m.load_state_dict(torch.load(pre_train_model))
-            os.makedirs("exp/{}/{}".format(dataset, save_folder), exist_ok=True)
+            os.makedirs("exp/{}/{}".format(folder, save_ID), exist_ok=True)
     else:
         print('Create new model')
         with open(log_name, "a+") as f:
@@ -358,14 +368,13 @@ def main():
         pyfile.write("import os\n")
         pyfile.write("os.system('conda init bash')\n")
         pyfile.write("os.system('conda activate py36')\n")
-        pyfile.write("os.system('tensorboard --logdir=../../../../tensorboard/{}/{}')".format(dataset, save_folder))
+        pyfile.write("os.system('tensorboard --logdir=../../../../exp/{}/{}')".format(folder, save_ID))
 
     params_to_update, layers = [], 0
     for name, param in m.named_parameters():
         layers += 1
         if param.requires_grad:
             params_to_update.append(param)
-            # print("\t", name)
     print("Training {} layers out of {}".format(len(params_to_update), layers))
 
     if optimize == 'rmsprop':
@@ -407,176 +416,184 @@ def main():
     csv_writer.writerow(write_csv_title())
     begin_time = time.time()
 
-    # Start Training
-    for i in range(opt.nEpochs)[begin_epoch:]:
-
-        opt.epoch = i
-        epoch_ls.append(i)
-        train_log_tmp = [i, lr]
-
-        log = open(log_name, "a+")
-        print('############# Starting Epoch {} #############'.format(i))
-        log.write('############# Starting Epoch {} #############\n'.format(i))
-
-        # optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
-        # writer.add_scalar("lr", lr, i)
-        # print("epoch {}: lr {}".format(i, lr))
-
-        loss, acc, pt_acc, pt_loss = train(train_loader, m, criterion, optimizer, writer)
-        train_log_tmp.append(" ")
-        train_log_tmp.append(loss)
-        train_log_tmp.append(acc.tolist())
-        for item in pt_acc:
-            train_log_tmp.append(item.tolist())
-
-        train_acc_ls.append(acc)
-        train_loss_ls.append(loss)
-        train_acc = acc if acc > train_acc else train_acc
-        train_loss = loss if loss < train_loss else train_loss
-
-        print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        log.write('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        #
-        opt.acc = acc
-        opt.loss = loss
-        m_dev = m.module
-
-        loss, acc, pt_acc, pt_loss = valid(val_loader, m, criterion, optimizer, writer)
-        train_log_tmp.append(" ")
-        train_log_tmp.insert(5, loss)
-        train_log_tmp.insert(6, acc.tolist())
-        train_log_tmp.insert(7, " ")
-        for item in pt_acc:
-            train_log_tmp.append(item.tolist())
-
-        val_acc_ls.append(acc)
-        val_loss_ls.append(loss)
-        if acc > val_acc:
-            best_epoch = i
-            val_acc = acc
-            torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder))
-            m_best = copy.deepcopy(m)
-        val_loss = loss if loss < val_loss else val_loss
-
-        bn_num = 0
-        for mod in m.modules():
-            if isinstance(mod, nn.BatchNorm2d):
-                bn_num += 1
-                writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
-
-        print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
-            idx=i,
-            loss=loss,
-            acc=acc
-        ))
-        log.close()
-        csv_writer.writerow(train_log_tmp)
-
-        writer.add_scalar("lr", lr, i)
-        print("epoch {}: lr {}".format(i, lr))
-        lr_ls.append(lr)
-
-        torch.save(
-            opt, 'exp/{}/{}/option.pkl'.format(dataset, save_folder, i))
-        if i % opt.save_interval == 0 and i != 0:
-            torch.save(
-                m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(dataset, save_folder, i))
-
-            # torch.save(
-            #     optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
-
-        if i < warm_up_epoch:
-            optimizer, lr = warm_up_lr(optimizer, i)
-        elif i == warm_up_epoch:
-            lr = opt.LR
-            early_stopping(acc)
-        else:
-            early_stopping(acc)
-            if early_stopping.early_stop:
-                optimizer, lr = lr_decay(optimizer, lr)
-                decay += 1
-                # shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
-                #             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
-
-                if decay > opt.lr_decay_time:
-                    stop = True
-                else:
-                    decay_epoch.append(i)
-                    early_stopping.reset(int(opt.patience * patience_decay[decay]))
-                    torch.save(
-                        m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(dataset, save_folder, decay))
-                    m = m_best
-
-        for epo, ac in config.bad_epochs.items():
-            if i == epo and val_acc < ac:
-                stop = True
-        if stop:
-            print("Training finished at epoch {}".format(i))
-            break
-
-    training_time = time.time() - begin_time
-    writer.close()
-    train_log.close()
-
     draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, log_dir)
 
     os.makedirs("result", exist_ok=True)
     result = os.path.join("result", "{}_result_{}.csv".format(opt.expFolder, config.computer))
     exist = os.path.exists(result)
 
-    with open(result, "a+") as f:
-        if not exist:
-            title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
-                        "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
-                        "model_location, ,folder_name,train_acc,train_loss,val_acc,val_loss,training_time, " \
-                        "best_epoch,final_epoch"
-            title_str = write_decay_title(len(decay_epoch), title_str)
-            f.write(title_str)
-        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{}\n".\
-            format(save_folder, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate,
-                   opt.addDPG, opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s,
-                   opt.sparse_decay,opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel,
-                   config.computer, os.path.join(opt.expFolder, save_folder), train_acc, train_loss, val_acc, val_loss,
-                   training_time, best_epoch, i)
-        info_str = write_decay_info(decay_epoch, info_str)
+    # Start Training
+    try:
+        for i in range(opt.nEpochs)[begin_epoch:]:
+
+            opt.epoch = i
+            epoch_ls.append(i)
+            train_log_tmp = [i, lr]
+
+            log = open(log_name, "a+")
+            print('############# Starting Epoch {} #############'.format(i))
+            log.write('############# Starting Epoch {} #############\n'.format(i))
+
+            # optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
+            # writer.add_scalar("lr", lr, i)
+            # print("epoch {}: lr {}".format(i, lr))
+
+            loss, acc, pt_acc, pt_loss = train(train_loader, m, criterion, optimizer, writer)
+            train_log_tmp.append(" ")
+            train_log_tmp.append(loss)
+            train_log_tmp.append(acc.tolist())
+            for item in pt_acc:
+                train_log_tmp.append(item.tolist())
+
+            train_acc_ls.append(acc)
+            train_loss_ls.append(loss)
+            train_acc = acc if acc > train_acc else train_acc
+            train_loss = loss if loss < train_loss else train_loss
+
+            print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+                idx=i,
+                loss=loss,
+                acc=acc
+            ))
+            log.write('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
+                idx=i,
+                loss=loss,
+                acc=acc
+            ))
+            #
+            opt.acc = acc
+            opt.loss = loss
+            m_dev = m.module
+
+            loss, acc, pt_acc, pt_loss = valid(val_loader, m, criterion, optimizer, writer)
+            train_log_tmp.append(" ")
+            train_log_tmp.insert(5, loss)
+            train_log_tmp.insert(6, acc.tolist())
+            train_log_tmp.insert(7, " ")
+            for item in pt_acc:
+                train_log_tmp.append(item.tolist())
+
+            val_acc_ls.append(acc)
+            val_loss_ls.append(loss)
+            if acc > val_acc:
+                best_epoch = i
+                val_acc = acc
+                torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(folder, save_ID))
+                m_best = copy.deepcopy(m)
+            val_loss = loss if loss < val_loss else val_loss
+
+            bn_num = 0
+            for mod in m.modules():
+                if isinstance(mod, nn.BatchNorm2d):
+                    bn_num += 1
+                    writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
+
+            print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+                idx=i,
+                loss=loss,
+                acc=acc
+            ))
+            log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
+                idx=i,
+                loss=loss,
+                acc=acc
+            ))
+            log.close()
+            csv_writer.writerow(train_log_tmp)
+
+            writer.add_scalar("lr", lr, i)
+            print("epoch {}: lr {}".format(i, lr))
+            lr_ls.append(lr)
+
+            torch.save(
+                opt, 'exp/{}/{}/option.pkl'.format(folder, save_ID, i))
+            if i % opt.save_interval == 0 and i != 0:
+                torch.save(
+                    m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(folder, save_ID, i))
+                # torch.save(
+                #     optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
+
+            if i < warm_up_epoch:
+                optimizer, lr = warm_up_lr(optimizer, i)
+            elif i == warm_up_epoch:
+                lr = opt.LR
+                early_stopping(acc)
+            else:
+                early_stopping(acc)
+                if early_stopping.early_stop:
+                    optimizer, lr = lr_decay(optimizer, lr)
+                    decay += 1
+                    # shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
+                    #             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
+
+                    if decay > opt.lr_decay_time:
+                        stop = True
+                    else:
+                        decay_epoch.append(i)
+                        early_stopping.reset(int(opt.patience * patience_decay[decay]))
+                        torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(folder, save_ID, decay))
+                        m = m_best
+
+            for epo, ac in config.bad_epochs.items():
+                if i == epo and val_acc < ac:
+                    stop = True
+            if stop:
+                print("Training finished at epoch {}".format(i))
+                break
+
+        training_time = time.time() - begin_time
+        writer.close()
+        train_log.close()
+
+        with open(result, "a+") as f:
+            if not exist:
+                title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
+                            "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
+                            "model_location, ,folder_name,train_acc,train_loss,val_acc,val_loss,training_time, " \
+                            "best_epoch,final_epoch"
+                title_str = write_decay_title(len(decay_epoch), title_str)
+                f.write(title_str)
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{}\n".\
+                format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                       opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                       opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                       os.path.join(folder, save_ID), training_time, train_acc, train_loss, val_acc, val_loss, best_epoch, i)
+            info_str = write_decay_info(decay_epoch, info_str)
+            f.write(info_str)
+    except IOError:
+        training_time = time.time() - begin_time
+        writer.close()
+        train_log.close()
+        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+            format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                   opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                   opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                   os.path.join(folder, save_ID), training_time, "Error occurs when reading files")
+        f.write(info_str)
+    except ZeroDivisionError:
+        training_time = time.time() - begin_time
+        writer.close()
+        train_log.close()
+        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+            format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                   opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                   opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                   os.path.join(folder, save_ID), training_time, "Gradient flow")
+        f.write(info_str)
+    except KeyboardInterrupt:
+        training_time = time.time() - begin_time
+        writer.close()
+        train_log.close()
+        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+            format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                   opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                   opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                   os.path.join(folder, save_ID), training_time, "Be killed by someone")
         f.write(info_str)
 
-    # os.makedirs(os.path.join(exp_dir, "graphs"), exist_ok=True)
-    #
-    # ln1, = plt.plot(epoch_ls[10:], train_loss_ls[10:], color='red', linewidth=3.0, linestyle='--')
-    # ln2, = plt.plot(epoch_ls[10:], val_loss_ls[10:], color='blue', linewidth=3.0, linestyle='-.')
-    # ln3, = plt.plot(epoch_ls[10:], lr_ls[10:], color='green', linewidth=3.0, linestyle='-')
-    # plt.title("Loss")
-    # plt.legend(handles=[ln1, ln2, ln3], labels=['train_loss', 'val_loss', "lr"])
-    # ax = plt.gca()
-    # ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
-    # ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    # plt.savefig(os.path.join(log_dir, "loss.jpg"))
-    # plt.cla()
-    #
-    # ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
-    # ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
-    # ln3, = plt.plot(epoch_ls, lr_ls, color='green', linewidth=3.0, linestyle='-')
-    #
-    # plt.title("Acc")
-    # plt.legend(handles=[ln1, ln2, ln3], labels=['train_acc', 'val_acc', "lr"])
-    # ax = plt.gca()
-    # ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
-    # ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    # plt.savefig(os.path.join(log_dir, "acc.jpg"))
+
+    print("Model {} training finished".format(save_ID))
+    print("----------------------------------------------------------------------------------------------------")
 
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ parser.add_argument('--expID', default='default', type=str,
                     help='Experiment ID')
 parser.add_argument('--expFolder', default='test', type=str,
                     help='Experiment folder')
-parser.add_argument('--dataset', default='coco', type=str,
+parser.add_argument('--dataset', default='multiple', type=str,
                     help='Dataset choice: mpii | coco')
 parser.add_argument('--nThreads', default=30, type=int,
                     help='Number of data loading threads')
