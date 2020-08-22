@@ -1,6 +1,4 @@
 # python train_opt.py --backbone mobilenet --struct huge_bigt --expFolder coco_mobile_pruned --expID 13kps_huge_bigt_DUC2_dpg --trainBatch 32 --validBatch 32 --kps 13 --DUC 2 --addDPG --LR 1e-3
-
-import matplotlib.pyplot as plt
 import torch
 import time
 import cv2
@@ -38,9 +36,7 @@ elif opt.backbone == "shufflenet":
     from config.model_cfg import shufflenet_cfg as model_ls
 else:
     raise ValueError("Your model name is wrong")
-
 model_cfg = model_ls[opt.struct]
-# print(model_cfg)
 
 
 try:
@@ -176,9 +172,6 @@ def valid(val_loader, m, criterion, optimizer, writer):
                 writer.add_image("result of epoch {} --> heatmap".format(opt.epoch), hm)
 
             loss = criterion(out.mul(setMask), labels)
-
-            # for idx, logger in pts_loss_Loggers.items():
-            #     logger.update(criterion(out.mul(setMask)[:,[idx],:,:], labels[:,[idx],:,:]), inps.size(0))
 
             flip_out = m(flip(inps))
             flip_out = flip(shuffleLR(flip_out, val_loader.dataset))
@@ -590,7 +583,6 @@ def main():
                    opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
                    os.path.join(folder, save_ID), training_time, "Be killed by someone")
         f.write(info_str)
-
 
     print("Model {} training finished".format(save_ID))
     print("----------------------------------------------------------------------------------------------------")
