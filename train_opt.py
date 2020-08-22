@@ -554,35 +554,38 @@ def main():
             info_str = write_decay_info(decay_epoch, info_str)
             f.write(info_str)
     except IOError:
-        training_time = time.time() - begin_time
-        writer.close()
-        train_log.close()
-        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
-            format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
-                   opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
-                   opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-                   os.path.join(folder, save_ID), training_time, "c")
-        f.write(info_str)
+        with open(result, "a+") as f:
+            training_time = time.time() - begin_time
+            writer.close()
+            train_log.close()
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+                format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                       opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                       opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                       os.path.join(folder, save_ID), training_time, "c")
+            f.write(info_str)
     except ZeroDivisionError:
-        training_time = time.time() - begin_time
-        writer.close()
-        train_log.close()
-        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
-            format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
-                   opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
-                   opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-                   os.path.join(folder, save_ID), training_time, "Gradient flow")
-        f.write(info_str)
+        with open(result, "a+") as f:
+            training_time = time.time() - begin_time
+            writer.close()
+            train_log.close()
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+                format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                       opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                       opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                       os.path.join(folder, save_ID), training_time, "Gradient flow")
+            f.write(info_str)
     except KeyboardInterrupt:
-        training_time = time.time() - begin_time
-        writer.close()
-        train_log.close()
-        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
-            format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
-                   opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
-                   opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-                   os.path.join(folder, save_ID), training_time, "Be killed by someone")
-        f.write(info_str)
+        with open(result, "a+") as f:
+            training_time = time.time() - begin_time
+            writer.close()
+            train_log.close()
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+                format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                       opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                       opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                       os.path.join(folder, save_ID), training_time, "Be killed by someone")
+            f.write(info_str)
 
     print("Model {} training finished".format(save_ID))
     print("----------------------------------------------------------------------------------------------------")
