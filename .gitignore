@@ -33,8 +33,7 @@ test/.coverage
 */*.so*
 */**/*.so*
 */**/*.dylib*
-test/data/legacy_serialized.pt
-*~
+train_result/prev
 .idea
 yolo
 SPPE
