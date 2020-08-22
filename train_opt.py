@@ -421,7 +421,7 @@ def main():
 
             opt.epoch = i
             epoch_ls.append(i)
-            train_log_tmp = [i, lr]
+            train_log_tmp = [save_ID, i, lr]
 
             log = open(log_name, "a+")
             print('############# Starting Epoch {} #############'.format(i))
@@ -561,7 +561,7 @@ def main():
             format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
                    opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
                    opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-                   os.path.join(folder, save_ID), training_time, "Error occurs when reading files")
+                   os.path.join(folder, save_ID), training_time, "c")
         f.write(info_str)
     except ZeroDivisionError:
         training_time = time.time() - begin_time
