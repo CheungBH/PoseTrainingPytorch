@@ -365,7 +365,7 @@ def main():
         layers += 1
         if param.requires_grad:
             params_to_update.append(param)
-            print("\t", name)
+            # print("\t", name)
     print("Training {} layers out of {}".format(len(params_to_update), layers))
 
     if optimize == 'rmsprop':
