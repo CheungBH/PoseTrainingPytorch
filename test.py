@@ -34,7 +34,7 @@ def draw_kp(hm, pt1, pt2, boxes, img_path):
 
 def draw_kps(hms, info):
     hms = hms.cpu()
-    (_pt1, _pt2, _boxes, _img_path) = info
+    (_pt1, _pt2, _boxes, _img_path, _gt) = info
     drawn = False
     img_ls = []
     for i in range(img_num):

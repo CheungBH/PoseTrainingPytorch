@@ -39,18 +39,28 @@ class NullWriter(object):
         pass
 
 
-def accuracy(output, label, dataset, out_offset=None):
+def exist_id(p):
+    exist = (p == 0).float()
+    ids = []
+    for i, item in enumerate(exist):
+        if torch.sum(item) < 1:
+            ids.append(i)
+    return ids
+
+
+def accuracy(output, label, dataset, part, out_offset=None):
+    # exist = if_exist(part)
     if type(output) == list:
-        return accuracy(output[opt.nStack - 1], label[opt.nStack - 1], dataset, out_offset)
+        return accuracy(output[opt.nStack - 1], label[opt.nStack - 1], dataset, part, out_offset)
     else:
-        return heatmapAccuracy(output.cpu().data, label.cpu().data, dataset.accIdxs)
+        return heatmapAccuracy(output.cpu().data, label.cpu().data, dataset.accIdxs, part)
 
 
-def part_accuracy(output, label, idx, out_offset=None):
-    return heatmapAccuracy(output.cpu().data, label.cpu().data, idx)
+def part_accuracy(output, label, idx, exist, out_offset=None):
+    return heatmapAccuracy(output.cpu().data, label.cpu().data, idx, exist)
 
 
-def heatmapAccuracy(output, label, idxs):
+def heatmapAccuracy(output, label, idxs, parts):
     preds = getPreds(output)
     gt = getPreds(label)
 
@@ -58,17 +68,19 @@ def heatmapAccuracy(output, label, idxs):
     dists = calc_dists(preds, gt, norm)
 
     acc = torch.zeros(len(idxs) + 1)
+    exists = []
     avg_acc = 0
     cnt = 0
     for i in range(len(idxs)):
         # acc[i + 1] = dist_acc(dists[idxs[i] - 1])
-        acc[i + 1] = dist_acc(dists[i] - 1)
+        acc[i + 1], exist = dist_acc(dists[i] - 1, parts[i])
+        exists.append(exist)
         if acc[i + 1] >= 0:
             avg_acc = avg_acc + acc[i + 1]
             cnt += 1
     if cnt != 0:
         acc[0] = avg_acc / cnt
-    return acc
+    return acc, exists
 
 
 def getPreds(hm):
@@ -105,12 +117,14 @@ def calc_dists(preds, target, normalize):
     return dists
 
 
-def dist_acc(dists, thr=0.5):
+def dist_acc(dists, part, thr=0.5):
+    ids = exist_id(part)
+    dists = dists[ids]
     ''' Return percentage below threshold while ignoring values with a -1 '''
     if dists.ne(-1).sum() > 0:
-        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum()
+        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum(), len(ids)
     else:
-        return - 1
+        return -1, 0
 
 
 def postprocess(output):

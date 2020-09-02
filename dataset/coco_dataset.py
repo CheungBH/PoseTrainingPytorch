@@ -71,7 +71,7 @@ class Mscoco(data.Dataset):
                                      config.train_data, sf, self, train=self.is_train)
 
         inp, out, setMask, (pt1, pt2) = metaData
-        kps_info = (pt1, pt2, bndbox, cv2.imread(img_path))
+        kps_info = (pt1, pt2, bndbox, cv2.imread(img_path), part)
         return inp, out, setMask, kps_info
 
     def __len__(self):
@@ -139,7 +139,7 @@ class MyDataset(data.Dataset):
                                      config.train_data, sf, self, train=self.is_train)
 
         inp, out, setMask, (pt1, pt2) = metaData
-        kps_info = (pt1, pt2, bndbox[0], imgname)
+        kps_info = (pt1, pt2, bndbox[0], imgname, part)
         return inp, out, setMask, kps_info
 
     def __len__(self):

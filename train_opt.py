@@ -90,7 +90,7 @@ def train(train_loader, m, criterion, optimizer, writer):
         # for idx, logger in pts_loss_Loggers.items():
         #     logger.update(criterion(out.mul(setMask)[:, [idx], :, :], labels[:, [idx], :, :]), inps.size(0))
 
-        acc = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset)
+        acc, exists = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset, img_info[-1])
 
         optimizer.zero_grad()
 
@@ -98,7 +98,7 @@ def train(train_loader, m, criterion, optimizer, writer):
         lossLogger.update(loss.item(), inps.size(0))
 
         for k, v in pts_acc_Loggers.items():
-            pts_acc_Loggers[k].update(acc[k+1], inps.size(0))
+            pts_acc_Loggers[k].update(acc[k+1], exists[k])
 
         if mix_precision:
             with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -178,7 +178,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
             out = (flip_out + out) / 2
 
-        acc = accuracy(out.mul(setMask), labels, val_loader.dataset)
+        acc, exists = accuracy(out.mul(setMask), labels, val_loader.dataset, img_info[-1])
 
         lossLogger.update(loss.item(), inps.size(0))
         accLogger.update(acc[0], inps.size(0))
