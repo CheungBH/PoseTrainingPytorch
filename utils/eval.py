@@ -34,6 +34,16 @@ class DataLogger(object):
         self.avg = self.sum / self.cnt
 
 
+class SumLogger(DataLogger):
+    def __init__(self):
+        super().__init__()
+
+    def update(self, value, n=1):
+        self.sum += value
+        self.cnt += n
+        self._cal_avg()
+
+
 class NullWriter(object):
     def write(self, arg):
         pass
@@ -46,6 +56,34 @@ def exist_id(p):
         if torch.sum(item) < 1:
             ids.append(i)
     return ids
+
+
+def cal_ave(weights, inps):
+    res = 0
+    for w, i in zip(weights, inps):
+        res += w*i
+    return res/torch.sum(weights)
+
+
+def cal_accuracy(output, label, idxs):
+    preds = getPreds(output)
+    gt = getPreds(label)
+
+    if_exist = torch.Tensor([torch.sum((label[i][j] > 0).float()) > 0 for i in range(len(label))
+                             for j in range(len(label[0]))]).view(len(label),len(label[0])).t()
+
+    norm = torch.ones(preds.size(0)) * opt.outputResH / 10
+    dists = calc_dists(preds, gt, norm)
+    acc, sum_dist, exist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1), torch.zeros(len(idxs))
+
+    for i, kps_dist in enumerate(dists):
+        nums = len(exist_id(if_exist[i]))
+        exist[i] = nums
+        dist = kps_dist[nums]
+        sum_dist[i + 1] = torch.sum(dist)
+        acc[i + 1] = dist_acc(dists[i]-1)
+
+
 
 
 def accuracy(output, label, dataset, part, out_offset=None):
@@ -67,9 +105,9 @@ def heatmapAccuracy(output, label, idxs, parts):
     norm = torch.ones(preds.size(0)) * opt.outputResH / 10
     dists = calc_dists(preds, gt, norm)
 
-    acc = torch.zeros(len(idxs) + 1)
+    acc, sum_dist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1)
     exists = []
-    avg_acc = 0
+    avg_acc, sum_dist = 0, 0
     cnt = 0
     for i in range(len(idxs)):
         # acc[i + 1] = dist_acc(dists[idxs[i] - 1])
@@ -117,12 +155,19 @@ def calc_dists(preds, target, normalize):
     return dists
 
 
+def acc_dist(dists, thr=0.5):
+    if dists.ne(-1).sum() > 0:
+        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum()
+    else:
+        return -1
+
+
 def dist_acc(dists, part, thr=0.5):
     ids = exist_id(part)
     dists = dists[ids]
     ''' Return percentage below threshold while ignoring values with a -1 '''
     if dists.ne(-1).sum() > 0:
-        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum(), len(ids)
+        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum(), len(ids), dist_sum
     else:
         return -1, 0
 
