@@ -413,8 +413,10 @@ def main():
     # ))
 
     early_stopping = EarlyStopping(patience=opt.patience, verbose=True)
-    train_acc, val_acc, train_loss, val_loss, best_epoch, = 0, 0, float("inf"), float("inf"), 0,
-    train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, epoch_ls, lr_ls = [], [], [], [], [], []
+    train_acc, val_acc, train_loss, val_loss, best_epoch, train_dist, val_dist = \
+        0, 0, float("inf"), float("inf"), 0, float("inf"), float("inf"),
+    train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, train_dist_ls, val_dist_ls, epoch_ls, lr_ls = \
+        [], [], [], [], [], [], [], []
     decay, decay_epoch, lr, i = 0, [], opt.LR, begin_epoch
     stop = False
     m_best = m
@@ -450,13 +452,19 @@ def main():
         train_log_tmp.append(" ")
         train_log_tmp.append(loss)
         train_log_tmp.append(acc.tolist())
-        for item in pt_acc:
-            train_log_tmp.append(item.tolist())
+        train_log_tmp.append(dist)
+        for a in pt_acc:
+            train_log_tmp.append(a.tolist())
+        train_log_tmp.append(" ")
+        for d in pt_dist:
+            train_log_tmp.append(d)
 
         train_acc_ls.append(acc)
         train_loss_ls.append(loss)
+        train_dist_ls.append(dist)
         train_acc = acc if acc > train_acc else train_acc
         train_loss = loss if loss < train_loss else train_loss
+        train_dist = dist if dist < train_dist else train_dist
 
         print('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}| dist:{dist:.4f}'.format(
             idx=i,
@@ -475,22 +483,31 @@ def main():
         opt.loss = loss
         m_dev = m.module
 
+
         loss, acc, dist, pt_acc, pt_dist = valid(val_loader, m, criterion, optimizer, writer)
         train_log_tmp.append(" ")
-        train_log_tmp.insert(5, loss)
-        train_log_tmp.insert(6, acc.tolist())
-        train_log_tmp.insert(7, " ")
-        for item in pt_acc:
-            train_log_tmp.append(item.tolist())
+        train_log_tmp.insert(6, loss)
+        train_log_tmp.insert(7, acc.tolist())
+        train_log_tmp.insert(8, dist)
+        train_log_tmp.insert(9, " ")
+        for a in pt_acc:
+            train_log_tmp.append(a.tolist())
+        train_log_tmp.append(" ")
+        for d in pt_dist:
+            train_log_tmp.append(d)
 
         val_acc_ls.append(acc)
         val_loss_ls.append(loss)
+        val_dist_ls.append(dist)
         if acc > val_acc:
             best_epoch = i
             val_acc = acc
-            torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best.pkl'.format(folder, save_ID))
+            torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_acc.pkl'.format(folder, save_ID))
             m_best = copy.deepcopy(m)
         val_loss = loss if loss < val_loss else val_loss
+        if dist < val_dist:
+            val_dist = dist
+            torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_dist.pkl'.format(folder, save_ID))
 
         bn_num = 0
         for mod in m.modules():
@@ -561,15 +578,16 @@ def main():
         if not exist:
             title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
                         "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
-                        "model_location, ,folder_name,train_acc,train_loss,val_acc,val_loss,training_time, " \
-                        "best_epoch,final_epoch"
+                        "model_location, ,folder_name,train_acc,train_loss,train_dist, val_acc,val_loss,val_dist, " \
+                        "training_time,best_epoch,final_epoch"
             title_str = write_decay_title(len(decay_epoch), title_str)
             f.write(title_str)
-        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{}\n".\
+        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{},{},{}\n".\
             format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
                    opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
                    opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-                   os.path.join(folder, save_ID), training_time, train_acc, train_loss, val_acc, val_loss, best_epoch, i)
+                   os.path.join(folder, save_ID), training_time, train_acc, train_loss, train_dist, val_acc, val_loss,
+                   val_dist, best_epoch, i)
         info_str = write_decay_info(decay_epoch, info_str)
         f.write(info_str)
     # except IOError:

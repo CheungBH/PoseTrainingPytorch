@@ -70,16 +70,18 @@ def get_sparse_value():
 
 
 def write_csv_title():
-    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "val_loss", "val_acc", " "]
-    title += csv_body_part("train")
-    title += csv_body_part("val")
+    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "val_loss", "val_acc", "val_dist"," "]
+    title += csv_body_part("train", "acc")
+    title += csv_body_part("train", "dist")
+    title += csv_body_part("val", "acc")
+    title += csv_body_part("val", "dist")
     return title
 
 
-def csv_body_part(phase):
+def csv_body_part(phase, indicator):
     ls = []
     for item in config.body_part_name:
-        ls.append(phase+"_"+item)
+        ls.append(phase + "_" + item + "_" + indicator)
     ls.append(" ")
     return ls
 
