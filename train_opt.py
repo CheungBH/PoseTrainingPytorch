@@ -433,196 +433,196 @@ def main():
     exist = os.path.exists(result)
 
     # Start Training
-    # try:
-    for i in range(opt.nEpochs)[begin_epoch:]:
+    try:
+        for i in range(opt.nEpochs)[begin_epoch:]:
 
-        opt.epoch = i
-        epoch_ls.append(i)
-        train_log_tmp = [save_ID, i, lr]
+            opt.epoch = i
+            epoch_ls.append(i)
+            train_log_tmp = [save_ID, i, lr]
 
-        log = open(log_name, "a+")
-        print('############# Starting Epoch {} #############'.format(i))
-        log.write('############# Starting Epoch {} #############\n'.format(i))
+            log = open(log_name, "a+")
+            print('############# Starting Epoch {} #############'.format(i))
+            log.write('############# Starting Epoch {} #############\n'.format(i))
 
-        # optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
-        # writer.add_scalar("lr", lr, i)
-        # print("epoch {}: lr {}".format(i, lr))
+            # optimizer, lr = adjust_lr(optimizer, i, config.lr_decay, opt.nEpochs)
+            # writer.add_scalar("lr", lr, i)
+            # print("epoch {}: lr {}".format(i, lr))
 
-        loss, acc, dist, pt_acc, pt_dist = train(train_loader, m, criterion, optimizer, writer)
-        train_log_tmp.append(" ")
-        train_log_tmp.append(loss)
-        train_log_tmp.append(acc.tolist())
-        train_log_tmp.append(dist)
-        for a in pt_acc:
-            train_log_tmp.append(a.tolist())
-        train_log_tmp.append(" ")
-        for d in pt_dist:
-            train_log_tmp.append(d)
+            loss, acc, dist, pt_acc, pt_dist = train(train_loader, m, criterion, optimizer, writer)
+            train_log_tmp.append(" ")
+            train_log_tmp.append(loss)
+            train_log_tmp.append(acc.tolist())
+            train_log_tmp.append(dist)
+            for a in pt_acc:
+                train_log_tmp.append(a.tolist())
+            train_log_tmp.append(" ")
+            for d in pt_dist:
+                train_log_tmp.append(d)
 
-        train_acc_ls.append(acc)
-        train_loss_ls.append(loss)
-        train_dist_ls.append(dist)
-        train_acc = acc if acc > train_acc else train_acc
-        train_loss = loss if loss < train_loss else train_loss
-        train_dist = dist if dist < train_dist else train_dist
+            train_acc_ls.append(acc)
+            train_loss_ls.append(loss)
+            train_dist_ls.append(dist)
+            train_acc = acc if acc > train_acc else train_acc
+            train_loss = loss if loss < train_loss else train_loss
+            train_dist = dist if dist < train_dist else train_dist
 
-        print('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}| dist:{dist:.4f}'.format(
-            idx=i,
-            loss=loss,
-            acc=acc,
-            dist=dist,
-        ))
-        log.write('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
-            idx=i,
-            loss=loss,
-            acc=acc,
-            dist=dist,
-        ))
+            print('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}| dist:{dist:.4f}'.format(
+                idx=i,
+                loss=loss,
+                acc=acc,
+                dist=dist,
+            ))
+            log.write('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
+                idx=i,
+                loss=loss,
+                acc=acc,
+                dist=dist,
+            ))
 
-        opt.acc = acc
-        opt.loss = loss
-        m_dev = m.module
+            opt.acc = acc
+            opt.loss = loss
+            m_dev = m.module
 
 
-        loss, acc, dist, pt_acc, pt_dist = valid(val_loader, m, criterion, optimizer, writer)
-        train_log_tmp.append(" ")
-        train_log_tmp.insert(6, loss)
-        train_log_tmp.insert(7, acc.tolist())
-        train_log_tmp.insert(8, dist)
-        train_log_tmp.insert(9, " ")
-        for a in pt_acc:
-            train_log_tmp.append(a.tolist())
-        train_log_tmp.append(" ")
-        for d in pt_dist:
-            train_log_tmp.append(d)
+            loss, acc, dist, pt_acc, pt_dist = valid(val_loader, m, criterion, optimizer, writer)
+            train_log_tmp.append(" ")
+            train_log_tmp.insert(6, loss)
+            train_log_tmp.insert(7, acc.tolist())
+            train_log_tmp.insert(8, dist)
+            train_log_tmp.insert(9, " ")
+            for a in pt_acc:
+                train_log_tmp.append(a.tolist())
+            train_log_tmp.append(" ")
+            for d in pt_dist:
+                train_log_tmp.append(d)
 
-        val_acc_ls.append(acc)
-        val_loss_ls.append(loss)
-        val_dist_ls.append(dist)
-        if acc > val_acc:
-            best_epoch = i
-            val_acc = acc
-            torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_acc.pkl'.format(folder, save_ID))
-            m_best = copy.deepcopy(m)
-        val_loss = loss if loss < val_loss else val_loss
-        if dist < val_dist:
-            val_dist = dist
-            torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_dist.pkl'.format(folder, save_ID))
+            val_acc_ls.append(acc)
+            val_loss_ls.append(loss)
+            val_dist_ls.append(dist)
+            if acc > val_acc:
+                best_epoch = i
+                val_acc = acc
+                torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_acc.pkl'.format(folder, save_ID))
+                m_best = copy.deepcopy(m)
+            val_loss = loss if loss < val_loss else val_loss
+            if dist < val_dist:
+                val_dist = dist
+                torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_dist.pkl'.format(folder, save_ID))
 
-        bn_num = 0
-        for mod in m.modules():
-            if isinstance(mod, nn.BatchNorm2d):
-                bn_num += 1
-                writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
+            bn_num = 0
+            for mod in m.modules():
+                if isinstance(mod, nn.BatchNorm2d):
+                    bn_num += 1
+                    writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
 
-        print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}'.format(
-            idx=i,
-            loss=loss,
-            acc=acc,
-            dist=dist,
-        ))
-        log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
-            idx=i,
-            loss=loss,
-            acc=acc,
-            dist=dist,
-        ))
-        log.close()
-        csv_writer.writerow(train_log_tmp)
+            print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}'.format(
+                idx=i,
+                loss=loss,
+                acc=acc,
+                dist=dist,
+            ))
+            log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
+                idx=i,
+                loss=loss,
+                acc=acc,
+                dist=dist,
+            ))
+            log.close()
+            csv_writer.writerow(train_log_tmp)
 
-        writer.add_scalar("lr", lr, i)
-        print("epoch {}: lr {}".format(i, lr))
-        lr_ls.append(lr)
+            writer.add_scalar("lr", lr, i)
+            print("epoch {}: lr {}".format(i, lr))
+            lr_ls.append(lr)
 
-        torch.save(
-            opt, 'exp/{}/{}/option.pkl'.format(folder, save_ID, i))
-        if i % opt.save_interval == 0 and i != 0:
             torch.save(
-                m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(folder, save_ID, i))
-            # torch.save(
-            #     optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
+                opt, 'exp/{}/{}/option.pkl'.format(folder, save_ID, i))
+            if i % opt.save_interval == 0 and i != 0:
+                torch.save(
+                    m_dev.state_dict(), 'exp/{0}/{1}/{1}_{2}.pkl'.format(folder, save_ID, i))
+                # torch.save(
+                #     optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
 
-        if i < warm_up_epoch:
-            optimizer, lr = warm_up_lr(optimizer, i)
-        elif i == warm_up_epoch:
-            lr = opt.LR
-            early_stopping(acc)
-        else:
-            early_stopping(acc)
-            if early_stopping.early_stop:
-                optimizer, lr = lr_decay(optimizer, lr)
-                decay += 1
-                # shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
-                #             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
+            if i < warm_up_epoch:
+                optimizer, lr = warm_up_lr(optimizer, i)
+            elif i == warm_up_epoch:
+                lr = opt.LR
+                early_stopping(acc)
+            else:
+                early_stopping(acc)
+                if early_stopping.early_stop:
+                    optimizer, lr = lr_decay(optimizer, lr)
+                    decay += 1
+                    # shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
+                    #             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
 
-                if decay > opt.lr_decay_time:
+                    if decay > opt.lr_decay_time:
+                        stop = True
+                    else:
+                        decay_epoch.append(i)
+                        early_stopping.reset(int(opt.patience * patience_decay[decay]))
+                        torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(folder, save_ID, decay))
+                        m = m_best
+
+            for epo, ac in config.bad_epochs.items():
+                if i == epo and val_acc < ac:
                     stop = True
-                else:
-                    decay_epoch.append(i)
-                    early_stopping.reset(int(opt.patience * patience_decay[decay]))
-                    torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(folder, save_ID, decay))
-                    m = m_best
+            if stop:
+                print("Training finished at epoch {}".format(i))
+                break
 
-        for epo, ac in config.bad_epochs.items():
-            if i == epo and val_acc < ac:
-                stop = True
-        if stop:
-            print("Training finished at epoch {}".format(i))
-            break
+        training_time = time.time() - begin_time
+        writer.close()
+        train_log.close()
 
-    training_time = time.time() - begin_time
-    writer.close()
-    train_log.close()
-
-    with open(result, "a+") as f:
-        if not exist:
-            title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
-                        "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
-                        "model_location, ,folder_name,train_acc,train_loss,train_dist, val_acc,val_loss,val_dist, " \
-                        "training_time,best_epoch,final_epoch"
-            title_str = write_decay_title(len(decay_epoch), title_str)
-            f.write(title_str)
-        info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{},{},{}\n".\
-            format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
-                   opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
-                   opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-                   os.path.join(folder, save_ID), training_time, train_acc, train_loss, train_dist, val_acc, val_loss,
-                   val_dist, best_epoch, i)
-        info_str = write_decay_info(decay_epoch, info_str)
-        f.write(info_str)
-    # except IOError:
-    #     with open(result, "a+") as f:
-    #         training_time = time.time() - begin_time
-    #         writer.close()
-    #         train_log.close()
-    #         info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
-    #             format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
-    #                    opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
-    #                    opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-    #                    os.path.join(folder, save_ID), training_time, "c")
-    #         f.write(info_str)
-    # except ZeroDivisionError:
-    #     with open(result, "a+") as f:
-    #         training_time = time.time() - begin_time
-    #         writer.close()
-    #         train_log.close()
-    #         info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
-    #             format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
-    #                    opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
-    #                    opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-    #                    os.path.join(folder, save_ID), training_time, "Gradient flow")
-    #         f.write(info_str)
-    # except KeyboardInterrupt:
-    #     with open(result, "a+") as f:
-    #         training_time = time.time() - begin_time
-    #         writer.close()
-    #         train_log.close()
-    #         info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
-    #             format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
-    #                    opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
-    #                    opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-    #                    os.path.join(folder, save_ID), training_time, "Be killed by someone")
-    #         f.write(info_str)
+        with open(result, "a+") as f:
+            if not exist:
+                title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
+                            "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
+                            "model_location, ,folder_name,train_acc,train_loss,train_dist, val_acc,val_loss,val_dist, " \
+                            "training_time,best_epoch,final_epoch"
+                title_str = write_decay_title(len(decay_epoch), title_str)
+                f.write(title_str)
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{},{},{}\n".\
+                format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                       opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                       opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                       os.path.join(folder, save_ID), training_time, train_acc, train_loss, train_dist, val_acc, val_loss,
+                       val_dist, best_epoch, i)
+            info_str = write_decay_info(decay_epoch, info_str)
+            f.write(info_str)
+    except IOError:
+        with open(result, "a+") as f:
+            training_time = time.time() - begin_time
+            writer.close()
+            train_log.close()
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+                format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                       opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                       opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                       os.path.join(folder, save_ID), training_time, "Some file is closed")
+            f.write(info_str)
+    except ZeroDivisionError:
+        with open(result, "a+") as f:
+            training_time = time.time() - begin_time
+            writer.close()
+            train_log.close()
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+                format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                       opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                       opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                       os.path.join(folder, save_ID), training_time, "Gradient flow")
+            f.write(info_str)
+    except KeyboardInterrupt:
+        with open(result, "a+") as f:
+            training_time = time.time() - begin_time
+            writer.close()
+            train_log.close()
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{}\n". \
+                format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
+                       opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
+                       opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
+                       os.path.join(folder, save_ID), training_time, "Be killed by someone")
+            f.write(info_str)
 
     print("Model {} training finished".format(save_ID))
     print("----------------------------------------------------------------------------------------------------")
