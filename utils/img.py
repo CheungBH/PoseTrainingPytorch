@@ -6,7 +6,7 @@
 import numpy as np
 import torch
 import scipy.misc
-import torch.nn.functional as F
+from utils.utils import check_hm
 import cv2
 from src.opt import opt
 

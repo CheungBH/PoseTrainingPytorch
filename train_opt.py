@@ -16,7 +16,7 @@ from tensorboardX import SummaryWriter
 import os
 import config.config as config
 from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title, write_decay_title, \
-    write_decay_info, draw_graph
+    write_decay_info, draw_graph, check_hm, check_part
 from utils.pytorchtools import EarlyStopping
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from test import draw_kps, draw_hms
@@ -62,9 +62,10 @@ torch.backends.cudnn.benchmark = True
 
 def train(train_loader, m, criterion, optimizer, writer):
     lossLogger = DataLogger()
-    accLogger = DataLogger()
+    accLogger, distLogger = DataLogger(), DataLogger()
     pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_loss_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
     m.train()
 
     train_loader_desc = tqdm(train_loader)
@@ -73,7 +74,6 @@ def train(train_loader, m, criterion, optimizer, writer):
     # print("Training")
 
     for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
-        # print("{}".format(img_info[-1]))
         if device != "cpu":
             inps = inps.cuda().requires_grad_()
             labels = labels.cuda()
@@ -87,22 +87,21 @@ def train(train_loader, m, criterion, optimizer, writer):
         for cons, idx_ls in loss_params.items():
             loss += cons * criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
-        # p = copy.deepcopy(img_info[-1])
-        # l = labels.clone()
-
         # for idx, logger in pts_loss_Loggers.items():
         #     logger.update(criterion(out.mul(setMask)[:, [idx], :, :], labels[:, [idx], :, :]), inps.size(0))
-        a, dist, e = cal_accuracy(out.data.mul(setMask), labels.data, train_loader.dataset.accIdxs)
-        acc, exists = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset, img_info[-1])
+        acc, dist, exists = cal_accuracy(out.data.mul(setMask), labels.data, train_loader.dataset.accIdxs)
+        # acc, exists = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset, img_info[-1])
 
         optimizer.zero_grad()
 
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
+        distLogger.update(dist[0], inps.size(0))
 
         for k, v in pts_acc_Loggers.items():
             if exists[k] > 0:
                 pts_acc_Loggers[k].update(acc[k+1], exists[k])
+                pts_dist_Loggers[k].update(dist[k+1], exists[k])
 
         if mix_precision:
             with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -121,27 +120,32 @@ def train(train_loader, m, criterion, optimizer, writer):
             'Train/Loss', lossLogger.avg, opt.trainIters)
         writer.add_scalar(
             'Train/Acc', accLogger.avg, opt.trainIters)
+        writer.add_scalar(
+            'Train/Dist', distLogger.avg, opt.trainIters)
 
         # TQDM
         train_loader_desc.set_description(
-            'loss: {loss:.8f} | acc: {acc:.2f}'.format(
+            'loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
                 loss=lossLogger.avg,
-                acc=accLogger.avg * 100)
+                acc=accLogger.avg * 100,
+                dist=distLogger.avg,
+            )
         )
 
     body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
-    body_part_loss = [Logger.avg for k, Logger in pts_loss_Loggers.items()]
+    body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
     train_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg, body_part_acc, body_part_loss
+    return lossLogger.avg, accLogger.avg, distLogger.avg, body_part_acc, body_part_dist
 
 
 def valid(val_loader, m, criterion, optimizer, writer):
     drawn_kp, drawn_hm = False, False
     lossLogger = DataLogger()
-    accLogger = DataLogger()
+    accLogger, distLogger = DataLogger(), DataLogger()
     pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_loss_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
     m.eval()
 
     # print("Validating")
@@ -177,18 +181,22 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
             loss = criterion(out.mul(setMask), labels)
 
-            flip_out = m(flip(inps))
-            flip_out = flip(shuffleLR(flip_out, val_loader.dataset))
+            # flip_out = m(flip(inps))
+            # flip_out = flip(shuffleLR(flip_out, val_loader.dataset))
+            #
+            # out = (flip_out + out) / 2
 
-            out = (flip_out + out) / 2
-
+        acc, dist, exists = cal_accuracy(out.data.mul(setMask), labels.data, val_loader.dataset.accIdxs)
         acc, exists = accuracy(out.mul(setMask), labels, val_loader.dataset, img_info[-1])
 
-        lossLogger.update(loss.item(), inps.size(0))
         accLogger.update(acc[0], inps.size(0))
+        lossLogger.update(loss.item(), inps.size(0))
+        distLogger.update(dist[0], inps.size(0))
 
         for k, v in pts_acc_Loggers.items():
-            pts_acc_Loggers[k].update(acc[k+1], inps.size(0))
+            if exists[k] > 0:
+                pts_acc_Loggers[k].update(acc[k+1], exists[k])
+                pts_dist_Loggers[k].update(dist[k+1], exists[k])
 
         opt.valIters += 1
 
@@ -197,18 +205,21 @@ def valid(val_loader, m, criterion, optimizer, writer):
             'Valid/Loss', lossLogger.avg, opt.valIters)
         writer.add_scalar(
             'Valid/Acc', accLogger.avg, opt.valIters)
+        writer.add_scalar(
+            'Valid/Dist', distLogger.avg, opt.valIters)
 
         val_loader_desc.set_description(
-            'loss: {loss:.8f} | acc: {acc:.2f}'.format(
+            'loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
                 loss=lossLogger.avg,
-                acc=accLogger.avg * 100)
+                acc=accLogger.avg * 100,
+                dist=distLogger.avg,)
         )
 
     body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
-    body_part_loss = [Logger.avg for k, Logger in pts_loss_Loggers.items()]
+    body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
     val_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg, body_part_acc, body_part_loss
+    return lossLogger.avg, accLogger.avg, distLogger.avg, body_part_acc, body_part_dist
 
 
 def main():
@@ -435,7 +446,7 @@ def main():
         # writer.add_scalar("lr", lr, i)
         # print("epoch {}: lr {}".format(i, lr))
 
-        loss, acc, pt_acc, pt_loss = train(train_loader, m, criterion, optimizer, writer)
+        loss, acc, dist, pt_acc, pt_dist = train(train_loader, m, criterion, optimizer, writer)
         train_log_tmp.append(" ")
         train_log_tmp.append(loss)
         train_log_tmp.append(acc.tolist())
@@ -447,22 +458,24 @@ def main():
         train_acc = acc if acc > train_acc else train_acc
         train_loss = loss if loss < train_loss else train_loss
 
-        print('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+        print('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}| dist:{dist:.4f}'.format(
             idx=i,
             loss=loss,
-            acc=acc
+            acc=acc,
+            dist=dist,
         ))
-        log.write('Train-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
+        log.write('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
             idx=i,
             loss=loss,
-            acc=acc
+            acc=acc,
+            dist=dist,
         ))
-        #
+
         opt.acc = acc
         opt.loss = loss
         m_dev = m.module
 
-        loss, acc, pt_acc, pt_loss = valid(val_loader, m, criterion, optimizer, writer)
+        loss, acc, dist, pt_acc, pt_dist = valid(val_loader, m, criterion, optimizer, writer)
         train_log_tmp.append(" ")
         train_log_tmp.insert(5, loss)
         train_log_tmp.insert(6, acc.tolist())
@@ -485,15 +498,17 @@ def main():
                 bn_num += 1
                 writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
 
-        print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}'.format(
+        print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}'.format(
             idx=i,
             loss=loss,
-            acc=acc
+            acc=acc,
+            dist=dist,
         ))
-        log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}\n'.format(
+        log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
             idx=i,
             loss=loss,
-            acc=acc
+            acc=acc,
+            dist=dist,
         ))
         log.close()
         csv_writer.writerow(train_log_tmp)

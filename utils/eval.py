@@ -276,21 +276,3 @@ def getmap(JsonDir='./val/alphapose-results.json'):
     return mApAll, mAp5
 
 
-def check_part(parts):
-    tmp = []
-    for part in parts:
-        if np.sum((part > 0)) > 0:
-            tmp.append(True)
-        else:
-            tmp.append(False)
-    return np.array(tmp)
-
-
-def check_hm(hms):
-    tmp = []
-    for hm in hms:
-        if torch.sum(hm>0):
-            tmp.append(True)
-        else:
-            tmp.append(False)
-    return np.array(tmp)

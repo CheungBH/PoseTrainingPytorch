@@ -3,6 +3,7 @@ from src.opt import opt
 from config import config
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def gather_bn_weights(module_list, prune_idx):
@@ -120,3 +121,24 @@ def draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, l
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
     plt.savefig(os.path.join(log_dir, "acc.jpg"))
+
+
+
+def check_part(parts):
+    tmp = []
+    for part in parts:
+        if np.sum((part > 0)) > 0:
+            tmp.append(True)
+        else:
+            tmp.append(False)
+    return np.array(tmp)
+
+
+def check_hm(hms):
+    tmp = []
+    for hm in hms:
+        if torch.sum(hm>0):
+            tmp.append(True)
+        else:
+            tmp.append(False)
+    return np.array(tmp)
