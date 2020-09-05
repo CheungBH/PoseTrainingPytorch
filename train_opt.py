@@ -9,7 +9,7 @@ import sys
 import torch.nn as nn
 from dataset.coco_dataset import MyDataset
 from tqdm import tqdm
-from utils.eval import DataLogger, accuracy
+from utils.eval import DataLogger, accuracy, cal_accuracy, SumLogger
 from utils.img import flip, shuffleLR
 from src.opt import opt
 from tensorboardX import SummaryWriter
@@ -87,9 +87,12 @@ def train(train_loader, m, criterion, optimizer, writer):
         for cons, idx_ls in loss_params.items():
             loss += cons * criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
+        # p = copy.deepcopy(img_info[-1])
+        # l = labels.clone()
+
         # for idx, logger in pts_loss_Loggers.items():
         #     logger.update(criterion(out.mul(setMask)[:, [idx], :, :], labels[:, [idx], :, :]), inps.size(0))
-
+        a, dist, e = cal_accuracy(out.data.mul(setMask), labels.data, train_loader.dataset.accIdxs)
         acc, exists = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset, img_info[-1])
 
         optimizer.zero_grad()
@@ -98,7 +101,8 @@ def train(train_loader, m, criterion, optimizer, writer):
         lossLogger.update(loss.item(), inps.size(0))
 
         for k, v in pts_acc_Loggers.items():
-            pts_acc_Loggers[k].update(acc[k+1], exists[k])
+            if exists[k] > 0:
+                pts_acc_Loggers[k].update(acc[k+1], exists[k])
 
         if mix_precision:
             with amp.scale_loss(loss, optimizer) as scaled_loss:

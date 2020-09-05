@@ -11,6 +11,7 @@ from utils.pose import generateSampleBox, choose_kps
 import random
 from dataset.bbox_visualize import BBoxVisualizer
 from dataset.kps_visualize import KeyPointVisualizer
+from utils.eval import check_hm, check_part
 
 
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
@@ -67,8 +68,8 @@ class Mscoco(data.Dataset):
 
         part = choose_kps(part, self.accIdxs)
 
-        metaData = generateSampleBox(img_path, bndbox, part, len(self.accIdxs),
-                                     config.train_data, sf, self, train=self.is_train)
+        metaData = generateSampleBox(img_path, bndbox, part, len(self.accIdxs), config.train_data, sf, self,
+                                     train=self.is_train)
 
         inp, out, setMask, (pt1, pt2) = metaData
         kps_info = (pt1, pt2, bndbox, cv2.imread(img_path), part)
@@ -132,7 +133,6 @@ class MyDataset(data.Dataset):
             part = self.part_val[index]
             bndbox = self.bbox_val[index]
             imgname = self.img_val[index]
-
         part = choose_kps(part, self.accIdxs)
 
         metaData = generateSampleBox(imgname, bndbox, part, len(self.accIdxs),

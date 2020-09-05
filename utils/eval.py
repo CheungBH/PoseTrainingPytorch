@@ -66,6 +66,7 @@ def cal_ave(weights, inps):
 
 
 def cal_accuracy(output, label, idxs):
+    label, output = label.cpu().data, output.cpu().data
     preds = getPreds(output)
     gt = getPreds(label)
 
@@ -77,13 +78,23 @@ def cal_accuracy(output, label, idxs):
     acc, sum_dist, exist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1), torch.zeros(len(idxs))
 
     for i, kps_dist in enumerate(dists):
-        nums = len(exist_id(if_exist[i]))
-        exist[i] = nums
-        dist = kps_dist[nums]
-        sum_dist[i + 1] = torch.sum(dist)
-        acc[i + 1] = dist_acc(dists[i]-1)
+        nums = exist_id(if_exist[i])
+        exist[i] = len(nums)
+        if len(nums) > 0:
+            dist = kps_dist[nums]
+            sum_dist[i + 1] = torch.sum(dist)/exist[i]
+            acc[i + 1] = acc_dist(dist-1)
+
+    sum_dist[0] = cal_ave(exist, sum_dist[1:])
+    acc[0] = cal_ave(exist, acc[1:])
+    return acc, sum_dist, exist
 
 
+def acc_dist(dists, thr=0.5):
+    if dists.ne(-1).sum() > 0:
+        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum()
+    else:
+        return -1
 
 
 def accuracy(output, label, dataset, part, out_offset=None):
@@ -155,19 +166,12 @@ def calc_dists(preds, target, normalize):
     return dists
 
 
-def acc_dist(dists, thr=0.5):
-    if dists.ne(-1).sum() > 0:
-        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum()
-    else:
-        return -1
-
-
 def dist_acc(dists, part, thr=0.5):
     ids = exist_id(part)
     dists = dists[ids]
     ''' Return percentage below threshold while ignoring values with a -1 '''
     if dists.ne(-1).sum() > 0:
-        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum(), len(ids), dist_sum
+        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum(), len(ids)
     else:
         return -1, 0
 
@@ -270,3 +274,23 @@ def getmap(JsonDir='./val/alphapose-results.json'):
         mAp5 = np.mean(score2[score2 > -1])
     cocoEval.summarize()
     return mApAll, mAp5
+
+
+def check_part(parts):
+    tmp = []
+    for part in parts:
+        if np.sum((part > 0)) > 0:
+            tmp.append(True)
+        else:
+            tmp.append(False)
+    return np.array(tmp)
+
+
+def check_hm(hms):
+    tmp = []
+    for hm in hms:
+        if torch.sum(hm>0):
+            tmp.append(True)
+        else:
+            tmp.append(False)
+    return np.array(tmp)
