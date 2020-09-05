@@ -210,7 +210,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
             'Valid/Dist', distLogger.avg, opt.valIters)
 
         val_loader_desc.set_description(
-            'Val: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+            'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
                 epoch=opt.epoch,
                 loss=lossLogger.avg,
                 acc=accLogger.avg * 100,
@@ -428,8 +428,6 @@ def main():
     csv_writer.writerow(write_csv_title())
     begin_time = time.time()
 
-    draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, log_dir)
-
     os.makedirs("result", exist_ok=True)
     result = os.path.join("result", "{}_result_{}.csv".format(opt.expFolder, config.computer))
     exist = os.path.exists(result)
@@ -576,12 +574,14 @@ def main():
         writer.close()
         train_log.close()
 
+        draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, train_dist_ls, val_dist_ls, log_dir)
+
         with open(result, "a+") as f:
             if not exist:
                 title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
                             "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
-                            "model_location, ,folder_name,train_acc,train_loss,train_dist, val_acc,val_loss,val_dist, " \
-                            "training_time,best_epoch,final_epoch"
+                            "model_location, ,folder_name,training_time,train_acc,train_loss,train_dist, " \
+                            "val_acc,val_loss,val_dist,best_epoch,final_epoch"
                 title_str = write_decay_title(len(decay_epoch), title_str)
                 f.write(title_str)
             info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{},{},{}\n".\
