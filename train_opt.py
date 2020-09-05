@@ -125,7 +125,8 @@ def train(train_loader, m, criterion, optimizer, writer):
 
         # TQDM
         train_loader_desc.set_description(
-            'loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+            'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+                epoch=opt.epoch,
                 loss=lossLogger.avg,
                 acc=accLogger.avg * 100,
                 dist=distLogger.avg,
@@ -209,7 +210,8 @@ def valid(val_loader, m, criterion, optimizer, writer):
             'Valid/Dist', distLogger.avg, opt.valIters)
 
         val_loader_desc.set_description(
-            'loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+            'Val: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+                epoch=opt.epoch,
                 loss=lossLogger.avg,
                 acc=accLogger.avg * 100,
                 dist=distLogger.avg,)
@@ -466,12 +468,12 @@ def main():
             train_loss = loss if loss < train_loss else train_loss
             train_dist = dist if dist < train_dist else train_dist
 
-            print('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}| dist:{dist:.4f}'.format(
-                idx=i,
-                loss=loss,
-                acc=acc,
-                dist=dist,
-            ))
+            # print('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}| dist:{dist:.4f}'.format(
+            #     idx=i,
+            #     loss=loss,
+            #     acc=acc,
+            #     dist=dist,
+            # ))
             log.write('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
                 idx=i,
                 loss=loss,
@@ -515,12 +517,12 @@ def main():
                     bn_num += 1
                     writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
 
-            print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}'.format(
-                idx=i,
-                loss=loss,
-                acc=acc,
-                dist=dist,
-            ))
+            # print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}'.format(
+            #     idx=i,
+            #     loss=loss,
+            #     acc=acc,
+            #     dist=dist,
+            # ))
             log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
                 idx=i,
                 loss=loss,

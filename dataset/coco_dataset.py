@@ -208,9 +208,6 @@ def extract_data(data_info):
             # imgname = change_imgname(i)
             img_val.append(os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))))
 
-        # img_train = [os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))) for i in imgname_train]
-        # img_val = [os.path.join(data_folder, reduce(lambda x, y: x + y, map(lambda x: chr(int(x)), i))) for i in imgname_val]
-
     return [img_train, bndbox_train, part_train, img_val, bndbox_val, part_val]
 
 
