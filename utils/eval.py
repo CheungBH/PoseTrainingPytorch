@@ -4,7 +4,7 @@
 # -----------------------------------------------------
 
 from src.opt import opt
-import sys
+from sklearn import metrics
 import numpy as np
 
 import torch
@@ -34,14 +34,28 @@ class DataLogger(object):
         self.avg = self.sum / self.cnt
 
 
-class SumLogger(DataLogger):
+class CurveLogger:
     def __init__(self):
-        super().__init__()
+        self.clear()
 
-    def update(self, value, n=1):
-        self.sum += value
-        self.cnt += n
-        self._cal_avg()
+    def clear(self):
+        self.gt = []
+        self.preds = []
+
+    def update(self, gt, preds):
+        if len(self.gt) == 0:
+            self.gt = gt
+            self.preds = preds
+        else:
+            self.gt = torch.cat((self.gt, gt))
+            self.preds = torch.cat((self.preds, preds))
+
+    def cal_AUC(self):
+        try:
+            auc = metrics.roc_auc_score(self.preds, self.gt)
+        except:
+            auc = 0
+        return auc
 
 
 class NullWriter(object):
@@ -67,8 +81,8 @@ def cal_ave(weights, inps):
 
 def cal_accuracy(output, label, idxs):
     label, output = label.cpu().data, output.cpu().data
-    preds = getPreds(output)
-    gt = getPreds(label)
+    preds, preds_maxval = getPreds(output)
+    gt, _ = getPreds(label)
 
     if_exist = torch.Tensor([torch.sum((label[i][j] > 0).float()) > 0 for i in range(len(label))
                              for j in range(len(label[0]))]).view(len(label),len(label[0])).t()
@@ -87,7 +101,7 @@ def cal_accuracy(output, label, idxs):
 
     sum_dist[0] = cal_ave(exist, sum_dist[1:])
     acc[0] = cal_ave(exist, acc[1:])
-    return acc, sum_dist, exist
+    return acc, sum_dist, exist, (preds_maxval.squeeze(dim=2).t(), if_exist)
 
 
 def acc_dist(dists, thr=0.5):
@@ -149,8 +163,7 @@ def getPreds(hm):
 
     # pred_mask = maxval.gt(0).repeat(1, 1, 2).float()
     # preds *= pred_mask
-    return preds
-
+    return preds, maxval
 
 def calc_dists(preds, target, normalize):
     preds = preds.float().clone()
@@ -162,7 +175,7 @@ def calc_dists(preds, target, normalize):
                 dists[c, n] = torch.dist(
                     preds[n, c, :], target[n, c, :]) / normalize[n]
             else:
-                dists[c, n] = -1
+                dists[c, n] = 0
     return dists
 
 

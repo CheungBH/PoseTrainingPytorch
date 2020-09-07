@@ -9,7 +9,7 @@ import sys
 import torch.nn as nn
 from dataset.coco_dataset import MyDataset
 from tqdm import tqdm
-from utils.eval import DataLogger, accuracy, cal_accuracy, SumLogger
+from utils.eval import DataLogger, accuracy, cal_accuracy, CurveLogger
 from utils.img import flip, shuffleLR
 from src.opt import opt
 from tensorboardX import SummaryWriter
@@ -55,6 +55,7 @@ open_source_dataset = config.open_source_dataset
 warm_up_epoch = max(config.warm_up.keys())
 loss_params = config.loss_param
 patience_decay = config.patience_decay
+draw_pred_img = False
 
 
 torch.backends.cudnn.benchmark = True
@@ -64,8 +65,9 @@ def train(train_loader, m, criterion, optimizer, writer):
     lossLogger = DataLogger()
     accLogger, distLogger = DataLogger(), DataLogger()
     pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
-    pts_loss_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_curve_Loggers = {i: CurveLogger() for i in range(opt.kps)}
+
     m.train()
 
     train_loader_desc = tqdm(train_loader)
@@ -89,7 +91,7 @@ def train(train_loader, m, criterion, optimizer, writer):
 
         # for idx, logger in pts_loss_Loggers.items():
         #     logger.update(criterion(out.mul(setMask)[:, [idx], :, :], labels[:, [idx], :, :]), inps.size(0))
-        acc, dist, exists = cal_accuracy(out.data.mul(setMask), labels.data, train_loader.dataset.accIdxs)
+        acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, train_loader.dataset.accIdxs)
         # acc, exists = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset, img_info[-1])
 
         optimizer.zero_grad()
@@ -99,6 +101,7 @@ def train(train_loader, m, criterion, optimizer, writer):
         distLogger.update(dist[0], inps.size(0))
 
         for k, v in pts_acc_Loggers.items():
+            pts_curve_Loggers[k].update(maxval[k], gt[k])
             if exists[k] > 0:
                 pts_acc_Loggers[k].update(acc[k+1], exists[k])
                 pts_dist_Loggers[k].update(dist[k+1], exists[k])
@@ -135,9 +138,10 @@ def train(train_loader, m, criterion, optimizer, writer):
 
     body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
+    auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
     train_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg, distLogger.avg, body_part_acc, body_part_dist
+    return lossLogger.avg, accLogger.avg, distLogger.avg, body_part_acc, body_part_dist, auc
 
 
 def valid(val_loader, m, criterion, optimizer, writer):
@@ -145,16 +149,13 @@ def valid(val_loader, m, criterion, optimizer, writer):
     lossLogger = DataLogger()
     accLogger, distLogger = DataLogger(), DataLogger()
     pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
-    pts_loss_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_curve_Loggers = {i: CurveLogger() for i in range(opt.kps)}
     m.eval()
-
-    # print("Validating")
 
     val_loader_desc = tqdm(val_loader)
 
     for i, (inps, labels, setMask, img_info) in enumerate(val_loader_desc):
-        # print("{}".format(img_info[-1]))
         if device != "cpu":
             inps = inps.cuda()
             labels = labels.cuda()
@@ -166,19 +167,24 @@ def valid(val_loader, m, criterion, optimizer, writer):
             if not drawn_kp:
                 try:
                     kps_img, have_kp = draw_kps(out, img_info)
-
-                # if have_kp:
                     drawn_kp = True
+                    if draw_pred_img:
+                        img = cv2.resize(kps_img, (1080, 720))
+                        drawn_kp = False
+                        cv2.imshow("val_pred", img)
+                        cv2.waitKey(0)
+                        # a = 1
+                        # draw_kps(out, img_info)
+                    else:
+                        writer.add_image("result of epoch {}".format(opt.epoch),
+                                         cv2.imread(
+                                             os.path.join("exp", opt.expFolder, opt.expID, opt.expID, "img.jpg"))[:, :,
+                                         ::-1], dataformats='HWC')
+
+                        hm = draw_hms(out[0])
+                        writer.add_image("result of epoch {} --> heatmap".format(opt.epoch), hm)
                 except:
                     pass
-                writer.add_image("result of epoch {}".format(opt.epoch),
-                                 cv2.imread(os.path.join("exp", opt.expFolder, opt.expID, opt.expID, "img.jpg"))[:, :, ::-1],
-                                 dataformats='HWC')
-                # else:
-                #     pass
-                drawn_hm = True
-                hm = draw_hms(out[0])
-                writer.add_image("result of epoch {} --> heatmap".format(opt.epoch), hm)
 
             loss = criterion(out.mul(setMask), labels)
 
@@ -187,14 +193,15 @@ def valid(val_loader, m, criterion, optimizer, writer):
             #
             # out = (flip_out + out) / 2
 
-        acc, dist, exists = cal_accuracy(out.data.mul(setMask), labels.data, val_loader.dataset.accIdxs)
-        acc, exists = accuracy(out.mul(setMask), labels, val_loader.dataset, img_info[-1])
+        acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, val_loader.dataset.accIdxs)
+        # acc, exists = accuracy(out.mul(setMask), labels, val_loader.dataset, img_info[-1])
 
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
         distLogger.update(dist[0], inps.size(0))
 
         for k, v in pts_acc_Loggers.items():
+            pts_curve_Loggers[k].update(maxval[k], gt[k])
             if exists[k] > 0:
                 pts_acc_Loggers[k].update(acc[k+1], exists[k])
                 pts_dist_Loggers[k].update(dist[k+1], exists[k])
@@ -219,9 +226,10 @@ def valid(val_loader, m, criterion, optimizer, writer):
 
     body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
+    auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
     val_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg, distLogger.avg, body_part_acc, body_part_dist
+    return lossLogger.avg, accLogger.avg, distLogger.avg, body_part_acc, body_part_dist, auc
 
 
 def main():
@@ -415,10 +423,10 @@ def main():
     # ))
 
     early_stopping = EarlyStopping(patience=opt.patience, verbose=True)
-    train_acc, val_acc, train_loss, val_loss, best_epoch, train_dist, val_dist = \
-        0, 0, float("inf"), float("inf"), 0, float("inf"), float("inf"),
-    train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, train_dist_ls, val_dist_ls, epoch_ls, lr_ls = \
-        [], [], [], [], [], [], [], []
+    train_acc, val_acc, train_loss, val_loss, best_epoch, train_dist, val_dist, train_auc, val_auc = \
+        0, 0, float("inf"), float("inf"), 0, float("inf"), float("inf"), 0, 0
+    train_acc_ls, val_acc_ls, train_loss_ls, val_loss_ls, train_dist_ls, val_dist_ls, train_auc_ls, val_auc_ls, \
+        epoch_ls, lr_ls = [], [], [], [], [], [], [], [], [], []
     decay, decay_epoch, lr, i = 0, [], opt.LR, begin_epoch
     stop = False
     m_best = m
@@ -448,30 +456,32 @@ def main():
             # writer.add_scalar("lr", lr, i)
             # print("epoch {}: lr {}".format(i, lr))
 
-            loss, acc, dist, pt_acc, pt_dist = train(train_loader, m, criterion, optimizer, writer)
+            loss, acc, dist, pt_acc, pt_dist, aucs = train(train_loader, m, criterion, optimizer, writer)
+            ave_auc = sum(aucs)/len(aucs)
             train_log_tmp.append(" ")
             train_log_tmp.append(loss)
             train_log_tmp.append(acc.tolist())
-            train_log_tmp.append(dist)
+            train_log_tmp.append(dist.tolist())
+            train_log_tmp.append(ave_auc)
             for a in pt_acc:
                 train_log_tmp.append(a.tolist())
             train_log_tmp.append(" ")
             for d in pt_dist:
-                train_log_tmp.append(d)
+                train_log_tmp.append(d.tolist())
+            train_log_tmp.append(" ")
+            for auc in aucs:
+                train_log_tmp.append(auc)
+            train_log_tmp.append(" ")
 
             train_acc_ls.append(acc)
             train_loss_ls.append(loss)
             train_dist_ls.append(dist)
+            train_auc_ls.append(ave_auc)
             train_acc = acc if acc > train_acc else train_acc
             train_loss = loss if loss < train_loss else train_loss
             train_dist = dist if dist < train_dist else train_dist
+            train_auc = ave_auc if train_auc > ave_auc else train_auc
 
-            # print('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f}| dist:{dist:.4f}'.format(
-            #     idx=i,
-            #     loss=loss,
-            #     acc=acc,
-            #     dist=dist,
-            # ))
             log.write('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
                 idx=i,
                 loss=loss,
@@ -483,22 +493,27 @@ def main():
             opt.loss = loss
             m_dev = m.module
 
-
-            loss, acc, dist, pt_acc, pt_dist = valid(val_loader, m, criterion, optimizer, writer)
-            train_log_tmp.append(" ")
+            loss, acc, dist, pt_acc, pt_dist, aucs = valid(val_loader, m, criterion, optimizer, writer)
+            ave_auc = sum(aucs)/len(aucs)
             train_log_tmp.insert(6, loss)
             train_log_tmp.insert(7, acc.tolist())
-            train_log_tmp.insert(8, dist)
-            train_log_tmp.insert(9, " ")
+            train_log_tmp.insert(8, dist.tolist())
+            train_log_tmp.insert(9, ave_auc)
+            train_log_tmp.insert(10, " ")
             for a in pt_acc:
                 train_log_tmp.append(a.tolist())
             train_log_tmp.append(" ")
             for d in pt_dist:
-                train_log_tmp.append(d)
+                train_log_tmp.append(d.tolist())
+            train_log_tmp.append(" ")
+            for auc in aucs:
+                train_log_tmp.append(auc)
+            train_log_tmp.append(" ")
 
             val_acc_ls.append(acc)
             val_loss_ls.append(loss)
             val_dist_ls.append(dist)
+            val_auc_ls.append(ave_auc)
             if acc > val_acc:
                 best_epoch = i
                 val_acc = acc
@@ -508,6 +523,10 @@ def main():
             if dist < val_dist:
                 val_dist = dist
                 torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_dist.pkl'.format(folder, save_ID))
+            if ave_auc > val_auc:
+                val_auc = ave_auc
+                torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_auc.pkl'.format(folder, save_ID))
+
 
             bn_num = 0
             for mod in m.modules():
@@ -515,12 +534,6 @@ def main():
                     bn_num += 1
                     writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
 
-            # print('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}'.format(
-            #     idx=i,
-            #     loss=loss,
-            #     acc=acc,
-            #     dist=dist,
-            # ))
             log.write('Valid:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
                 idx=i,
                 loss=loss,
@@ -554,7 +567,8 @@ def main():
                     decay += 1
                     # shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
                     #             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
-
+                    # if decay == 2:
+                    #     draw_pred_img = False
                     if decay > opt.lr_decay_time:
                         stop = True
                     else:

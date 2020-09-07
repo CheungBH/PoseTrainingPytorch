@@ -134,6 +134,14 @@ def transformBoxInvert(pt, ul, br, inpH, inpW, resH, resW):
     return new_point
 
 
+def box2location(pt, ul, br, inpH, inpW, resH, resW):
+    lenH = br[1] - ul[1]
+    lenW = br[0] - ul[0]
+    ratio = inpH/resH
+
+
+
+
 def cropBox(img, ul, br, resH, resW):
     ul = ul.int()
     br = (br - 1).int()
