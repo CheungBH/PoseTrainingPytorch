@@ -98,7 +98,7 @@ def train(train_loader, m, criterion, optimizer, writer):
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
         distLogger.update(dist[0], inps.size(0))
-        curveLogger.update(maxval.reshape(1,-1), gt.view(1,-1))
+        curveLogger.update(maxval.reshape(1,-1).squeeze(), gt.reshape(1,-1).squeeze())
         ave_auc = curveLogger.cal_AUC()
 
         for k, v in pts_acc_Loggers.items():
@@ -128,7 +128,7 @@ def train(train_loader, m, criterion, optimizer, writer):
             'Train/Dist', distLogger.avg, opt.trainIters)
         writer.add_scalar(
             'Train/AUC', ave_auc, opt.trainIters)
-
+        
         # TQDM
         train_loader_desc.set_description(
             'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f}'.format(
@@ -202,7 +202,7 @@ def valid(val_loader, m, criterion, optimizer, writer):
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
         distLogger.update(dist[0], inps.size(0))
-        curveLogger.update(maxval.reshape(1,-1), gt.view(1,-1))
+        curveLogger.update(maxval.reshape(1,-1).squeeze(), gt.reshape(1,-1).squeeze())
         ave_auc = curveLogger.cal_AUC()
 
         for k, v in pts_acc_Loggers.items():
@@ -501,12 +501,11 @@ def main():
             opt.loss = loss
             m_dev = m.module
 
-            loss, acc, dist, pt_acc, pt_dist, aucs = valid(val_loader, m, criterion, optimizer, writer)
-            ave_auc = sum(aucs)/len(aucs)
+            loss, acc, dist, auc, pt_acc, pt_dist, pt_auc = valid(val_loader, m, criterion, optimizer, writer)
             train_log_tmp.insert(6, loss)
             train_log_tmp.insert(7, acc.tolist())
             train_log_tmp.insert(8, dist.tolist())
-            train_log_tmp.insert(9, ave_auc)
+            train_log_tmp.insert(9, auc)
             train_log_tmp.insert(10, " ")
             for a in pt_acc:
                 train_log_tmp.append(a.tolist())
@@ -514,14 +513,14 @@ def main():
             for d in pt_dist:
                 train_log_tmp.append(d.tolist())
             train_log_tmp.append(" ")
-            for auc in aucs:
+            for auc in pt_auc:
                 train_log_tmp.append(auc)
             train_log_tmp.append(" ")
 
             val_acc_ls.append(acc)
             val_loss_ls.append(loss)
             val_dist_ls.append(dist)
-            val_auc_ls.append(ave_auc)
+            val_auc_ls.append(auc)
             if acc > val_acc:
                 best_epoch = i
                 val_acc = acc
@@ -531,8 +530,8 @@ def main():
             if dist < val_dist:
                 val_dist = dist
                 torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_dist.pkl'.format(folder, save_ID))
-            if ave_auc > val_auc:
-                val_auc = ave_auc
+            if auc > val_auc:
+                val_auc = auc
                 torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_auc.pkl'.format(folder, save_ID))
 
 
@@ -573,8 +572,6 @@ def main():
                 if early_stopping.early_stop:
                     optimizer, lr = lr_decay(optimizer, lr)
                     decay += 1
-                    # shutil.copy('exp/{0}/{1}/{1}_best.pkl'.format(dataset, save_folder),
-                    #             'exp/{0}/{1}/{1}_decay{2}_best.pkl'.format(dataset, save_folder, decay))
                     # if decay == 2:
                     #     draw_pred_img = False
                     if decay > opt.lr_decay_time:
@@ -582,7 +579,7 @@ def main():
                     else:
                         decay_epoch.append(i)
                         early_stopping.reset(int(opt.patience * patience_decay[decay]))
-                        torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(folder, save_ID, decay))
+                        # torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_decay{2}.pkl'.format(folder, save_ID, decay))
                         m = m_best
 
             for epo, ac in config.bad_epochs.items():
@@ -596,22 +593,26 @@ def main():
         writer.close()
         train_log.close()
 
-        draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, train_dist_ls, val_dist_ls, log_dir)
+        # draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, train_dist_ls, val_dist_ls, log_dir)
+        draw_graph(epoch_ls, train_loss_ls, val_loss_ls, "loss", log_dir)
+        draw_graph(epoch_ls, train_acc_ls, val_acc_ls, "acc", log_dir)
+        draw_graph(epoch_ls, train_auc_ls, val_auc_ls, "AUC", log_dir)
+        draw_graph(epoch_ls, train_dist_ls, val_dist_ls, "dist", log_dir)
 
         with open(result, "a+") as f:
             if not exist:
                 title_str = "id,backbone,structure,DUC,params,flops,time,loss_param,addDPG,kps,batch_size,optimizer," \
                             "freeze_bn,freeze,sparse,sparse_decay,epoch_num,LR,Gaussian,thresh,weightDecay,loadModel," \
-                            "model_location, ,folder_name,training_time,train_acc,train_loss,train_dist, " \
-                            "val_acc,val_loss,val_dist,best_epoch,final_epoch"
+                            "model_location, ,folder_name,training_time,train_acc,train_loss,train_dist,train_AUC" \
+                            "val_acc,val_loss,val_dist,val_AUC,best_epoch,final_epoch"
                 title_str = write_decay_title(len(decay_epoch), title_str)
                 f.write(title_str)
-            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{},{},{}\n".\
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{},{},{},{},{}\n".\
                 format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
                        opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
                        opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
-                       os.path.join(folder, save_ID), training_time, train_acc, train_loss, train_dist, val_acc, val_loss,
-                       val_dist, best_epoch, i)
+                       os.path.join(folder, save_ID), training_time, train_acc, train_loss, train_dist, train_auc,
+                       val_acc, val_loss, val_dist, val_auc, best_epoch, i)
             info_str = write_decay_info(decay_epoch, info_str)
             f.write(info_str)
     except IOError:

@@ -70,11 +70,14 @@ def get_sparse_value():
 
 
 def write_csv_title():
-    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "val_loss", "val_acc", "val_dist"," "]
+    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "train_auc", "val_loss",
+             "val_acc", "val_dist", "val_auc", " "]
     title += csv_body_part("train", "acc")
     title += csv_body_part("train", "dist")
+    title += csv_body_part("train", "AUC")
     title += csv_body_part("val", "acc")
     title += csv_body_part("val", "dist")
+    title += csv_body_part("val", "AUC")
     return title
 
 
@@ -104,35 +107,47 @@ def write_decay_info(decays, char):
     return char
 
 
-def draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, train_dists, val_dists, log_dir):
-    ln1, = plt.plot(epoch_ls, train_loss_ls, color='red', linewidth=3.0, linestyle='--')
-    ln2, = plt.plot(epoch_ls, val_loss_ls, color='blue', linewidth=3.0, linestyle='-.')
+def draw_graph(epoch_ls, train_ls, val_ls, name, log_dir):
+    img_name = name + ".jpg"
+    ln1, = plt.plot(epoch_ls, train_ls, color='red', linewidth=3.0, linestyle='--')
+    ln2, = plt.plot(epoch_ls, val_ls, color='blue', linewidth=3.0, linestyle='-.')
     plt.title("Loss")
     plt.legend(handles=[ln1, ln2], labels=['train_loss', 'val_loss'])
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(log_dir, "loss.jpg"))
-    plt.cla()
+    plt.savefig(os.path.join(log_dir, "{}.jpg".format(img_name)))
 
-    ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
-    ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
-    plt.title("Acc")
-    plt.legend(handles=[ln1, ln2], labels=['train_acc', 'val_acc'])
-    ax = plt.gca()
-    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
-    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(log_dir, "acc.jpg"))
-    plt.cla()
 
-    ln1, = plt.plot(epoch_ls, train_dists, color='red', linewidth=3.0, linestyle='--')
-    ln2, = plt.plot(epoch_ls, val_dists, color='blue', linewidth=3.0, linestyle='-.')
-    plt.title("Dist")
-    plt.legend(handles=[ln1, ln2], labels=['train_dist', 'val_dist'])
-    ax = plt.gca()
-    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
-    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(log_dir, "dist.jpg"))
+# def draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, train_dists, val_dists, log_dir):
+#     ln1, = plt.plot(epoch_ls, train_loss_ls, color='red', linewidth=3.0, linestyle='--')
+#     ln2, = plt.plot(epoch_ls, val_loss_ls, color='blue', linewidth=3.0, linestyle='-.')
+#     plt.title("Loss")
+#     plt.legend(handles=[ln1, ln2], labels=['train_loss', 'val_loss'])
+#     ax = plt.gca()
+#     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+#     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+#     plt.savefig(os.path.join(log_dir, "loss.jpg"))
+#     plt.cla()
+#
+#     ln1, = plt.plot(epoch_ls, train_acc_ls, color='red', linewidth=3.0, linestyle='--')
+#     ln2, = plt.plot(epoch_ls, val_acc_ls, color='blue', linewidth=3.0, linestyle='-.')
+#     plt.title("Acc")
+#     plt.legend(handles=[ln1, ln2], labels=['train_acc', 'val_acc'])
+#     ax = plt.gca()
+#     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+#     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+#     plt.savefig(os.path.join(log_dir, "acc.jpg"))
+#     plt.cla()
+#
+#     ln1, = plt.plot(epoch_ls, train_dists, color='red', linewidth=3.0, linestyle='--')
+#     ln2, = plt.plot(epoch_ls, val_dists, color='blue', linewidth=3.0, linestyle='-.')
+#     plt.title("Dist")
+#     plt.legend(handles=[ln1, ln2], labels=['train_dist', 'val_dist'])
+#     ax = plt.gca()
+#     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+#     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+#     plt.savefig(os.path.join(log_dir, "dist.jpg"))
 
 
 

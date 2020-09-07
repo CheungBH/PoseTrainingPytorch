@@ -57,6 +57,10 @@ class CurveLogger:
             auc = 0
         return auc
 
+    def cal_PR(self):
+        P, R, _ = metrics.precision_recall_curve(self.preds, self.gt)
+        return P, R
+
 
 class NullWriter(object):
     def write(self, arg):
