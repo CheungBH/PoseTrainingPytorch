@@ -58,8 +58,15 @@ class CurveLogger:
         return auc
 
     def cal_PR(self):
-        P, R, _ = metrics.precision_recall_curve(self.preds, self.gt)
-        return P, R
+        try:
+            P, R, thresh = metrics.precision_recall_curve(self.preds, self.gt)
+            area = 0
+            for idx in range(len(thresh)-1):
+                a = (R[idx] - R[idx+1]) * (P[idx+1] + P[idx])/2
+                area += a
+            return area
+        except:
+            return 0
 
 
 class NullWriter(object):

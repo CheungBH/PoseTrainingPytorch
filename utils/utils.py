@@ -70,14 +70,16 @@ def get_sparse_value():
 
 
 def write_csv_title():
-    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "train_auc", "val_loss",
-             "val_acc", "val_dist", "val_auc", " "]
+    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "train_auc", "train_pr", "val_loss",
+             "val_acc", "val_dist", "val_auc", "val_pr", " "]
     title += csv_body_part("train", "acc")
     title += csv_body_part("train", "dist")
     title += csv_body_part("train", "AUC")
+    title += csv_body_part("train", "PR")
     title += csv_body_part("val", "acc")
     title += csv_body_part("val", "dist")
     title += csv_body_part("val", "AUC")
+    title += csv_body_part("val", "PR")
     return title
 
 
