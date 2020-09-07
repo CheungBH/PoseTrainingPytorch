@@ -62,8 +62,7 @@ torch.backends.cudnn.benchmark = True
 
 
 def train(train_loader, m, criterion, optimizer, writer):
-    lossLogger = DataLogger()
-    accLogger, distLogger = DataLogger(), DataLogger()
+    accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
     pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_curve_Loggers = {i: CurveLogger() for i in range(opt.kps)}
@@ -99,6 +98,8 @@ def train(train_loader, m, criterion, optimizer, writer):
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
         distLogger.update(dist[0], inps.size(0))
+        curveLogger.update(maxval.reshape(1,-1), gt.view(1,-1))
+        ave_auc = curveLogger.cal_AUC()
 
         for k, v in pts_acc_Loggers.items():
             pts_curve_Loggers[k].update(maxval[k], gt[k])
@@ -125,29 +126,31 @@ def train(train_loader, m, criterion, optimizer, writer):
             'Train/Acc', accLogger.avg, opt.trainIters)
         writer.add_scalar(
             'Train/Dist', distLogger.avg, opt.trainIters)
+        writer.add_scalar(
+            'Train/AUC', ave_auc, opt.trainIters)
 
         # TQDM
         train_loader_desc.set_description(
-            'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+            'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f}'.format(
                 epoch=opt.epoch,
                 loss=lossLogger.avg,
                 acc=accLogger.avg * 100,
                 dist=distLogger.avg,
+                AUC=ave_auc,
             )
         )
 
     body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
-    auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
+    body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
     train_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg, distLogger.avg, body_part_acc, body_part_dist, auc
+    return lossLogger.avg, accLogger.avg, distLogger.avg, curveLogger.cal_AUC(), body_part_acc, body_part_dist, body_part_auc
 
 
 def valid(val_loader, m, criterion, optimizer, writer):
     drawn_kp, drawn_hm = False, False
-    lossLogger = DataLogger()
-    accLogger, distLogger = DataLogger(), DataLogger()
+    accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
     pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_curve_Loggers = {i: CurveLogger() for i in range(opt.kps)}
@@ -199,6 +202,8 @@ def valid(val_loader, m, criterion, optimizer, writer):
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
         distLogger.update(dist[0], inps.size(0))
+        curveLogger.update(maxval.reshape(1,-1), gt.view(1,-1))
+        ave_auc = curveLogger.cal_AUC()
 
         for k, v in pts_acc_Loggers.items():
             pts_curve_Loggers[k].update(maxval[k], gt[k])
@@ -215,21 +220,25 @@ def valid(val_loader, m, criterion, optimizer, writer):
             'Valid/Acc', accLogger.avg, opt.valIters)
         writer.add_scalar(
             'Valid/Dist', distLogger.avg, opt.valIters)
+        writer.add_scalar(
+            'Train/AUC', ave_auc, opt.trainIters)
 
         val_loader_desc.set_description(
-            'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+            'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f}'.format(
                 epoch=opt.epoch,
                 loss=lossLogger.avg,
                 acc=accLogger.avg * 100,
-                dist=distLogger.avg,)
+                dist=distLogger.avg,
+                AUC=ave_auc,
+            )
         )
 
     body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
-    auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
+    body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
     val_loader_desc.close()
 
-    return lossLogger.avg, accLogger.avg, distLogger.avg, body_part_acc, body_part_dist, auc
+    return lossLogger.avg, accLogger.avg, distLogger.avg, curveLogger.cal_AUC(), body_part_acc, body_part_dist, body_part_auc
 
 
 def main():
@@ -456,31 +465,30 @@ def main():
             # writer.add_scalar("lr", lr, i)
             # print("epoch {}: lr {}".format(i, lr))
 
-            loss, acc, dist, pt_acc, pt_dist, aucs = train(train_loader, m, criterion, optimizer, writer)
-            ave_auc = sum(aucs)/len(aucs)
+            loss, acc, dist, auc, pt_acc, pt_dist, pt_auc = train(train_loader, m, criterion, optimizer, writer)
             train_log_tmp.append(" ")
             train_log_tmp.append(loss)
             train_log_tmp.append(acc.tolist())
             train_log_tmp.append(dist.tolist())
-            train_log_tmp.append(ave_auc)
+            train_log_tmp.append(auc)
             for a in pt_acc:
                 train_log_tmp.append(a.tolist())
             train_log_tmp.append(" ")
             for d in pt_dist:
                 train_log_tmp.append(d.tolist())
             train_log_tmp.append(" ")
-            for auc in aucs:
+            for auc in pt_auc:
                 train_log_tmp.append(auc)
             train_log_tmp.append(" ")
 
             train_acc_ls.append(acc)
             train_loss_ls.append(loss)
             train_dist_ls.append(dist)
-            train_auc_ls.append(ave_auc)
+            train_auc_ls.append(auc)
             train_acc = acc if acc > train_acc else train_acc
             train_loss = loss if loss < train_loss else train_loss
             train_dist = dist if dist < train_dist else train_dist
-            train_auc = ave_auc if train_auc > ave_auc else train_auc
+            train_auc = auc if train_auc > auc else train_auc
 
             log.write('Train:-{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}\n'.format(
                 idx=i,
