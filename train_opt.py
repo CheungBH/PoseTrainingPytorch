@@ -114,9 +114,10 @@ def train(train_loader, m, criterion, optimizer, writer):
         else:
             loss.backward()
 
-        # for mod in m.modules():
-        #     if isinstance(mod, nn.BatchNorm2d):
-        #         mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))
+        if opt.freeze > 0:
+            for mod in m.modules():
+                if isinstance(mod, nn.BatchNorm2d):
+                    mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))
 
         optimizer.step()
         opt.trainIters += 1
@@ -496,10 +497,10 @@ def main():
             train_acc = acc if acc > train_acc else train_acc
             train_loss = loss if loss < train_loss else train_loss
             train_dist = dist if dist < train_dist else train_dist
-            train_auc = auc if train_auc > auc else train_auc
-            train_PR = pr if train_PR > pr else train_PR
+            train_auc = auc if auc > train_auc else train_auc
+            train_PR = pr if pr > train_PR else train_PR
 
-            log.write('Train:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f}| AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
+            log.write('Train:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
                     idx=i,
                     loss=loss,
                     acc=acc,
