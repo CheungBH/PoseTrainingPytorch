@@ -110,15 +110,15 @@ def write_decay_info(decays, char):
 
 
 def draw_graph(epoch_ls, train_ls, val_ls, name, log_dir):
-    img_name = name + ".jpg"
     ln1, = plt.plot(epoch_ls, train_ls, color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls, val_ls, color='blue', linewidth=3.0, linestyle='-.')
-    plt.title("Loss")
-    plt.legend(handles=[ln1, ln2], labels=['train_loss', 'val_loss'])
+    plt.title("{}".format(name))
+    plt.legend(handles=[ln1, ln2], labels=['train_{}'.format(name), 'val_{}'.format(name)])
     ax = plt.gca()
     ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
     ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
-    plt.savefig(os.path.join(log_dir, "{}.jpg".format(img_name)))
+    plt.savefig(os.path.join(log_dir, "{}.jpg".format(name)))
+    plt.cla()
 
 
 # def draw_graph(epoch_ls, train_loss_ls, val_loss_ls, train_acc_ls, val_acc_ls, train_dists, val_dists, log_dir):

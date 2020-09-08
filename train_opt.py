@@ -514,12 +514,12 @@ def main():
             m_dev = m.module
 
             loss, acc, dist, auc, pr, pt_acc, pt_dist, pt_auc, pt_pr = valid(val_loader, m, criterion, writer)
-            train_log_tmp.insert(6, loss)
-            train_log_tmp.insert(7, acc.tolist())
-            train_log_tmp.insert(8, dist.tolist())
-            train_log_tmp.insert(9, auc)
-            train_log_tmp.insert(10, pr)
-            train_log_tmp.insert(11, " ")
+            train_log_tmp.insert(9, loss)
+            train_log_tmp.insert(10, acc.tolist())
+            train_log_tmp.insert(11, dist.tolist())
+            train_log_tmp.insert(12, auc)
+            train_log_tmp.insert(13, pr)
+            train_log_tmp.insert(14, " ")
             for a in pt_acc:
                 train_log_tmp.append(a.tolist())
             train_log_tmp.append(" ")
@@ -555,7 +555,7 @@ def main():
                 torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_pr.pkl'.format(folder, save_ID))
 
 
-            log.write('Valid:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
+            log.write('Valid:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
                     idx=i,
                     loss=loss,
                     acc=acc,
@@ -633,7 +633,7 @@ def main():
                             "train_PR,val_acc,val_loss,val_dist,val_AUC,val_PR,best_epoch,final_epoch"
                 title_str = write_decay_title(len(decay_epoch), title_str)
                 f.write(title_str)
-            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{},{},{},{},{}\n".\
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".\
                 format(save_ID, opt.backbone, opt.struct, opt.DUC, params, flops, inf_time, opt.loss_allocate, opt.addDPG,
                        opt.kps, opt.trainBatch, opt.optMethod, opt.freeze_bn, opt.freeze, opt.sparse_s, opt.sparse_decay,
                        opt.nEpochs, opt.LR, opt.hmGauss, opt.ratio, opt.weightDecay, opt.loadModel, config.computer,
