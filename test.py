@@ -1,76 +1,135 @@
-from utils.eval import getPrediction
-from utils.nms import pose_nms
 import torch
-import cv2
-from utils.visualize import KeyPointVisualizer
+import torch.utils.data
+from dataset.coco_dataset import MyDataset
+from tqdm import tqdm
+from utils.eval import DataLogger, cal_accuracy, CurveLogger
 from src.opt import opt
-import math
-import numpy as np
+import config.config as config
+from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
+from utils.draw import draw_kps
 import os
 
-tensor = torch.FloatTensor
-max_img = 4
-img_num = min(opt.validBatch, max_img)
-column = 4
-row = math.floor(img_num/column)
+device = config.device
+open_source_dataset = config.open_source_dataset
+torch.backends.cudnn.benchmark = True
 
 
-def draw_kp(hm, pt1, pt2, boxes, img_path):
-    scores = tensor([[0.999]]*(boxes.shape[0]))
-    boxes = boxes.float()
-    preds_hm, preds_img, preds_scores = getPrediction(
-        hm, pt1, pt2, opt.inputResH, opt.inputResW, opt.outputResH, opt.outputResW)
-    kps, score = pose_nms(boxes, scores, preds_img, preds_scores)
-    orig_img = cv2.imread(img_path)
-    if kps:
-        cond = True
-        kpv = KeyPointVisualizer()
-        img = kpv.vis_ske(orig_img, kps, score)
+def test(loader, m, criterion):
+    accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
+    pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
+    pts_curve_Loggers = {i: CurveLogger() for i in range(opt.kps)}
+    m.eval()
+
+    test_loader_desc = tqdm(loader)
+
+    for i, (inps, labels, setMask, img_info) in enumerate(test_loader_desc):
+        if device != "cpu":
+            inps = inps.cuda()
+            labels = labels.cuda()
+            setMask = setMask.cuda()
+
+        with torch.no_grad():
+            out = m(inps)
+
+            try:
+                draw_kps(out, img_info)
+            except:
+                pass
+
+            loss = criterion(out.mul(setMask), labels)
+
+        acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, loader.dataset.accIdxs)
+
+        accLogger.update(acc[0], inps.size(0))
+        lossLogger.update(loss.item(), inps.size(0))
+        distLogger.update(dist[0], inps.size(0))
+        curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
+        ave_auc = curveLogger.cal_AUC()
+        pr_area = curveLogger.cal_PR()
+
+        for k, v in pts_acc_Loggers.items():
+            pts_curve_Loggers[k].update(maxval[k], gt[k])
+            if exists[k] > 0:
+                pts_acc_Loggers[k].update(acc[k + 1], exists[k])
+                pts_dist_Loggers[k].update(dist[k + 1], exists[k])
+
+        test_loader_desc.set_description(
+            'Test: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+                epoch=opt.epoch,
+                loss=lossLogger.avg,
+                acc=accLogger.avg * 100,
+                dist=distLogger.avg,
+                AUC=ave_auc,
+                PR=pr_area
+            )
+        )
+
+    body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
+    body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
+    body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
+    body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
+    test_loader_desc.close()
+
+    return lossLogger.avg, accLogger.avg, distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR(), \
+           body_part_acc, body_part_dist, body_part_auc, body_part_pr
+
+
+def test_model(structure, cfg, data_info, weight, batch=4):
+
+    if structure == "mobilenet":
+        from models.mobilenet.MobilePose import createModel
+        from config.model_cfg import mobile_opt as model_ls
+    elif structure == "seresnet101":
+        from models.seresnet.FastPose import createModel
+        from config.model_cfg import seresnet_cfg as model_ls
+    elif structure == "efficientnet":
+        from models.efficientnet.EfficientPose import createModel
+        from config.model_cfg import efficientnet_cfg as model_ls
+    elif structure == "shufflenet":
+        from models.shufflenet.ShufflePose import createModel
+        from config.model_cfg import shufflenet_cfg as model_ls
     else:
-        img = orig_img
-        cond = False
-    return img, cond
+        raise ValueError("Your model name is wrong")
+    model_cfg = model_ls[cfg]
+    opt.loadModel = weight
+
+    # Model Initialize
+    if device != "cpu":
+        m = createModel(cfg=model_cfg).cuda()
+    else:
+        m = createModel(cfg=model_cfg).cpu()
+
+    m.load_state_dict(torch.load(weight))
+    flops = print_model_param_flops(m)
+    print("FLOPs of current model is {}".format(flops))
+    params = print_model_param_nums(m)
+    print("Parameters of current model is {}".format(params))
+    inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
+    print("Inference time is {}".format(inf_time))
+    print("----------------------------------------------------------------------------------------------------")
+
+    # Model Transfer
+    if device != "cpu":
+        criterion = torch.nn.MSELoss().cuda()
+    else:
+        criterion = torch.nn.MSELoss()
+
+    test_dataset = MyDataset(data_info, train=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch, num_workers=4, pin_memory=True)
+
+    loss, acc, dist, auc, pr, pt_acc, pt_dist, pt_auc, pt_pr = test(test_loader, m, criterion)
 
 
-def draw_kps(hms, info):
-    hms = hms.cpu()
-    (_pt1, _pt2, _boxes, _img_path, _gt) = info
-    drawn = False
-    img_ls = []
-    for i in range(img_num):
-        pt1, pt2, boxes, img_path, hm = _pt1[i].unsqueeze(dim=0), _pt2[i].unsqueeze(dim=0), _boxes[i].unsqueeze(dim=0), _img_path[i], hms[i].unsqueeze(dim=0)
-        img, if_kps = draw_kp(hm, pt1, pt2, boxes, img_path)
-        drawn = if_kps or drawn
-        img = cv2.resize(img, (720, 540))
-        img_ls.append(img)
-
-    # predictions = img_ls[0]
-    prediction_1 = np.concatenate((img_ls[0], img_ls[1]), axis=0)
-    prediction_2 = np.concatenate((img_ls[2], img_ls[3]), axis=0)
-    predictions = np.concatenate((prediction_1, prediction_2), axis=1)
-    # for r in range(row):
-    #     row_img = [img_ls[r*4+c] for c in range(column)]
-    #     predictions = np.concatenate((row_img[0], row_img[1], row_img[2], row_img[3]), axis=0)
-    cv2.imwrite(os.path.join("exp", opt.expFolder, opt.expID, opt.expID, "img.jpg"), predictions)
-
-    return predictions, drawn
-
-
-def draw_hms(hms):
-    hm_column = 6
-    hms = hms.cpu().numpy()
-    hm1 = np.concatenate((hms[0], hms[1], hms[2], hms[3], hms[4], hms[5]), axis=1)
-    hm2 = np.concatenate((hms[6], hms[7], hms[8], hms[9], hms[10], hms[11]), axis=1)
-    remain = len(hms) - hm_column * 2
-    hm3 = generate_white(hm_column-remain)
-    for num in range(remain):
-        hm3 = np.concatenate((hms[-num+1], hm3), axis=1)
-    hm = np.concatenate((hm1, hm2, hm3), axis=0)
-    return tensor(hm).unsqueeze(dim=0)
-
-
-def generate_white(num):
-    rand = np.zeros((opt.outputResH, opt.outputResW))
-    for _ in range(num-1):
-        rand = np.concatenate((rand, np.zeros((opt.outputResH, opt.outputResW))), axis=1)
-    return rand
+if __name__ == '__main__':
+    data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
+    weight = "exp/weights/ceiling_5/ceiling_5_best_duc_se.pkl"
+    cfg = ""
+    backbone = "seresnet101"
+    option_path = os.path.join("/".join(weight.split("/")[:-1]), "option.pkl")
+    if os.path.exists(option_path):
+        info = torch.load(option_path)
+        cfg = info.struct
+        backbone = info.backbone
+        opt.kps = info.kps
+    test_model(backbone, cfg, data, weight)

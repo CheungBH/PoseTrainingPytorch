@@ -19,7 +19,7 @@ from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, wr
     write_decay_info, draw_graph, check_hm, check_part
 from utils.pytorchtools import EarlyStopping
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
-from test import draw_kps, draw_hms
+from utils.draw import draw_kps, draw_hms
 
 
 if opt.backbone == "mobilenet":
