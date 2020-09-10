@@ -114,7 +114,7 @@ def train(train_loader, m, criterion, optimizer, writer):
         else:
             loss.backward()
 
-        if opt.freeze > 0:
+        if opt.freeze == 0:
             for mod in m.modules():
                 if isinstance(mod, nn.BatchNorm2d):
                     mod.weight.grad.data.add_(s * torch.sign(mod.weight.data))

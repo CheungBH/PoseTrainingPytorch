@@ -71,6 +71,7 @@ mobile_opt = {"0": None,
 
 seresnet_cfg = {"0": None,
                 "cfg1": "config/pose_cfg/seresnet_cfg.txt",
+                "ceiling_0910": "config/ceiling_cfg/0910.txt"
                 }
 
 

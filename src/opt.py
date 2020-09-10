@@ -101,4 +101,7 @@ parser.add_argument('--hmGauss', default=1, type=int,
 parser.add_argument('--ratio', default=3, type=int,
                     help='Heatmap ratio')
 
-opt = parser.parse_args()
+# try:
+#     opt = parser.parse_args()
+# except:
+opt, unknown = parser.parse_known_args()
