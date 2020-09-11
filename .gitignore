@@ -4,6 +4,8 @@ datasets/
 checkpoints/
 result/
 build/
+test_weight
+result.csv
 dist/
 *.png
 torch.egg-info/

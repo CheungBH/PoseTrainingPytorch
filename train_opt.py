@@ -385,6 +385,9 @@ def main():
                 f.write(cmd)
             print('Loading Model from {}'.format(pre_train_model))
             m.load_state_dict(torch.load(pre_train_model))
+            m.conv_out = nn.Conv2d(m.DIM, opt.kps, kernel_size=3, stride=1, padding=1)
+            if device != "cpu":
+                m.conv_out.cuda()
             os.makedirs("exp/{}/{}".format(folder, save_ID), exist_ok=True)
     else:
         print('Create new model')
