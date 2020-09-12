@@ -70,6 +70,7 @@ def test(loader, m, criterion):
     body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
     body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
     test_loader_desc.close()
+    print("----------------------------------------------------------------------------------------------------")
 
     return lossLogger.avg, accLogger.avg, distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR(), \
            body_part_acc, body_part_dist, body_part_auc, body_part_pr
@@ -107,7 +108,6 @@ def main(structure, cfg, data_info, weight, batch=4):
     print("Parameters of current model is {}".format(params))
     inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
     print("Inference time is {}".format(inf_time))
-    print("----------------------------------------------------------------------------------------------------")
 
     # Model Transfer
     if device != "cpu":
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     import csv
     from config.config import computer
     from utils.utils import write_test_title
-    model_folders = "test_weight/ceiling_0911"
+    model_folders = "test_weight/ceiling_0911_s"
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
 
     result_path = os.path.join(model_folders, "test_result.csv")
@@ -145,8 +145,8 @@ if __name__ == '__main__':
             if "option" in file:
                 option = os.path.join(model_folders, folder, file)
             elif ".pkl" in file or ".pth" in file:
+                test_log.append(folder + file)
                 model = os.path.join(model_folders, folder, file)
-                test_log.append(folder + model)
             else:
                 continue
 
