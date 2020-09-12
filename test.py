@@ -55,7 +55,7 @@ def test(loader, m, criterion):
                 pts_dist_Loggers[k].update(dist[k + 1], exists[k])
 
         test_loader_desc.set_description(
-            'Test: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+            'Test: | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                 epoch=opt.epoch,
                 loss=lossLogger.avg,
                 acc=accLogger.avg * 100,
@@ -126,10 +126,10 @@ if __name__ == '__main__':
     import csv
     from config.config import computer
     from utils.utils import write_test_title
-    model_folders = "test_weight"
+    model_folders = "test_weight/ceiling_0911"
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
 
-    result_path = "result.csv"
+    result_path = os.path.join(model_folders, "test_result.csv")
     if_exist = os.path.exists(result_path)
     test_log = open(result_path, "a+", newline="")
     csv_writer = csv.writer(test_log)
@@ -138,6 +138,9 @@ if __name__ == '__main__':
 
     for folder in os.listdir(model_folders):
         option, model, test_log = "", "", []
+        if "csv" in folder:
+            continue
+
         for file in os.listdir(os.path.join(model_folders, folder)):
             if "option" in file:
                 option = os.path.join(model_folders, folder, file)
@@ -154,6 +157,7 @@ if __name__ == '__main__':
         backbone = info.backbone
         opt.kps = info.kps
 
+        print("Testing model {}".format(model))
         benchmark, overall, part = main(backbone, cfg, test_data, model)
 
         for item in benchmark:
@@ -161,6 +165,8 @@ if __name__ == '__main__':
         test_log.append(computer)
 
         for item in overall:
+            if isinstance(item, torch.Tensor):
+                item = item.tolist()
             test_log.append(item)
         test_log.append(" ")
 
