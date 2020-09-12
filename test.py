@@ -103,11 +103,11 @@ def main(structure, cfg, data_info, weight, batch=4):
 
     m.load_state_dict(torch.load(weight))
     flops = print_model_param_flops(m)
-    print("FLOPs of current model is {}".format(flops))
+    # print("FLOPs of current model is {}".format(flops))
     params = print_model_param_nums(m)
-    print("Parameters of current model is {}".format(params))
+    # print("Parameters of current model is {}".format(params))
     inf_time = get_inference_time(m, height=opt.outputResH, width=opt.outputResW)
-    print("Inference time is {}".format(inf_time))
+    # print("Inference time is {}".format(inf_time))
 
     # Model Transfer
     if device != "cpu":
@@ -116,7 +116,7 @@ def main(structure, cfg, data_info, weight, batch=4):
         criterion = torch.nn.MSELoss()
 
     test_dataset = MyDataset(data_info, train=True)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch, num_workers=4, pin_memory=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch, num_workers=0, pin_memory=True)
 
     loss, acc, dist, auc, pr, pt_acc, pt_dist, pt_auc, pt_pr = test(test_loader, m, criterion)
     return (flops, params, inf_time), (loss, acc, dist, auc, pr), (pt_acc, pt_dist, pt_auc, pt_pr)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     import csv
     from config.config import computer
     from utils.utils import write_test_title
-    model_folders = "test_weight/ceiling_0911_s"
+    model_folders = "test_weight/ceiling_0911"
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
 
     result_path = os.path.join(model_folders, "test_result.csv")
@@ -145,7 +145,8 @@ if __name__ == '__main__':
             if "option" in file:
                 option = os.path.join(model_folders, folder, file)
             elif ".pkl" in file or ".pth" in file:
-                test_log.append(folder + file)
+                test_log.append(folder)
+                test_log.append(file)
                 model = os.path.join(model_folders, folder, file)
             else:
                 continue
