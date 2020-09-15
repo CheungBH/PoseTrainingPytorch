@@ -1,11 +1,11 @@
 import os
 import shutil
 
-src_folder = '../exp/ceiling_0911'
-dest_folder = "../test_weight/ceiling_0911"
+src_folder = '../exp/ceiling_prune'
+dest_folder = "../test_weight/ceiling_prune"
 os.makedirs(dest_folder,exist_ok=True)
 
-target_indic = ["acc", "pr", "auc", "dist"]
+target_indic = ["acc", "_pr", "auc", "dist"]
 
 for folder in os.listdir(src_folder):
     sub_folder = os.path.join(src_folder, folder)

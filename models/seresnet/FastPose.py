@@ -27,8 +27,7 @@ class FastPose(nn.Module):
         self.duc1 = DUC(512, 1024, upscale_factor=2)
         self.duc2 = DUC(256, 512, upscale_factor=2)
 
-        self.conv_out = nn.Conv2d(
-            self.DIM, len(train_body_part), kernel_size=3, stride=1, padding=1)
+        self.conv_out = nn.Conv2d(self.DIM, opt.kps, kernel_size=3, stride=1, padding=1)
 
         if opt.loadModel:
             if "duc" in opt.loadModel:
