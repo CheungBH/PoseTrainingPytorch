@@ -220,8 +220,8 @@ def valid(val_loader, m, criterion, writer):
         writer.add_scalar('Valid/Loss', lossLogger.avg, opt.valIters)
         writer.add_scalar('Valid/Acc', accLogger.avg, opt.valIters)
         writer.add_scalar('Valid/Dist', distLogger.avg, opt.valIters)
-        writer.add_scalar('Valid/AUC', ave_auc, opt.trainIters)
-        writer.add_scalar('Valid/PR', pr_area, opt.trainIters)
+        writer.add_scalar('Valid/AUC', ave_auc, opt.valIters)
+        writer.add_scalar('Valid/PR', pr_area, opt.valIters)
 
         val_loader_desc.set_description(
             'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
