@@ -1,6 +1,6 @@
 import torch
 import torch.utils.data
-from dataset.coco_dataset import MyDataset
+from dataset.coco_dataset import TestDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, cal_accuracy, CurveLogger
 from src.opt import opt
@@ -115,7 +115,7 @@ def main(structure, cfg, data_info, weight, batch=4):
     else:
         criterion = torch.nn.MSELoss()
 
-    test_dataset = MyDataset(data_info, train=True)
+    test_dataset = TestDataset(data_info, train=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch, num_workers=0, pin_memory=True)
 
     loss, acc, dist, auc, pr, pt_acc, pt_dist, pt_auc, pt_pr = test(test_loader, m, criterion)
@@ -157,6 +157,7 @@ if __name__ == '__main__':
         cfg = info.struct
         backbone = info.backbone
         opt.kps = info.kps
+        import config.config
 
         print("Testing model {}".format(model))
         benchmark, overall, part = main(backbone, cfg, test_data, model)

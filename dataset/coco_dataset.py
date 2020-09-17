@@ -12,6 +12,7 @@ import random
 from dataset.bbox_visualize import BBoxVisualizer
 from dataset.kps_visualize import KeyPointVisualizer
 from utils.utils import check_hm, check_part
+from src.opt import opt
 
 
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
@@ -98,7 +99,8 @@ class MyDataset(data.Dataset):
         self.accIdxs = config.train_body_part
         self.flipRef = [item for idx, item in enumerate(origin_flipRef) if (idx + 1) * 2 < len(self.accIdxs)]
 
-        self.img_train, self.img_val, self.part_train, self.part_val, self.bbox_train, self.bbox_val = [], [], [], [], [], []
+        self.img_train, self.img_val, self.part_train, self.part_val, self.bbox_train, self.bbox_val = \
+            [], [], [], [], [], []
 
         for k, v in data_info.items():
             if k in open_source_dataset:
@@ -135,8 +137,8 @@ class MyDataset(data.Dataset):
             imgname = self.img_val[index]
         part = choose_kps(part, self.accIdxs)
 
-        inp, out, setMask, pt1, pt2 = generateSampleBox(imgname, bndbox, part, len(self.accIdxs),
-                                     config.train_data, sf, self, train=self.is_train)
+        inp, out, setMask, pt1, pt2 = generateSampleBox(imgname, bndbox, part, len(self.accIdxs), config.train_data, sf,
+                                                        self, train=self.is_train)
 
         kps_info = (pt1, pt2, bndbox[0], imgname, part)
         return inp, out, setMask, kps_info
@@ -146,6 +148,16 @@ class MyDataset(data.Dataset):
             return self.size_train
         else:
             return self.size_val
+
+
+class TestDataset(MyDataset):
+    def __init__(self, data_info,train=True, sigma=opt.hmGauss, scale_factor=(0.2, 0.3), rot_factor=40,
+                         label_type='Gaussian'):
+        super().__init__(data_info)
+        if opt.kps == 17:
+            self.accIdxs = [i + 1 for i in range(17)]
+        elif opt.kps == 13:
+            self.accIdxs = [1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
 
 def extract_customized_data(data_info):
