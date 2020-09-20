@@ -16,10 +16,11 @@ test_log = open(result_path, "a+", newline="")
 
 model_ls, option_ls, name_ls, folder_ls = [], [], [], []
 csv_writer = csv.writer(test_log)
-if not if_exist:
-    csv_writer.writerow(write_test_title())
 
 for folder in os.listdir(model_folders):
+    if not os.path.isdir(os.path.join(model_folders, folder)):
+        continue
+
     option, model = "", ""
     model_tmp, name_tmp = [], []
     if "csv" in folder:
@@ -43,12 +44,18 @@ for folder in os.listdir(model_folders):
         model_ls.append(m)
         option_ls.append(option)
         name_ls.append(n)
+        folder_ls.append(folder)
 
+info = torch.load(option)
+opt.kps = info.kps
 
-for opt, mdl, name, fold in zip(option_ls, model_ls, name_ls, folder_ls):
+if not if_exist:
+    csv_writer.writerow(write_test_title())
+
+for op, mdl, name, fold in zip(option_ls, model_ls, name_ls, folder_ls):
     log = [fold, name]
-    
-    info = torch.load(opt)
+
+    info = torch.load(op)
     cfg = info.struct
     backbone = info.backbone
     opt.kps = info.kps

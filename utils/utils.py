@@ -95,7 +95,12 @@ def write_test_title():
 
 def csv_body_part(phase, indicator):
     ls = []
-    for item in config.body_part_name:
+    body_parts = [item for item in config.body_parts.values()]
+    if opt.kps == 17:
+        body_parts = body_parts
+    elif opt.kps == 13:
+        body_parts = [body_parts[0]] + body_parts[5:]
+    for item in body_parts:
         ls.append(phase + "_" + item + "_" + indicator)
     ls.append(" ")
     return ls

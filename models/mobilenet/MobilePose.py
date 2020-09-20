@@ -25,7 +25,7 @@ class MobilePose(nn.Module):
         #self.duc3 = DUC(128, 256, upscale_factor=2)
         #self.duc4 = DUC(256, 512, upscale_factor=2)
         self.conv_out = nn.Conv2d(
-            int(DUCs[1]/4), n_classes, kernel_size=3, stride=1, padding=1)
+            int(DUCs[1]/4), opt.kps, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
         out = self.mobile(x)
