@@ -579,6 +579,7 @@ def main():
 
             bn_ave = bn_sum/bn_num
             bn_log.write("{} --> {}".format(i, bn_ave))
+            print("Current bn : {} --> {}".format(i, bn_ave))
             bn_log.write("\n")
             log.close()
             csv_writer.writerow(train_log_tmp)
