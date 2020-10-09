@@ -272,6 +272,7 @@ def main():
     os.makedirs(log_dir, exist_ok=True)
     log_name = os.path.join(log_dir, "{}.txt".format(save_ID))
     train_log_name = os.path.join(log_dir, "{}_train.xlsx".format(save_ID))
+    bn_file = os.path.join(log_dir, "{}_bn.txt".format(save_ID))
     # Prepare Dataset
 
     # Model Initialize
@@ -447,6 +448,7 @@ def main():
     m_best = m
 
     train_log = open(train_log_name, "w", newline="")
+    bn_log = open(bn_file, "w")
     csv_writer = csv.writer(train_log)
     csv_writer.writerow(write_csv_title())
     begin_time = time.time()
@@ -558,7 +560,6 @@ def main():
                 val_PR = pr
                 torch.save(m_dev.state_dict(), 'exp/{0}/{1}/{1}_best_pr.pkl'.format(folder, save_ID))
 
-
             log.write('Valid:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
                     idx=i,
                     loss=loss,
@@ -569,13 +570,15 @@ def main():
                 )
             )
 
-            bn_num = 0
+            bn_sum, bn_num = 0, 0
             for mod in m.modules():
                 if isinstance(mod, nn.BatchNorm2d):
-                    bn_num += 1
+                    bn_num += mod.num_features
+                    bn_sum += torch.sum(abs(mod.weight))
                     writer.add_histogram("bn_weight", mod.weight.data.cpu().numpy(), i)
 
-
+            bn_ave = bn_sum/bn_num
+            bn_log.write("{} --> {}".format(i, bn_ave))
             log.close()
             csv_writer.writerow(train_log_tmp)
 
