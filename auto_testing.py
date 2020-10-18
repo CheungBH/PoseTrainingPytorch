@@ -8,7 +8,7 @@ from config.config import computer
 
 model_folders = "exp/coco_mob"
 test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-test_mark = ["best_acc", "best_acc", "best_pr", "best_dist"]
+test_mark = ["best_acc", "best_auc", "best_pr", "best_dist"]
 
 result_path = os.path.join(model_folders, "test_result.csv")
 if_exist = os.path.exists(result_path)
