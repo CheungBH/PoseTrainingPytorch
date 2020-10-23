@@ -152,7 +152,7 @@ def cropBox(img, ul, br, resH, resW):
         img = img[np.newaxis, :]
 
     box_shape = [br[1] - ul[1], br[0] - ul[0]]
-    pad_size = [(lenH - box_shape[0]) / 2, (lenW - box_shape[1]) / 2]
+    pad_size = [(lenH - box_shape[0]) // 2, (lenW - box_shape[1]) // 2]
     # Padding Zeros
     #img[:, :ul[1], :], img[:, :, :ul[0]] = 0, 0
     #img[:, br[1] + 1:, :], img[:, :, br[0] + 1:] = 0, 0

@@ -30,7 +30,7 @@ class FastPose(nn.Module):
         self.conv_out = nn.Conv2d(self.DIM, opt.kps, kernel_size=3, stride=1, padding=1)
 
         if opt.loadModel:
-            if "duc" in opt.loadModel:
+            if "duceedt" in opt.loadModel:
                 self.conv_out = nn.Conv2d(self.DIM, 33, kernel_size=3, stride=1, padding=1)
 
 
