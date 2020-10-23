@@ -127,7 +127,7 @@ if __name__ == '__main__':
     import csv
     from config.config import computer
     from utils.utils import write_test_title
-    model_folders = "test_weight/ceiling_prune"
+    model_folders = "test_weight/ceiling_thresh"
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
 
     result_path = os.path.join(model_folders, "test_result.csv")
