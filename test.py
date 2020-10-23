@@ -69,11 +69,12 @@ def test(loader, m, criterion):
     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
     body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
     body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
+    body_part_thresh = [Logger.get_thresh() for k, Logger in pts_curve_Loggers.items()]
     test_loader_desc.close()
     print("----------------------------------------------------------------------------------------------------")
 
     return lossLogger.avg, accLogger.avg, distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR(), \
-           body_part_acc, body_part_dist, body_part_auc, body_part_pr
+           body_part_acc, body_part_dist, body_part_auc, body_part_pr, body_part_thresh
 
 
 def main(structure, cfg, data_info, weight, batch=4):
@@ -118,8 +119,8 @@ def main(structure, cfg, data_info, weight, batch=4):
     test_dataset = TestDataset(data_info, train=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch, num_workers=0, pin_memory=True)
 
-    loss, acc, dist, auc, pr, pt_acc, pt_dist, pt_auc, pt_pr = test(test_loader, m, criterion)
-    return (flops, params, inf_time), (loss, acc, dist, auc, pr), (pt_acc, pt_dist, pt_auc, pt_pr)
+    loss, acc, dist, auc, pr, pt_acc, pt_dist, pt_auc, pt_pr, thresh = test(test_loader, m, criterion)
+    return (flops, params, inf_time), (loss, acc, dist, auc, pr), (pt_acc, pt_dist, pt_auc, pt_pr), thresh
 
 
 if __name__ == '__main__':
@@ -160,7 +161,7 @@ if __name__ == '__main__':
         import config.config
 
         print("Testing model {}".format(model))
-        benchmark, overall, part = main(backbone, cfg, test_data, model)
+        benchmark, overall, part, thresholds = main(backbone, cfg, test_data, model)
 
         for item in benchmark:
             test_log.append(item)
@@ -171,6 +172,15 @@ if __name__ == '__main__':
                 item = item.tolist()
             test_log.append(item)
         test_log.append(" ")
+
+        thre_str = ""
+        for thr in thresholds:
+            test_log.append(thr)
+            thre_str += str(thr)
+            thre_str += ","
+        opt.thresh = thre_str[:-1]
+        test_log.append(" ")
+        torch.save(opt, option)
 
         for indicator in part:
             for kp in indicator:
