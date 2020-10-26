@@ -6,16 +6,16 @@ import csv
 from utils.utils import write_test_title
 from config.config import computer
 
-model_folders = "exp/ceiling-mobile_13kps_side"
+model_folders = "D:/pose_test1"
 test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
 test_mark = ["best_acc", "best_auc", "best_pr", "best_dist"]
 
 result_path = os.path.join(model_folders, "test_result.csv")
 if_exist = os.path.exists(result_path)
-test_log = open(result_path, "a+", newline="")
+test_log_file = open(result_path, "a+", newline="")
 
 model_ls, option_ls, name_ls, folder_ls = [], [], [], []
-csv_writer = csv.writer(test_log)
+csv_writer = csv.writer(test_log_file)
 
 for folder in os.listdir(model_folders):
     if not os.path.isdir(os.path.join(model_folders, folder)):
@@ -62,7 +62,7 @@ for op, mdl, name, fold in zip(option_ls, model_ls, name_ls, folder_ls):
     opt.DUC = info.DUC
 
     print("Testing model {}".format(mdl))
-    benchmark, overall, part = main(backbone, cfg, test_data, mdl)
+    benchmark, overall, part, thresholds = main(backbone, cfg, test_data, mdl)
 
     for item in benchmark:
         log.append(item)
@@ -80,6 +80,15 @@ for op, mdl, name, fold in zip(option_ls, model_ls, name_ls, folder_ls):
                 kp = kp.tolist()
             log.append(kp)
         log.append(" ")
+
+    thre_str = ""
+    for thr in thresholds:
+        log.append(thr)
+        thre_str += str(thr)
+        thre_str += ","
+    # info.thresh = thre_str[:-1]
+    log.append(" ")
+    # torch.save(info, op)
 
     csv_writer.writerow(log)
 
