@@ -23,6 +23,7 @@ class FastPose(nn.Module):
 
         self.preact = SEResnet(cfg=cfg)
 
+
         self.suffle1 = nn.PixelShuffle(2)
         self.duc1 = DUC(512, 1024, upscale_factor=2)
         self.duc2 = DUC(256, 512, upscale_factor=2)
