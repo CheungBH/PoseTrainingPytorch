@@ -127,13 +127,13 @@ if __name__ == '__main__':
     import csv
     from config.config import computer
     from utils.utils import write_test_title
-    model_folders = "test_weight/ceiling_thresh"
+    model_folders = "D:/pose_test2"
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
 
     result_path = os.path.join(model_folders, "test_result.csv")
     if_exist = os.path.exists(result_path)
-    test_log = open(result_path, "a+", newline="")
-    csv_writer = csv.writer(test_log)
+    test_log_file = open(result_path, "a+", newline="")
+    csv_writer = csv.writer(test_log_file)
     if not if_exist:
         csv_writer.writerow(write_test_title())
 
@@ -173,21 +173,21 @@ if __name__ == '__main__':
             test_log.append(item)
         test_log.append(" ")
 
-        thre_str = ""
-        for thr in thresholds:
-            test_log.append(thr)
-            thre_str += str(thr)
-            thre_str += ","
-        opt.thresh = thre_str[:-1]
-        test_log.append(" ")
-        torch.save(opt, option)
-
         for indicator in part:
             for kp in indicator:
                 if isinstance(kp, torch.Tensor):
                     kp = kp.tolist()
                 test_log.append(kp)
             test_log.append(" ")
+
+        thre_str = ""
+        for thr in thresholds:
+            test_log.append(thr)
+            thre_str += str(thr)
+            thre_str += ","
+        info.thresh = thre_str[:-1]
+        test_log.append(" ")
+        torch.save(info, option)
 
         csv_writer.writerow(test_log)
 

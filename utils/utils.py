@@ -86,11 +86,11 @@ def write_csv_title():
 def write_test_title():
     title = ["model ID", "model name", "params", "flops", "inf_time", "location", "test_loss", "test_acc", "test_dist",
              "test_auc", "test_pr", " "]
-    title += csv_body_part("test", "thresh")
     title += csv_body_part("test", "acc")
     title += csv_body_part("test", "dist")
     title += csv_body_part("test", "AUC")
     title += csv_body_part("test", "PR")
+    title += csv_body_part("test", "thresh")
     return title
 
 
