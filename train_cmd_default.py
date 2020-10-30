@@ -1,31 +1,14 @@
 cmds = [
-    "CUDA_VISIBLE_DEVICES=0 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco_mob_sparse --expID "
-    "sE-6_lrE-3 --loadModel pretrained/mobile_13/86/86_best_acc.pkl --trainBatch 64 --validBatch 64 --LR 1E-3 "
-    "--patience 20 --nEpochs 100 --sparse_s 1E-6 --kps 13 --lr_decay_time 1 --dataset coco --optMethod adam",
-    "CUDA_VISIBLE_DEVICES=0 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco_mob_sparse --expID "
-    "s5E-6_lrE-3 --loadModel pretrained/mobile_13/86/86_best_acc.pkl --trainBatch 64 --validBatch 64 --LR 1E-3 "
-    "--patience 20 --nEpochs 100 --sparse_s 5E-6 --kps 13 --lr_decay_time 1 --dataset coco --optMethod adam",
 
-    "CUDA_VISIBLE_DEVICES=1 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco_mob_sparse --expID "
-    "s5E-7_lrE-3 --loadModel pretrained/mobile_13/86/86_best_acc.pkl --trainBatch 64 --validBatch 64 --LR 1E-3 "
-    "--patience 20 --nEpochs 100 --sparse_s 5E-7 --kps 13 --lr_decay_time 1 --dataset coco --optMethod adam",
-    "CUDA_VISIBLE_DEVICES=1 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco_mob_sparse --expID "
-    "sE-6_lrE-4 --loadModel pretrained/mobile_13/86/86_best_acc.pkl --trainBatch 64 --validBatch 64 --LR 1E-4 "
-    "--patience 20 --nEpochs 100 --sparse_s 1E-6 --kps 13 --lr_decay_time 1 --dataset coco --optMethod adam",
+'CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --DUC 0 --dataset coco --addDPG True --kps 17 --validBatch 64 --trainBatch 64 --optMethod sgd --nEpochs 200 --LR 1.00E-03 --hmGauss 1 --ratio 4 --momentum 0.9 --weightDecay 0 --save_interval 20 --expFolder alphapose-coco_mobile_17kps --expID 65',
+'CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --DUC 0 --dataset coco --addDPG False --kps 17 --validBatch 64 --trainBatch 64 --optMethod sgd --nEpochs 200 --LR 1.00E-03 --hmGauss 1 --ratio 4 --momentum 0.9 --weightDecay 0 --save_interval 20 --expFolder alphapose-coco_mobile_17kps --expID 66',
+'CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --DUC 0 --dataset coco --addDPG True --kps 17 --validBatch 64 --trainBatch 64 --optMethod rmsprop --nEpochs 200 --LR 1.00E-03 --hmGauss 1 --ratio 4 --momentum 0.9 --weightDecay 1.00E-04 --save_interval 20 --expFolder alphapose-coco_mobile_17kps --expID 67',
+'CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --DUC 0 --dataset coco --addDPG False --kps 17 --validBatch 64 --trainBatch 64 --optMethod rmsprop --nEpochs 200 --LR 1.00E-03 --hmGauss 1 --ratio 4 --momentum 0.9 --weightDecay 1.00E-04 --save_interval 20 --expFolder alphapose-coco_mobile_17kps --expID 68',
+'CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --DUC 0 --dataset coco --addDPG True --kps 17 --validBatch 64 --trainBatch 64 --optMethod adam --nEpochs 200 --LR 1.00E-03 --hmGauss 1 --ratio 4 --momentum 0.9 --weightDecay 1.00E-04 --save_interval 20 --expFolder alphapose-coco_mobile_17kps --expID 69',
+'CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --DUC 0 --dataset coco --addDPG False --kps 17 --validBatch 64 --trainBatch 64 --optMethod adam --nEpochs 200 --LR 1.00E-03 --hmGauss 1 --ratio 4 --momentum 0.9 --weightDecay 1.00E-04 --save_interval 20 --expFolder alphapose-coco_mobile_17kps --expID 70',
+'CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --DUC 0 --dataset coco --addDPG True --kps 17 --validBatch 64 --trainBatch 64 --optMethod sgd --nEpochs 200 --LR 1.00E-03 --hmGauss 1 --ratio 4 --momentum 0.9 --weightDecay 1.00E-04 --save_interval 20 --expFolder alphapose-coco_mobile_17kps --expID 71',
+'CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --DUC 0 --dataset coco --addDPG False --kps 17 --validBatch 64 --trainBatch 64 --optMethod sgd --nEpochs 200 --LR 1.00E-03 --hmGauss 1 --ratio 4 --momentum 0.9 --weightDecay 1.00E-04 --save_interval 20 --expFolder alphapose-coco_mobile_17kps --expID 72',
 
-    "CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco_mob_sparse --expID "
-    "sE-6_lr5E-4 --loadModel pretrained/mobile_13/86/86_best_acc.pkl --trainBatch 64 --validBatch 64 --LR 5E-4 "
-    "--patience 20 --nEpochs 100 --sparse_s 1E-6 --kps 13 --lr_decay_time 1 --dataset coco --optMethod adam",
-    "CUDA_VISIBLE_DEVICES=2 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco_mob_sparse --expID "
-    "s5E-6_lr5E-4 --loadModel pretrained/mobile_13/86/86_best_acc.pkl --trainBatch 64 --validBatch 64 --LR 5E-4 "
-    "--patience 20 --nEpochs 100 --sparse_s 5E-6 --kps 13 --lr_decay_time 1 --dataset coco --optMethod adam",
-
-    "CUDA_VISIBLE_DEVICES=3 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco_mob_sparse --expID "
-    "s5E-7_lr5E-4 --loadModel pretrained/mobile_13/86/86_best_acc.pkl --trainBatch 64 --validBatch 64 --LR 5E-4 "
-    "--patience 20 --nEpochs 100 --sparse_s 5E-7 --kps 13 --lr_decay_time 1 --dataset coco --optMethod adam",
-    "CUDA_VISIBLE_DEVICES=3 python train_opt.py --backbone mobilenet --struct 0 --expFolder coco_mob_sparse --expID "
-    "s5E-7_lr1E-4 --loadModel pretrained/mobile_13/86/86_best_acc.pkl --trainBatch 64 --validBatch 64 --LR 1E-4 "
-    "--patience 20 --nEpochs 100 --sparse_s 5E-7 --kps 13 --lr_decay_time 1 --dataset coco --optMethod adam",
 ]
 
 import os
