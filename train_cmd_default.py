@@ -121,6 +121,7 @@ cmds = [
     'CUDA_VISIBLE_DEVICES=3 python train_opt.py --backbone seresnet101 --struct 0 --DUC 0 --dataset coco --addDPG False --kps 17 --validBatch 64 --trainBatch 64 --optMethod adam --nEpochs 200 --LR 0.001 --hmGauss 1 --ratio 2 --momentum 0.9 --weightDecay 0.0001 --save_interval 20 --expFolder alphapose-coco_seres101_17kps --expID 118',
     'CUDA_VISIBLE_DEVICES=3 python train_opt.py --backbone seresnet101 --struct 0 --DUC 0 --dataset coco --addDPG True --kps 17 --validBatch 64 --trainBatch 64 --optMethod sgd --nEpochs 200 --LR 0.001 --hmGauss 1 --ratio 2 --momentum 0.9 --weightDecay 0.0001 --save_interval 20 --expFolder alphapose-coco_seres101_17kps --expID 119',
     'CUDA_VISIBLE_DEVICES=3 python train_opt.py --backbone seresnet101 --struct 0 --DUC 0 --dataset coco --addDPG False --kps 17 --validBatch 64 --trainBatch 64 --optMethod sgd --nEpochs 200 --LR 0.001 --hmGauss 1 --ratio 2 --momentum 0.9 --weightDecay 0.0001 --save_interval 20 --expFolder alphapose-coco_seres101_17kps --expID 120',
+
 ]
 
 import os

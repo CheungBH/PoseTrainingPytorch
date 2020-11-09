@@ -90,6 +90,7 @@ def write_test_title():
     title += csv_body_part("test", "dist")
     title += csv_body_part("test", "AUC")
     title += csv_body_part("test", "PR")
+    title += csv_body_part("test", "thresh")
     return title
 
 

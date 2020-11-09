@@ -68,6 +68,15 @@ class CurveLogger:
         except:
             return 0
 
+    def get_thresh(self):
+        try:
+            P, R, thresh = metrics.precision_recall_curve(self.preds, self.gt)
+            PR_ls = [P[idx] + R[idx] for idx in range(len(P))]
+            max_idx = PR_ls.index(max(PR_ls))
+            return thresh[max_idx]
+        except:
+            return 0
+
 
 class NullWriter(object):
     def write(self, arg):
