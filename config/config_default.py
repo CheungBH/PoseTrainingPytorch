@@ -38,6 +38,9 @@ elif opt.dataset == "coco":
     train_info = {"coco": ["G:/MB155_data/images/images", "data/coco/annot_coco.h5", 5887]}
 elif opt.dataset == "aic":
     train_info = {"ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 1000],}
+elif opt.yoga == "yoga":
+    train_info = {"yoga": ["data/ai_add_searchedyoga/ai_add_searchedyoga_train",
+                           "data/ai_add_searchedyoga/ai_add_searchedyoga_train.h5", 1500], }
 else:
     raise ValueError("Wrong training data name!")
 
