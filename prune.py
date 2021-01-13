@@ -102,7 +102,7 @@ def obtain_filters_mask(model, prune_idx, thre):
     prune_ratio = pruned / total
     print(f'Prune channels: {pruned}\tPrune ratio: {prune_ratio:.3f}')
 
-    return pruned_filters, pruned_maskers
+    return pruned_filters[1:], pruned_maskers
 
 def init_weights_from_loose_model(compact_model, loose_model, CBL_idx, Conv_idx, CBLidx2mask):
 
@@ -119,10 +119,10 @@ def init_weights_from_loose_model(compact_model, loose_model, CBL_idx, Conv_idx,
         #input mask is
 
         # input_mask = get_input_mask(loose_model.module_defs, idx, CBLidx2mask)
-        if i==0:
-            in_channel_idx = list(range(64))
-        else:
-            in_channel_idx = np.argwhere(CBLidx2mask[CBL_idx[i-1]])[:, 0].tolist()
+        # if i==0:
+        #     in_channel_idx = list(range(64))
+        # else:
+        in_channel_idx = np.argwhere(CBLidx2mask[CBL_idx[i-1]])[:, 0].tolist()
         compact_conv, loose_conv = list(compact_model.modules())[idx], list(loose_model.modules())[idx]
         tmp = loose_conv.weight.data[:, in_channel_idx, :, :].clone()
         compact_conv.weight.data = tmp[out_channel_idx, :, :, :].clone()
