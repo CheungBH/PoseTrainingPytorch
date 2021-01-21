@@ -12,7 +12,7 @@ parser.add_argument('--expID', default='default', type=str,
                     help='Experiment ID')
 parser.add_argument('--expFolder', default='test', type=str,
                     help='Experiment folder')
-parser.add_argument('--dataset', default='coco', type=str,
+parser.add_argument('--dataset', default='multiple', type=str,
                     help='Dataset choice: mpii | coco')
 parser.add_argument('--nThreads', default=30, type=int,
                     help='Number of data loading threads')
@@ -20,8 +20,8 @@ parser.add_argument('--snapshot', default=1, type=int,
                     help='How often to take a snapshot of the model (0 = never)')
 
 "----------------------------- AlphaPose options -----------------------------"
-parser.add_argument('--addDPG', default=False, dest='addDPG',
-                    help='Train with data augmentation', action='store_true')
+parser.add_argument('--addDPG', default=False, type=bool,
+                    help='Train with data augmentation')
 
 "----------------------------- Model options -----------------------------"
 parser.add_argument('--backbone', default="seresnet101", type=str,
@@ -30,9 +30,10 @@ parser.add_argument('--struct', default="0", type=str,
                     help='The structure of the model')
 parser.add_argument('--loadModel', default=None, type=str,
                     help='Provide full path to a previously trained model')
-parser.add_argument('--nClasses', default=17, type=int,
+parser.add_argument('--kps', default=17, type=int,
                     help='Number of output channel')
-
+parser.add_argument('--DUC', default=0, type=int,
+                    help='DUC')
 
 "----------------------------- Hyperparameter options -----------------------------"
 parser.add_argument('--LR', default=1e-3, type=float,
@@ -45,13 +46,22 @@ parser.add_argument('--eps', default=1e-8, type=float,
                     help='epsilon')
 parser.add_argument('--crit', default='MSE', type=str,
                     help='Criterion type')
-parser.add_argument('--freeze', default=False, type=bool,
+parser.add_argument('--loss_allocate', default=0, type=int,
                     help='Criterion type')
+parser.add_argument('--freeze', default=0, type=float,
+                    help='freeze backbone')
+parser.add_argument('--freeze_bn', default=False, type=bool,
+                    help='freeze bn')
 parser.add_argument('--optMethod', default='rmsprop', type=str,
                     help='Optimization method: rmsprop | sgd | nag | adadelta')
 parser.add_argument('--sparse_s', default=0, type=float,
                     help='sparse')
-
+parser.add_argument('--sparse_decay', default=1, type=float,
+                    help='sparse_decay')
+parser.add_argument('--patience', default=6, type=float,
+                    help='epoch of lr decay')
+parser.add_argument('--lr_decay_time', default=2, type=float,
+                    help='epoch of lr decay')
 
 "----------------------------- Training options -----------------------------"
 parser.add_argument('--nEpochs', default=500, type=int,
@@ -70,7 +80,7 @@ parser.add_argument('--trainNW', default=5, type=int,
                     help='num worker of train')
 parser.add_argument('--valNW', default=1, type=int,
                     help='num worker of val')
-parser.add_argument('--save_interval', default=1, type=int,
+parser.add_argument('--save_interval', default=20, type=int,
                     help='interval')
 
 "----------------------------- Data options -----------------------------"
@@ -91,4 +101,7 @@ parser.add_argument('--hmGauss', default=1, type=int,
 parser.add_argument('--ratio', default=3, type=int,
                     help='Heatmap ratio')
 
-opt = parser.parse_args()
+# try:
+#     opt = parser.parse_args()
+# except:
+opt, unknown = parser.parse_known_args()

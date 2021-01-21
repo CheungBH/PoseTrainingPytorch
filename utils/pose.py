@@ -8,6 +8,7 @@ import torch
 import numpy as np
 import random
 from src.opt import opt
+from utils.utils import check_hm, check_part
 # import config.config as config
 
 inputResH = opt.inputResH
@@ -20,7 +21,7 @@ def rnd(x):
     return max(-2 * x, min(2 * x, np.random.randn(1)[0] * x))
 
 
-def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dataset, train=True, nJoints_coco=17):
+def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dataset, train=True):
 
     img = load_image(img_path)
     if train:
@@ -91,7 +92,7 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
 
     # Doing Random Crop
     if opt.addDPG:
-        if jointNum > 13 and train:
+        if jointNum > nJoints * 0.8 and train:
             switch = random.uniform(0, 1)
             if switch > 0.96:
                 bottomRight[0] = (upLeft[0] + bottomRight[0]) / 2
@@ -120,6 +121,43 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
     if jointNum == 0:
         inp = torch.zeros(3, inputResH, inputResW)
 
+    # out = torch.zeros(nJoints, outputResH, outputResW)
+    # setMask = torch.zeros(nJoints, outputResH, outputResW)
+    # # Draw Label
+    # # if imgset == 'coco':
+    # for i in range(nJoints):
+    #     if part[i][0] > 0 and part[i][0] > upLeft[0] and part[i][1] > upLeft[1] \
+    #        and part[i][0] < bottomRight[0] and part[i][1] < bottomRight[1]:
+    #         hm_part = transformBox(
+    #             part[i], upLeft, bottomRight, inputResH, inputResW, outputResH, outputResW)
+    #
+    #         out[i] = drawGaussian(out[i], hm_part, opt.hmGauss)
+    #
+    #     setMask[i].add_(1)
+    out, setMask = draw_label(nJoints, part, bottomRight, upLeft)
+
+    #     # Flip
+    #     if random.uniform(0, 1) < 0.5:
+    #         inp = flip(inp)
+    #         out = shuffleLR(flip(out), dataset)
+    if train:
+        # Rotate
+        r = rnd(opt.rotate)
+        if random.uniform(0, 1) < 0.6:
+            r = 0
+        if r != 0:
+            inp = cv_rotate(inp, r, inputResW, inputResH)
+            out = cv_rotate(out, r, outputResW, outputResH)
+
+    return inp, out, setMask, upLeft, bottomRight
+
+
+def choose_kps(array, target):
+    new_parts = [item for i, item in enumerate(array) if i+1 in target]
+    return new_parts
+
+
+def draw_label(nJoints, part, bottomRight, upLeft):
     out = torch.zeros(nJoints, outputResH, outputResW)
     setMask = torch.zeros(nJoints, outputResH, outputResW)
     # Draw Label
@@ -133,28 +171,5 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
             out[i] = drawGaussian(out[i], hm_part, opt.hmGauss)
 
         setMask[i].add_(1)
-
-    if train:
-        # Flip
-        if random.uniform(0, 1) < 0.5:
-            inp = flip(inp)
-            out = shuffleLR(flip(out), dataset)
-
-        # Rotate
-        r = rnd(opt.rotate)
-        if random.uniform(0, 1) < 0.6:
-            r = 0
-        if r != 0:
-            inp = cv_rotate(inp, r, inputResW, inputResH)
-            out = cv_rotate(out, r, outputResW, outputResH)
-
-    return inp, out, setMask, (upLeft, bottomRight)
-
-
-def choose_kps(array, target):
-    new_parts = [item for i, item in enumerate(array) if i+1 in target]
-    return new_parts
-
-
-
+    return out, setMask
 

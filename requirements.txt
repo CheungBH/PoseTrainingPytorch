@@ -1,2 +1,11 @@
 certifi==2020.4.5.1
-torch==1.0.0
+torch===1.6.0 torchvision===0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
+scipy==1.2.0
+matplotlib
+opencv-python
+torchvision==0.7.0
+tqdm
+h5py
+scikit-learn
+pycocotools
+tensorboardX

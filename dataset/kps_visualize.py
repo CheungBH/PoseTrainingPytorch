@@ -94,6 +94,10 @@ class KeyPointVisualizer(object):
                 if kp_scores[n] <= 0.05:
                     continue
                 cor_x, cor_y = int(kp_preds[n, 0]), int(kp_preds[n, 1])
+
+                if cor_x == 0:
+                    continue
+
                 part_line[n] = (cor_x, cor_y)
                 cv2.circle(bg, (cor_x, cor_y), 4, self.p_color[n], -1)
             # Draw limbs

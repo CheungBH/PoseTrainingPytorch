@@ -54,7 +54,7 @@ mobile_opt = {"0": None,
                   [3, 42, 4, 2],
                   [3, 60, 3, 1],
                   [2, 96, 3, 2],
-                  [2, 318, 1, 1], [320, 160]
+                  [2, 318, 1, 1]
               ],
             "huge_bigt":
             [
@@ -65,17 +65,23 @@ mobile_opt = {"0": None,
                   [4, 42, 4, 2],
                   [3, 60, 3, 1],
                   [3, 96, 3, 2],
-                  [2, 318, 1, 1], [320, 160]]
+                  [2, 318, 1, 1]]
 }
 
 
 seresnet_cfg = {"0": None,
-                "1": "config/pose_cfg/seresnet_cfg.txt",
+                "cfg1": "config/pose_cfg/seresnet_cfg.txt",
+                "ceiling_0910": "config/ceiling_cfg/0910.txt"
                 }
 
 
 efficientnet_cfg = {str(i): "b"+str(i) for i in range(9)}
 
-shufflenet_cfg = {0: ""}
+shufflenet_cfg = {"0": None}
 
+
+DUC_cfg = {0: [640, 320],
+           1: [480, 240],
+           2: [320, 160],
+           }
 

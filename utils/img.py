@@ -6,7 +6,7 @@
 import numpy as np
 import torch
 import scipy.misc
-import torch.nn.functional as F
+from utils.utils import check_hm
 import cv2
 from src.opt import opt
 
@@ -134,6 +134,14 @@ def transformBoxInvert(pt, ul, br, inpH, inpW, resH, resW):
     return new_point
 
 
+def box2location(pt, ul, br, inpH, inpW, resH, resW):
+    lenH = br[1] - ul[1]
+    lenW = br[0] - ul[0]
+    ratio = inpH/resH
+
+
+
+
 def cropBox(img, ul, br, resH, resW):
     ul = ul.int()
     br = (br - 1).int()
@@ -144,7 +152,7 @@ def cropBox(img, ul, br, resH, resW):
         img = img[np.newaxis, :]
 
     box_shape = [br[1] - ul[1], br[0] - ul[0]]
-    pad_size = [(lenH - box_shape[0]) / 2, (lenW - box_shape[1]) / 2]
+    pad_size = [(lenH - box_shape[0]) // 2, (lenW - box_shape[1]) // 2]
     # Padding Zeros
     #img[:, :ul[1], :], img[:, :, :ul[0]] = 0, 0
     #img[:, br[1] + 1:, :], img[:, :, br[0] + 1:] = 0, 0

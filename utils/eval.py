@@ -4,7 +4,7 @@
 # -----------------------------------------------------
 
 from src.opt import opt
-import sys
+from sklearn import metrics
 import numpy as np
 
 import torch
@@ -34,37 +34,136 @@ class DataLogger(object):
         self.avg = self.sum / self.cnt
 
 
+class CurveLogger:
+    def __init__(self):
+        self.clear()
+
+    def clear(self):
+        self.gt = []
+        self.preds = []
+
+    def update(self, gt, preds):
+        if len(self.gt) == 0:
+            self.gt = gt
+            self.preds = preds
+        else:
+            self.gt = torch.cat((self.gt, gt))
+            self.preds = torch.cat((self.preds, preds))
+
+    def cal_AUC(self):
+        try:
+            auc = metrics.roc_auc_score(self.preds, self.gt)
+        except:
+            auc = 0
+        return auc
+
+    def cal_PR(self):
+        try:
+            P, R, thresh = metrics.precision_recall_curve(self.preds, self.gt)
+            area = 0
+            for idx in range(len(thresh)-1):
+                a = (R[idx] - R[idx+1]) * (P[idx+1] + P[idx])/2
+                area += a
+            return area
+        except:
+            return 0
+
+    def get_thresh(self):
+        try:
+            P, R, thresh = metrics.precision_recall_curve(self.preds, self.gt)
+            PR_ls = [P[idx] + R[idx] for idx in range(len(P))]
+            max_idx = PR_ls.index(max(PR_ls))
+            return thresh[max_idx]
+        except:
+            return 0
+
+
 class NullWriter(object):
     def write(self, arg):
         pass
 
 
-def accuracy(output, label, dataset, out_offset=None):
-    if type(output) == list:
-        return accuracy(output[opt.nStack - 1], label[opt.nStack - 1], dataset, out_offset)
+def exist_id(p):
+    exist = (p == 0).float()
+    ids = []
+    for i, item in enumerate(exist):
+        if torch.sum(item) < 1:
+            ids.append(i)
+    return ids
+
+
+def cal_ave(weights, inps):
+    res = 0
+    for w, i in zip(weights, inps):
+        res += w*i
+    return res/torch.sum(weights)
+
+
+def cal_accuracy(output, label, idxs):
+    label, output = label.cpu().data, output.cpu().data
+    preds, preds_maxval = getPreds(output)
+    gt, _ = getPreds(label)
+
+    if_exist = torch.Tensor([torch.sum((label[i][j] > 0).float()) > 0 for i in range(len(label))
+                             for j in range(len(label[0]))]).view(len(label),len(label[0])).t()
+
+    norm = torch.ones(preds.size(0)) * opt.outputResH / 10
+    dists = calc_dists(preds, gt, norm)
+    acc, sum_dist, exist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1), torch.zeros(len(idxs))
+
+    for i, kps_dist in enumerate(dists):
+        nums = exist_id(if_exist[i])
+        exist[i] = len(nums)
+        if len(nums) > 0:
+            dist = kps_dist[nums]
+            sum_dist[i + 1] = torch.sum(dist)/exist[i]
+            acc[i + 1] = acc_dist(dist-1)
+
+    sum_dist[0] = cal_ave(exist, sum_dist[1:])
+    acc[0] = cal_ave(exist, acc[1:])
+    return acc, sum_dist, exist, (preds_maxval.squeeze(dim=2).t(), if_exist)
+
+
+def acc_dist(dists, thr=0.5):
+    if dists.ne(-1).sum() > 0:
+        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum()
     else:
-        return heatmapAccuracy(output.cpu().data, label.cpu().data, dataset.accIdxs)
+        return -1
 
 
-def heatmapAccuracy(output, label, idxs):
+def accuracy(output, label, dataset, part, out_offset=None):
+    # exist = if_exist(part)
+    if type(output) == list:
+        return accuracy(output[opt.nStack - 1], label[opt.nStack - 1], dataset, part, out_offset)
+    else:
+        return heatmapAccuracy(output.cpu().data, label.cpu().data, dataset.accIdxs, part)
+
+
+def part_accuracy(output, label, idx, exist, out_offset=None):
+    return heatmapAccuracy(output.cpu().data, label.cpu().data, idx, exist)
+
+
+def heatmapAccuracy(output, label, idxs, parts):
     preds = getPreds(output)
     gt = getPreds(label)
 
     norm = torch.ones(preds.size(0)) * opt.outputResH / 10
     dists = calc_dists(preds, gt, norm)
 
-    acc = torch.zeros(len(idxs) + 1)
-    avg_acc = 0
+    acc, sum_dist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1)
+    exists = []
+    avg_acc, sum_dist = 0, 0
     cnt = 0
     for i in range(len(idxs)):
         # acc[i + 1] = dist_acc(dists[idxs[i] - 1])
-        acc[i + 1] = dist_acc(dists[i] - 1)
+        acc[i + 1], exist = dist_acc(dists[i] - 1, parts[i])
+        exists.append(exist)
         if acc[i + 1] >= 0:
             avg_acc = avg_acc + acc[i + 1]
             cnt += 1
     if cnt != 0:
         acc[0] = avg_acc / cnt
-    return acc
+    return acc, exists
 
 
 def getPreds(hm):
@@ -84,8 +183,7 @@ def getPreds(hm):
 
     # pred_mask = maxval.gt(0).repeat(1, 1, 2).float()
     # preds *= pred_mask
-    return preds
-
+    return preds, maxval
 
 def calc_dists(preds, target, normalize):
     preds = preds.float().clone()
@@ -97,16 +195,18 @@ def calc_dists(preds, target, normalize):
                 dists[c, n] = torch.dist(
                     preds[n, c, :], target[n, c, :]) / normalize[n]
             else:
-                dists[c, n] = -1
+                dists[c, n] = 0
     return dists
 
 
-def dist_acc(dists, thr=0.5):
+def dist_acc(dists, part, thr=0.5):
+    ids = exist_id(part)
+    dists = dists[ids]
     ''' Return percentage below threshold while ignoring values with a -1 '''
     if dists.ne(-1).sum() > 0:
-        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum()
+        return dists.le(thr).eq(dists.ne(-1)).float().sum() * 1.0 / dists.ne(-1).float().sum(), len(ids)
     else:
-        return - 1
+        return -1, 0
 
 
 def postprocess(output):
@@ -207,3 +307,5 @@ def getmap(JsonDir='./val/alphapose-results.json'):
         mAp5 = np.mean(score2[score2 > -1])
     cocoEval.summarize()
     return mApAll, mAp5
+
+
