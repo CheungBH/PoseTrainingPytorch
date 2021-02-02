@@ -27,8 +27,29 @@ def obtain_prune_idx(path):
         #     bn3_id.append(idx)
 
 
-    prune_idx = prune_idx[1:]  # 去除第一个bn1层
+    prune_idx = prune_idx  # 去除第一个bn1层
     return prune_idx,bn3_id
+
+
+def obtain_prune_idx2(model):
+    all_bn_id, normal_idx, head_idx, shortcut_idx, downsample_idx = [], [], [], [], []
+    for i, layer in enumerate(list(model.named_modules())):
+        if isinstance(layer[1], nn.BatchNorm2d):
+            all_bn_id.append(i)
+            if "seresnet18" in layer[0]:
+                if i < 5:
+                    shortcut_idx.append(i)
+                elif "downsample" in layer[0]:
+                    downsample_idx.append(i)
+                elif "bn1" in layer[0] and i > 5:
+                    normal_idx.append(i)
+                elif "bn3" in layer[0]:
+                    shortcut_idx.append(i)
+                else:
+                    print("???????")
+            else:
+                head_idx.append(i)
+    return all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx
 
 
 def sort_bn(model, prune_idx):
@@ -102,7 +123,8 @@ def obtain_filters_mask(model, prune_idx, thre):
     prune_ratio = pruned / total
     print(f'Prune channels: {pruned}\tPrune ratio: {prune_ratio:.3f}')
 
-    return pruned_filters[1:], pruned_maskers
+    return pruned_filters, pruned_maskers
+
 
 def init_weights_from_loose_model(compact_model, loose_model, CBL_idx, Conv_idx, CBLidx2mask):
 
@@ -135,6 +157,9 @@ def pruning(weight, thresh=80, device="cpu"):
     elif opt.backbone == "seresnet101":
         from models.seresnet.FastPose import createModel
         from config.model_cfg import seresnet_cfg as model_ls
+    elif opt.backbone == "seresnet18":
+        from models.seresnet18.FastPose import createModel
+        from config.model_cfg import seresnet_cfg as model_ls
     elif opt.backbone == "efficientnet":
         from models.efficientnet.EfficientPose import createModel
         from config.model_cfg import efficientnet_cfg as model_ls
@@ -152,23 +177,26 @@ def pruning(weight, thresh=80, device="cpu"):
         model.cpu()
     else:
         model.cuda()
+    torch_out = torch.onnx.export(model, torch.rand(1, 3, 224, 224), "onnx_pose.onnx", verbose=False,)
 
     tmp = "./model.txt"
     print(model, file=open(tmp, 'w'))
-    prune_idx, bn3_id = obtain_prune_idx(tmp)
-    Conv_idx = [conv-1 for conv in prune_idx]
+    all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx2(model)
+    # prune_idx, bn3_id = obtain_prune_idx(tmp)
+    # Conv_idx = [conv-1 for conv in all_bn_id]
+    prune_idx = all_bn_id
     sorted_bn = sort_bn(model, prune_idx)
 
     threshold = obtain_bn_threshold(model, sorted_bn, thresh/100)
     pruned_filters, pruned_maskers = obtain_filters_mask(model, prune_idx, threshold)
-    CBLidx2mask = {idx: mask.astype('float32') for idx, mask in zip(Conv_idx, pruned_maskers)}
+    CBLidx2mask = {idx-1: mask.astype('float32') for idx, mask in zip(prune_idx, pruned_maskers)}
+    CBLidx2filter = {idx-1: filter_num for idx, filter_num in zip(prune_idx, pruned_filters)}
     print(pruned_filters, file=open("ceiling.txt", "w"))
     new_model = createModel(cfg="ceiling.txt").cpu()
 
-    init_weights_from_loose_model(new_model, model, Conv_idx, Conv_idx, CBLidx2mask)
-
-    print()
+    # init_weights_from_loose_model(new_model, model, Conv_idx, Conv_idx, CBLidx2mask)
 
 
 if __name__ == '__main__':
-    pruning("/media/hkuit164/MB155_1/sparsed_demo/origin_5E-4-acc/origin_5E-4_best_acc.pkl")
+    opt.backbone = "seresnet18"
+    pruning("exp/seresnet18/sparse/sparse_best_acc.pkl")
