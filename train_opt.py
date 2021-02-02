@@ -35,6 +35,9 @@ elif opt.backbone == "efficientnet":
 elif opt.backbone == "shufflenet":
     from models.shufflenet.ShufflePose import createModel
     from config.model_cfg import shufflenet_cfg as model_ls
+elif opt.backbone == "seresnet18":
+    from models.seresnet18.FastPose import createModel
+    from config.model_cfg import seresnet18_cfg as model_ls
 else:
     raise ValueError("Your model name is wrong")
 model_cfg = model_ls[opt.struct]
