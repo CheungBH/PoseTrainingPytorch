@@ -18,6 +18,11 @@ else:
     raise ValueError("This keypoint num doesn't exist")
 body_part_name = [body_parts[no] for no in train_body_part]
 
+heatmap = {"seresnet101": [64, 80, 256, 320],
+           "seresnet18": [56, 56, 224, 224]}
+
+if opt.model_hm:
+    opt.outputResW, opt.outputResH, opt.inputResW, opt.inputResH = heatmap[opt.model_hm]
 
 train_data = "coco"
 if opt.dataset == "multiple":
@@ -25,12 +30,12 @@ if opt.dataset == "multiple":
         # "yoga": ["data/yoga/images", "data/yoga/test.h5", 2],
         # "coco": ["G:/MB155_data/images/images", "data/coco/annot_coco.h5", 5887],
         # "ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 1000],
-        "ceiling": ["data/ceiling/0605_new", "data/ceiling/0605_new.h5", 100],
+        "ceiling": ["data/ceiling/ceiling_train", "data/ceiling/ceiling_train.h5", 100],
         "underwater": ["data/0612_underwater_rename/0612_underwater_Img",
                        "data/0612_underwater_rename/0612_underwater_all_rename.h5", 100]
     }
 elif opt.dataset == "ceiling":
-    train_info = {"ceiling": ["data/ceiling/0605_new", "data/ceiling/0605_new.h5", 100],}
+    train_info = {"ceiling": ["data/ceiling/ceiling_train", "data/ceiling/ceiling_train.h5", 100],}
 elif opt.dataset == "underwater":
     train_info = {"underwater": ["data/0612_underwater_rename/0612_underwater_Img",
                                  "data/0612_underwater_rename/0612_underwater_all_rename.h5", 100]}
@@ -38,6 +43,9 @@ elif opt.dataset == "coco":
     train_info = {"coco": ["G:/MB155_data/images/images", "data/coco/annot_coco.h5", 5887]}
 elif opt.dataset == "aic":
     train_info = {"ai_challenger": ["data/ai_challenger/images", "data/ai_challenger/ai_c_anno.h5", 1000],}
+elif opt.yoga == "yoga":
+    train_info = {"yoga": ["data/ai_add_searchedyoga/ai_add_searchedyoga_train",
+                           "data/ai_add_searchedyoga/ai_add_searchedyoga_train.h5", 1500], }
 else:
     raise ValueError("Wrong training data name!")
 
