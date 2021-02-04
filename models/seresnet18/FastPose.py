@@ -33,6 +33,10 @@ class SeResPose18(nn.Module):
             if "duceedt" in opt.loadModel:
                 self.conv_out = nn.Conv2d(self.DIM, 33, kernel_size=3, stride=1, padding=1)
 
+    # def parse_cfg(self, cfg_file):
+    #     with open(cfg_file, "r") as f:
+
+
     def forward(self, x: Variable):
         out = self.seresnet18(x)
         out = self.shuffle1(out)

@@ -22,9 +22,9 @@ class SeBasicBlock(nn.Module):
     def __init__(self, inplanes, planes, cfg, stride=1, downsample=None, reduction=False):
         super(SeBasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, cfg, stride)
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = nn.BatchNorm2d(cfg)
         self.relu = nn.ReLU(inplace=True)
-        self.conv3 = conv3x3(planes, planes)
+        self.conv3 = conv3x3(cfg, planes)
         self.bn3 = nn.BatchNorm2d(planes)
         if reduction:
             self.se = SELayer(planes)
