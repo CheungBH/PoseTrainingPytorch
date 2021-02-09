@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.seresnet.layers.SE_module import SELayer
+from src.opt import opt
+
+se_ratio = opt.se_ratio
 
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
@@ -27,7 +30,7 @@ class SeBasicBlock(nn.Module):
         self.conv3 = conv3x3(cfg, planes)
         self.bn3 = nn.BatchNorm2d(planes)
         if reduction:
-            self.se = SELayer(planes)
+            self.se = SELayer(planes, reduction=se_ratio)
 
         self.reduc = reduction
         self.downsample = downsample

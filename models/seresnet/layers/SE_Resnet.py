@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.seresnet.layers.SE_module import SELayer
+from src.opt import opt
+
+se_ratio = opt.se_ratio
 
 
 class SeBottleneck(nn.Module):

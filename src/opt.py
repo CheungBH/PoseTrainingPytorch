@@ -96,6 +96,8 @@ parser.add_argument('--model_hm', default=None, type=str,
                     help='heatmap set')
 parser.add_argument('--scale', default=0.3, type=float,
                     help='Degree of scale augmentation')
+parser.add_argument('--se_ratio', default=16, type=float,
+                    help='Degree of scale augmentation')
 parser.add_argument('--rotate', default=40, type=float,
                     help='Degree of rotation augmentation')
 parser.add_argument('--hmGauss', default=1, type=int,
