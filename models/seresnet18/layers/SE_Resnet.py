@@ -58,28 +58,34 @@ class SeBasicBlock(nn.Module):
 class SeResnet(nn.Module):
     """ SeResnet """
 
-    def __init__(self,  block, num_blocks, cfg=None):
+    def __init__(self,  block, num_blocks, cfg_ls=None):
         super(SeResnet, self).__init__()
 
         self.inplanes = 64
         self.block = block
-
-        if not cfg:
+        planes = [64, 128, 256, 512]
+        if not cfg_ls:
             # Construct config variable.
-            # only purned layer
-            cfg = [[64, 64], [128, 128], [256, 256], [512, 512]]
-            cfg = [item for sub_list in cfg for item in sub_list]
+            cfg = [64, 64, 128, 128, 256, 256, 512, 512]
+        else:
+            if len(cfg_ls) == 10:
+                cfg = [cfg_ls[0], cfg_ls[1], cfg_ls[2], cfg_ls[3], cfg_ls[4], cfg_ls[5], cfg_ls[6], cfg_ls[7]]
+            elif len(cfg_ls) == 22:
+                cfg = [cfg_ls[1], cfg_ls[3], cfg_ls[5], cfg_ls[8], cfg_ls[10], cfg_ls[13], cfg_ls[15], cfg_ls[18]]
+                planes = [cfg_ls[4], cfg_ls[9], cfg_ls[14], cfg_ls[19]]
+            else:
+                raise ValueError("The configuration file is wrong!")
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7,
+        self.conv1 = nn.Conv2d(3, planes[0], kernel_size=7,
                                stride=2, padding=3, bias=False)
-        self.bn1 = nn.BatchNorm2d(64, eps=1e-5, momentum=0.01, affine=True)
+        self.bn1 = nn.BatchNorm2d(planes[0], eps=1e-5, momentum=0.01, affine=True)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.layer1 = self.make_layer(block, 64, num_blocks[0], cfg=cfg[0:2], stride=1, se=True)
-        self.layer2 = self.make_layer(block, 128, num_blocks[1], cfg=cfg[2:4], stride=2)
-        self.layer3 = self.make_layer(block, 256, num_blocks[2], cfg=cfg[4:6], stride=2)
-        self.layer4 = self.make_layer(block, 512, num_blocks[3], cfg=cfg[6:8], stride=2)
+        self.layer1 = self.make_layer(block, planes[0], num_blocks[0], cfg=cfg[0:2], stride=1, se=True)
+        self.layer2 = self.make_layer(block, planes[1], num_blocks[1], cfg=cfg[2:4], stride=2)
+        self.layer3 = self.make_layer(block, planes[2], num_blocks[2], cfg=cfg[4:6], stride=2)
+        self.layer4 = self.make_layer(block, planes[3], num_blocks[3], cfg=cfg[6:8], stride=2)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -90,7 +96,7 @@ class SeResnet(nn.Module):
 
     def make_layer(self, block, planes, blocks, cfg, stride=1, se=False):
         downsample = None
-        if stride != 1 or self.inplanes != planes * block.expansion:
+        if stride != 1: #or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes * block.expansion,
                           kernel_size=1, stride=stride, bias=False),

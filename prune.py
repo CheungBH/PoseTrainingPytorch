@@ -208,7 +208,6 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
     init_weights_from_loose_model(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
     torch.save(compact_model.state_dict(), compact_model_path)
-    a = 1
 
 
 if __name__ == '__main__':
