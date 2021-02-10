@@ -111,7 +111,7 @@ def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
         dist = np.zeros((num_samples, len(used_joints)))
         valid = np.zeros((num_samples, len(used_joints)))
         joint_radio = []
-        valid[i, :] = if_exist[i, :]
+        valid[i, :] = if_exist[i][4:16]
         dist[i,:] = np.linalg.norm(y_true[i][4:16] - y_pred[i][4:16],axis=1) / head_size
         jnt_count = valid_joints(if_exist[i, :])
         scale = dist * valid
@@ -152,7 +152,7 @@ def cal_accuracy(output, label, idxs):
     norm = torch.ones(preds.size(0)) * opt.outputResH / 10
     dists = calc_dists(preds, gt, norm)
     acc, sum_dist, exist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1), torch.zeros(len(idxs))
-    pckh_dict = cal_pckh(gt,preds,if_exist,refp=0.5)
+    pckh_dict = cal_pckh(gt,preds,if_exist.t(),refp=0.5)
 
     for i, kps_dist in enumerate(dists):
         nums = exist_id(if_exist[i])
