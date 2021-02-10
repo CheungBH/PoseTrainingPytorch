@@ -102,30 +102,23 @@ def cal_ave(weights, inps):
     return res/torch.sum(weights)
 
 def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
-    central=y_true[:,-11,:]+y_true[:,-12,:]
-    head_size = norm(central - y_true[:,0,:], axis=1)
-    assert len(y_true) == len(head_size)
     num_samples = len(y_true)
+    for i in range(num_samples):
+        central = y_true[i][-11] + y_true[i][-12]
+        head_size = np.linalg.norm(np.subtract(central,y_true[i][0]))
     # for coco datasets, abandon eyes and ears keypoints
-    used_joints = range(4,16)
-    y_true = y_true[:, used_joints,:]
-    y_pred = y_pred[:, used_joints,:]
-    dist = np.zeros((num_samples,len(used_joints)))
-    valid = np.zeros((num_samples,len(used_joints)))
-    joint_radio =[]
-
-    for i in range(num_samples):
-        valid[i,:] = if_exist[i,:]
-        dist[i,:] = norm(y_true[i] - y_pred[i], axis=1) / head_size[i]
-        jnt_count = valid_joints(if_exist[i,:])
+        used_joints = range(4,16)
+        dist = np.zeros((num_samples, len(used_joints)))
+        valid = np.zeros((num_samples, len(used_joints)))
+        joint_radio = []
+        valid[i, :] = if_exist[i, :]
+        dist[i,:] = np.linalg.norm(y_true[i][4:16] - y_pred[i][4:16],axis=1) / head_size
+        jnt_count = valid_joints(if_exist[i, :])
         scale = dist * valid
-        a = (0<scale[i,:])& (scale[i,:] <= refp)
+        a = (0 < scale[i, :]) & (scale[i, :] <= refp)
         less_than_threshold = valid_joints(a)
-        joint_radio.append(100. * less_than_threshold / jnt_count)
-
-    scale = dist * valid
-    PCKh = np.ma.array(scale, mask=False)
-    for i in range(num_samples):
+        joint_radio.append(less_than_threshold / jnt_count)
+        PCKh = np.ma.array(100*scale, mask=False)
         name_value = [('Shoulder', 0.5 * (PCKh[i][0] + PCKh[i][1])),
                       ('Elbow', 0.5 * (PCKh[i][2] + PCKh[i][3])),
                       ('Wrist', 0.5 * (PCKh[i][4] + PCKh[i][5])),
@@ -133,13 +126,11 @@ def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
                       ('Knee', 0.5 * (PCKh[i][8] + PCKh[i][9])),
                       ('Ankle', 0.5 * (PCKh[i][10] + PCKh[i][11])),
                       ('PCKh', np.mean(PCKh[i][:])),
-                      ('pckh@0.5',np.sum(PCKh[i][:]*joint_radio[i]/3))]
+                      ('PCKh@0.5',np.mean(PCKh[i][5:]*joint_radio))]
         name_value = OrderedDict(name_value)
+        # print(name_value)
     return name_value
 
-
-def norm(x, axis=None):
-    return np.sqrt(np.sum(np.power(x, 2).numpy(), axis=axis))
 
 def valid_joints(if_exist):
     count = 0
