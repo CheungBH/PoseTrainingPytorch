@@ -2,14 +2,17 @@
 # Copyright (c) Shanghai Jiao Tong University. All rights reserved.
 # Written by Jiefeng Li (jeff.lee.sjtu@gmail.com)
 # -----------------------------------------------------
+from scipy.io import savemat, loadmat
 
 from src.opt import opt
 from sklearn import metrics
 import numpy as np
+import os
 
 import torch
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
+from collections import OrderedDict
 
 from utils.img import transformBoxInvert
 
@@ -98,6 +101,54 @@ def cal_ave(weights, inps):
         res += w*i
     return res/torch.sum(weights)
 
+def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
+    central=y_true[:,-11,:]+y_true[:,-12,:]
+    head_size = norm(central - y_true[:,0,:], axis=1)
+    assert len(y_true) == len(head_size)
+    num_samples = len(y_true)
+    # for coco datasets, abandon eyes and ears keypoints
+    used_joints = range(4,16)
+    y_true = y_true[:, used_joints,:]
+    y_pred = y_pred[:, used_joints,:]
+    dist = np.zeros((num_samples,len(used_joints)))
+    valid = np.zeros((num_samples,len(used_joints)))
+    joint_radio =[]
+
+    for i in range(num_samples):
+        valid[i,:] = if_exist[i,:]
+        dist[i,:] = norm(y_true[i] - y_pred[i], axis=1) / head_size[i]
+        jnt_count = valid_joints(if_exist[i,:])
+        scale = dist * valid
+        a = (0<scale[i,:])& (scale[i,:] <= refp)
+        less_than_threshold = valid_joints(a)
+        joint_radio.append(100. * less_than_threshold / jnt_count)
+
+    scale = dist * valid
+    PCKh = np.ma.array(scale, mask=False)
+    for i in range(num_samples):
+        name_value = [('Shoulder', 0.5 * (PCKh[i][0] + PCKh[i][1])),
+                      ('Elbow', 0.5 * (PCKh[i][2] + PCKh[i][3])),
+                      ('Wrist', 0.5 * (PCKh[i][4] + PCKh[i][5])),
+                      ('Hip', 0.5 * (PCKh[i][6] + PCKh[i][7])),
+                      ('Knee', 0.5 * (PCKh[i][8] + PCKh[i][9])),
+                      ('Ankle', 0.5 * (PCKh[i][10] + PCKh[i][11])),
+                      ('PCKh', np.mean(PCKh[i][:])),
+                      ('pckh@0.5',np.sum(PCKh[i][:]*joint_radio[i]/3))]
+        name_value = OrderedDict(name_value)
+    return name_value
+
+
+def norm(x, axis=None):
+    return np.sqrt(np.sum(np.power(x, 2).numpy(), axis=axis))
+
+def valid_joints(if_exist):
+    count = 0
+    for i in range(len(if_exist)):
+        if if_exist[i] == 0:
+            count += 0
+        else:
+            count += 1
+    return count
 
 def cal_accuracy(output, label, idxs):
     label, output = label.cpu().data, output.cpu().data
@@ -110,6 +161,7 @@ def cal_accuracy(output, label, idxs):
     norm = torch.ones(preds.size(0)) * opt.outputResH / 10
     dists = calc_dists(preds, gt, norm)
     acc, sum_dist, exist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1), torch.zeros(len(idxs))
+    pckh_dict = cal_pckh(gt,preds,if_exist,refp=0.5)
 
     for i, kps_dist in enumerate(dists):
         nums = exist_id(if_exist[i])
@@ -121,7 +173,7 @@ def cal_accuracy(output, label, idxs):
 
     sum_dist[0] = cal_ave(exist, sum_dist[1:])
     acc[0] = cal_ave(exist, acc[1:])
-    return acc, sum_dist, exist, (preds_maxval.squeeze(dim=2).t(), if_exist)
+    return acc, sum_dist, exist,pckh_dict,(preds_maxval.squeeze(dim=2).t(), if_exist)
 
 
 def acc_dist(dists, thr=0.5):
@@ -146,9 +198,9 @@ def part_accuracy(output, label, idx, exist, out_offset=None):
 def heatmapAccuracy(output, label, idxs, parts):
     preds = getPreds(output)
     gt = getPreds(label)
-
     norm = torch.ones(preds.size(0)) * opt.outputResH / 10
     dists = calc_dists(preds, gt, norm)
+
 
     acc, sum_dist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1)
     exists = []
@@ -290,6 +342,7 @@ def getmap(JsonDir='./val/alphapose-results.json'):
     for x in imgIds_str:
         imgIds.append(int(x))
 
+
     # running evaluation
     iouThrs = np.linspace(.5, 0.95, np.round((0.95 - .5) / .05) + 1, endpoint=True)
     t = np.where(0.5 == iouThrs)[0]
@@ -307,5 +360,36 @@ def getmap(JsonDir='./val/alphapose-results.json'):
         mAp5 = np.mean(score2[score2 > -1])
     cocoEval.summarize()
     return mApAll, mAp5
-
-
+# def cal_pckh(y_true, y_pred, refp=0.5):
+#     for j in range(len(y_true[0])):
+#         head_size = (y_true[j][1]+y_true[j][2])/2 - y_true[j][0]
+#         assert len(y_true) == len(head_size)
+#         num_samples = len(y_true)
+#         used_joints = range(4, 16)
+#         y_true = y_true[:, used_joints, :]
+#         y_pred = y_pred[:, used_joints, :]
+#         dist = np.zeros((num_samples, len(used_joints)))
+#         valid = np.zeros((num_samples, len(used_joints)))
+#
+#         for i in range(num_samples):
+#             valid[i,:] = valid_joints(y_true[i])
+#             dist[i,:] = norm(y_true[i] - y_pred[i], axis=1) / head_size[i]
+#         match = (dist <= refp) * valid
+#
+#         return match.sum() / valid.sum()
+#
+# def norm(x, axis=None):
+#     return np.sqrt(np.sum(np.power(x, 2), axis=axis))
+#
+# def valid_joints(y, min_valid=0):
+#     def and_all(x):
+#         if x.all():
+#             return 1
+#         return 0
+#
+#     return np.apply_along_axis(and_all, axis=1, arr=(y > min_valid))
+#
+# if __name__ == '__main__':
+#     preds = torch.Tensor([[1,1], [2,2]])
+#     gt = torch.Tensor([[1,0], [3,1]])
+#     cal_pckh(preds, gt)
