@@ -92,7 +92,11 @@ parser.add_argument('--outputResH', default=80, type=int,
                     help='Output heatmap height')
 parser.add_argument('--outputResW', default=64, type=int,
                     help='Output heatmap width')
+parser.add_argument('--model_hm', default=None, type=str,
+                    help='heatmap set')
 parser.add_argument('--scale', default=0.3, type=float,
+                    help='Degree of scale augmentation')
+parser.add_argument('--se_ratio', default=16, type=int,
                     help='Degree of scale augmentation')
 parser.add_argument('--rotate', default=40, type=float,
                     help='Degree of rotation augmentation')

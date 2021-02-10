@@ -15,6 +15,7 @@ from utils.utils import check_hm, check_part
 from src.opt import opt
 
 
+
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
 open_source_dataset = config.open_source_dataset
 draw = False
@@ -163,6 +164,7 @@ class TestDataset(MyDataset):
 def extract_customized_data(data_info):
     data_folder, h5file, val_num = data_info[0], data_info[1], data_info[2]
     with h5py.File(h5file, 'r') as annot:
+
         imgname = annot['imgname'][:].tolist()  #:-5887
         bndbox_raw = annot['bndbox'][:].tolist()
         bndbox = [[xywh2xyxy(box[0])] for box in bndbox_raw]

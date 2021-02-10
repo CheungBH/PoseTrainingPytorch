@@ -1,3 +1,4 @@
+
 # python train_opt.py --backbone mobilenet --struct huge_bigt --expFolder coco_mobile_pruned --expID 13kps_huge_bigt_DUC2_dpg --trainBatch 32 --validBatch 32 --kps 13 --DUC 2 --addDPG --LR 1e-3
 import torch
 import time
@@ -34,6 +35,9 @@ elif opt.backbone == "efficientnet":
 elif opt.backbone == "shufflenet":
     from models.shufflenet.ShufflePose import createModel
     from config.model_cfg import shufflenet_cfg as model_ls
+elif opt.backbone == "seresnet18":
+    from models.seresnet18.FastPose import createModel
+    from config.model_cfg import seresnet18_cfg as model_ls
 else:
     raise ValueError("Your model name is wrong")
 model_cfg = model_ls[opt.struct]
