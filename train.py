@@ -604,10 +604,6 @@ def main():
                 # torch.save(
                 #     optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
 
-
-            # else:
-            #     adjust_lr(optimizer, i, lr_dict, )
-
             for epo, ac in config.bad_epochs.items():
                 if i == epo and val_acc < ac:
                     stop = True
