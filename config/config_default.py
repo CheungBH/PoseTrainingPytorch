@@ -65,6 +65,8 @@ else:
 
 bad_epochs = {30: 0.1}
 patience_decay = {1: 0.75, 2: 0.5, 3: 0.5}
+lr_decay_dict = {0.7: 0.1, 0.9: 0.01}
+
 
 if __name__ == '__main__':
     opt.loss_allocate = 1
