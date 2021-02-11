@@ -469,7 +469,10 @@ def main():
             print('############# Starting Epoch {} #############'.format(i))
             log.write('############# Starting Epoch {} #############\n'.format(i))
 
-            optimizer, lr = adjust_lr(optimizer, i, lr_dict, opt.nEpochs)
+            if i < warm_up_epoch:
+                optimizer, lr = warm_up_lr(optimizer, i)
+            else:
+                optimizer, lr = adjust_lr(optimizer, i, lr_dict, opt.nEpochs)
             writer.add_scalar("lr", lr, i)
             print("epoch {}: lr {}".format(i, lr))
 
@@ -598,8 +601,7 @@ def main():
                 # torch.save(
                 #     optimizer, 'exp/{}/{}/optimizer.pkl'.format(dataset, save_folder))
 
-            # if i < warm_up_epoch:
-            #     optimizer, lr = warm_up_lr(optimizer, i)
+
             # else:
             #     adjust_lr(optimizer, i, lr_dict, )
 
