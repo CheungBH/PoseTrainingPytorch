@@ -298,6 +298,9 @@ def main():
         elif opt.backbone == "seresnet101":
             feature_layer_num = 327
             feature_layer_name = "preact"
+        elif opt.backbone == "seresnet18":
+            feature_layer_num = 75
+            feature_layer_name = "seresnet18"
         elif opt.backbone == "shufflenet":
             feature_layer_num = 167
             feature_layer_name = "shuffle"
