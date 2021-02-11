@@ -168,7 +168,6 @@ def draw_graph(epoch_ls, train_ls, val_ls, name, log_dir):
 #     plt.savefig(os.path.join(log_dir, "dist.jpg"))
 
 
-
 def check_part(parts):
     tmp = []
     for part in parts:
