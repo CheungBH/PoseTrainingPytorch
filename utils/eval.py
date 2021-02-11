@@ -164,7 +164,7 @@ def cal_accuracy(output, label, idxs):
 
     sum_dist[0] = cal_ave(exist, sum_dist[1:])
     acc[0] = cal_ave(exist, acc[1:])
-    return acc, sum_dist, exist,pckh_dict,(preds_maxval.squeeze(dim=2).t(), if_exist)
+    return acc, sum_dist, exist, (preds_maxval.squeeze(dim=2).t(), if_exist)
 
 
 def acc_dist(dists, thr=0.5):
