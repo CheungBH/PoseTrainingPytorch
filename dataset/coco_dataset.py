@@ -85,7 +85,7 @@ class Mscoco(data.Dataset):
 
 
 class MyDataset(data.Dataset):
-    def __init__(self, data_info, train=True, sigma=opt.hmGauss,
+    def __init__(self, data_info, train=True, sigma=1,
                  scale_factor=(0.2, 0.3), rot_factor=40, label_type='Gaussian'):
         self.is_train = train  # training set or test set
         self.inputResH = opt.inputResH

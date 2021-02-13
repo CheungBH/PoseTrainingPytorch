@@ -10,6 +10,7 @@ import os
 from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
+from dataset.loader import TrainDataset
 from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title, write_decay_title, \
     write_decay_info, draw_graph, check_hm, check_part, adjust_lr
 
@@ -30,6 +31,7 @@ lr_decay_dict = config.lr_decay_dict
 stop_dicts = config.bad_epochs
 loss_weight = config.loss_weight
 sparse_decay_dict = config.sparse_decay_dict
+dataset_info = config.train_info
 
 
 class Trainer:
@@ -55,16 +57,23 @@ class Trainer:
     def build_with_opt(self, opt):
         self.opt = opt
         self.total_epochs = opt.epoch
+        self.kps = opt.kps
+        self.lr = opt.LR
+        self.trainIter, self.valIter = opt.trainIters, opt.valIters
+
         posenet.init_with_opt(opt)
         self.params_to_update, _ = posenet.get_updating_param()
         self.freeze = posenet.is_freeze
         posenet.model_transfer(device)
         self.model = posenet.model
+
+        self.dataset = TrainDataset(dataset_info, hmGauss=opt.hmGauss, rotate=opt.rotate)
+        self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
+                                                                           opt.train_worker, opt.val_worker)
+
         self.build_criterion(opt.crit)
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
-        self.kps = opt.kps
-        self.lr = opt.LR
-        self.trainIter, self.valIter = opt.trainIters, opt.valIters
+
         if opt.lr_schedule == "step":
             from utils.train_utils import StepLRAdjuster as scheduler
         else:
