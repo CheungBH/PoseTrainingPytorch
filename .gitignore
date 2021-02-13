@@ -60,3 +60,4 @@ train_result/alphapose_sparse
 pretrained
 tmp
 res_collect
+*DS_Store

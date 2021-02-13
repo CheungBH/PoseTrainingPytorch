@@ -1,5 +1,5 @@
 import tqdm
-from utils.eval import DataLogger, accuracy, cal_accuracy, CurveLogger
+from utils.eval import DataLogger, cal_accuracy, CurveLogger
 from config import config
 import torch
 from utils.train_utils import Criterion, Optimizer
@@ -11,8 +11,6 @@ from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
 from dataset.loader import TrainDataset
-from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title, write_decay_title, \
-    write_decay_info, draw_graph, check_hm, check_part, adjust_lr
 
 try:
     from apex import amp
@@ -279,6 +277,11 @@ class Trainer:
         if mix_precision:
             self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O1")
 
+    def build_sparse_scheduler(self, s):
+        self.sparse_s = s
+        from utils.train_utils import SparseScheduler
+        self.sparse_scheduler = SparseScheduler(self.total_epochs, sparse_decay_dict, self.sparse_s)
+
     def check_stop(self):
         for stop_epoch, stop_acc in stop_dicts.items():
             if self.curr_epoch == stop_epoch and self.val_acc < stop_acc:
@@ -289,11 +292,6 @@ class Trainer:
         torch.save(self.opt, self.opt_path)
         if self.curr_epoch % self.save_interval == 0 and self.curr_epoch != 0:
             torch.save(self.model.modules.state_dict(), os.path.join(self.expFolder, "{}.pkl".format(self.curr_epoch)))
-    
-    def build_sparse_scheduler(self, s):
-        self.sparse_s = s
-        from utils.train_utils import SparseScheduler
-        self.sparse_scheduler = SparseScheduler(self.total_epochs, sparse_decay_dict, self.sparse_s)
 
     def record_bn(self):
         bn_sum, bn_num = 0, 0

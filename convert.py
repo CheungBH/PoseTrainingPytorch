@@ -4,8 +4,8 @@ import torch
 import os
 
 model_path = ""
-onnx = ""
-libtorch = ""
+onnx_path = ""
+libtorch_path = ""
 
 '''Must be assigned if option.pkl is not exist'''
 backbone = ""
@@ -26,7 +26,10 @@ posenet.build(backbone, cfg)
 posenet.load(model_path)
 model = posenet.model
 
+example = torch.rand(2, 3, width, height).cuda()
 with torch.no_grad():
-    dummy_inp = torch.ones()
-    if onnx:
-
+    if libtorch_path:
+        traced_model = torch.jit.trace(model, example)
+        traced_model.save(libtorch_path)
+    if onnx_path:
+        torch_out = torch.onnx.export(model, example, onnx_path, verbose=False, )

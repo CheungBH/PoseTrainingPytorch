@@ -1,8 +1,3 @@
-# -----------------------------------------------------
-# Copyright (c) Shanghai Jiao Tong University. All rights reserved.
-# Written by Jiefeng Li (jeff.lee.sjtu@gmail.com)
-# -----------------------------------------------------
-
 import argparse
 
 parser = argparse.ArgumentParser(description='PyTorch AlphaPose Training')
@@ -14,19 +9,11 @@ parser.add_argument('--expFolder', default='test', type=str,
                     help='Experiment folder')
 parser.add_argument('--dataset', default='multiple', type=str,
                     help='Dataset choice: mpii | coco')
-parser.add_argument('--nThreads', default=30, type=int,
-                    help='Number of data loading threads')
-parser.add_argument('--snapshot', default=1, type=int,
-                    help='How often to take a snapshot of the model (0 = never)')
-
-"----------------------------- AlphaPose options -----------------------------"
-parser.add_argument('--addDPG', default=False, type=bool,
-                    help='Train with data augmentation')
 
 "----------------------------- Model options -----------------------------"
 parser.add_argument('--backbone', default="seresnet101", type=str,
                     help='The backbone of the model')
-parser.add_argument('--struct', default="0", type=str,
+parser.add_argument('--struct', default=None, type=str,
                     help='The structure of the model')
 parser.add_argument('--loadModel', default=None, type=str,
                     help='Provide full path to a previously trained model')
@@ -85,8 +72,7 @@ parser.add_argument('--val_worker', default=1, type=int,
 parser.add_argument('--save_interval', default=20, type=int,
                     help='interval')
 
-
-"----------------------------- Data options -----------------------------"
+"---------------------------- Image options ----------------------------"
 parser.add_argument('--inputResH', default=320, type=int,
                     help='Input image height')
 parser.add_argument('--inputResW', default=256, type=int,
@@ -98,6 +84,9 @@ parser.add_argument('--outputResW', default=64, type=int,
 parser.add_argument('--model_hm', default=None, type=str,
                     help='heatmap set')
 
+"----------------------------- Data options -----------------------------"
+parser.add_argument('--addDPG', default=False, type=bool,
+                    help='Train with data augmentation')
 parser.add_argument('--scale', default=0.3, type=float,
                     help='Degree of scale augmentation')
 parser.add_argument('--se_ratio', default=1, type=int,
@@ -112,5 +101,5 @@ parser.add_argument('--ratio', default=3, type=int,
 # try:
 #     opt = parser.parse_args()
 # except:
-opt, unknown = parser.parse_known_args()
+opt, _ = parser.parse_known_args()
 
