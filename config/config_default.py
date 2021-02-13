@@ -50,15 +50,15 @@ else:
     raise ValueError("Wrong training data name!")
 
 
-sparse_decay_time = 0.5
+sparse_decay_dict = {0.5: 0.1}
 warm_up = {1: 0.1, 2: 0.5}
 
 all_kps = [-item for item in list(range(opt.kps + 1))[1:]]
 if opt.loss_allocate == 0:
-    loss_param = {1: all_kps}
+    loss_weight = {1: all_kps}
 elif opt.loss_allocate == 1:
-    loss_param = {3: [-1, -2, -7, -8, -11, -12]}
-    loss_param[1] = [-item for item in all_kps if -item not in loss_param[3]]
+    loss_weight = {3: [-1, -2, -7, -8, -11, -12]}
+    loss_weight[1] = [-item for item in all_kps if -item not in loss_weight[3]]
 else:
     raise ValueError()
 
@@ -70,4 +70,4 @@ lr_decay_dict = {0.7: 0.1, 0.9: 0.01}
 
 if __name__ == '__main__':
     opt.loss_allocate = 1
-    print(loss_param)
+    print(loss_weight)

@@ -44,9 +44,11 @@ parser.add_argument('--weightDecay', default=0, type=float,
                     help='Weight decay')
 parser.add_argument('--eps', default=1e-8, type=float,
                     help='epsilon')
+parser.add_argument('--lr_schedule', default="step", type=str,
+                    help='interval')
 parser.add_argument('--crit', default='MSE', type=str,
                     help='Criterion type')
-parser.add_argument('--loss_allocate', default=0, type=int,
+parser.add_argument('--loss_weight', default=0, type=int,
                     help='Criterion type')
 parser.add_argument('--freeze', default=0, type=float,
                     help='freeze backbone')
@@ -56,8 +58,8 @@ parser.add_argument('--optMethod', default='rmsprop', type=str,
                     help='Optimization method: rmsprop | sgd | nag | adadelta')
 parser.add_argument('--sparse_s', default=0, type=float,
                     help='sparse')
-parser.add_argument('--sparse_decay', default=1, type=float,
-                    help='sparse_decay')
+# parser.add_argument('--sparse_decay', default=1, type=float,
+#                     help='sparse_decay')
 parser.add_argument('--patience', default=6, type=float,
                     help='epoch of lr decay')
 parser.add_argument('--lr_decay_time', default=2, type=float,
@@ -82,6 +84,9 @@ parser.add_argument('--valNW', default=1, type=int,
                     help='num worker of val')
 parser.add_argument('--save_interval', default=20, type=int,
                     help='interval')
+parser.add_argument('--save_interval', default=20, type=int,
+                    help='interval')
+
 
 "----------------------------- Data options -----------------------------"
 parser.add_argument('--inputResH', default=320, type=int,

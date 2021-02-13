@@ -27,6 +27,12 @@ def generate_cmd(ls):
     return string[:-1] + "\n"
 
 
+def get_option_path(model_path):
+    model_path = model_path.replace("\\", "/")
+    option_path = "/".join(model_path.split("/")[:-1]) + "/option.pkl"
+    return option_path
+
+
 def adjust_lr(optimizer, epoch, lr_dict, nEpoch):
     curr_ratio = epoch/nEpoch
     bound = list(lr_dict.keys())
