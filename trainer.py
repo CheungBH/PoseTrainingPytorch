@@ -365,6 +365,7 @@ class Trainer:
             self.train()
             self.valid()
             self.record_bn()
+            self.write_log()
             self.save()
 
             self.check_stop()
