@@ -11,6 +11,8 @@ from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
 from dataset.loader import TrainDataset
+from utils.utils import draw_graph, write_csv_title
+import csv
 
 try:
     from apex import amp
@@ -40,10 +42,11 @@ class Trainer:
         self.curr_epoch = opt.epoch
         self.build_with_opt(opt)
 
-        os.makedirs(self.expFolder, exist_ok=True)
+        os.makedirs(os.path.join(self.expFolder, opt.expID), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
-        self.txt_log = os.path.join(self.expFolder, "assets/log.txt")
-        self.bn_log = os.path.join(self.expFolder, "assets/bn.txt")
+        self.txt_log = os.path.join(self.expFolder, "{}/log.txt".format(opt.expID))
+        self.bn_log = os.path.join(self.expFolder, "{}/bn.txt".format(opt.expID))
+        self.xlsx_log = os.path.join(self.expFolder, "{}/train_xlsx.xlsx".format(opt.expID))
         self.freeze = False
         self.stop = False
         self.best_epoch = self.curr_epoch
@@ -160,8 +163,8 @@ class Trainer:
                 )
             )
 
-        body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
-        body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
+        body_part_acc = [Logger.avg.tolist() for k, Logger in pts_acc_Loggers.items()]
+        body_part_dist = [Logger.avg.tolist() for k, Logger in pts_dist_Loggers.items()]
         body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
         train_loader_desc.close()
@@ -257,8 +260,8 @@ class Trainer:
                 )
             )
 
-        body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
-        body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
+        body_part_acc = [Logger.avg.tolist() for k, Logger in pts_acc_Loggers.items()]
+        body_part_dist = [Logger.avg.tolist() for k, Logger in pts_dist_Loggers.items()]
         body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
         val_loader_desc.close()
@@ -337,6 +340,20 @@ class Trainer:
         else:
             raise ValueError("The code is wrong!")
 
+    def draw_graph(self):
+        log_dir = os.path.join(self.expFolder, self.opt.expID)
+        draw_graph(self.epoch_ls, self.train_loss_ls, self.val_loss_ls, "loss", log_dir)
+        draw_graph(self.epoch_ls, self.train_acc_ls, self.val_acc_ls, "acc", log_dir)
+        draw_graph(self.epoch_ls, self.train_auc_ls, self.val_auc_ls, "AUC", log_dir)
+        draw_graph(self.epoch_ls, self.train_dist_ls, self.val_dist_ls, "dist", log_dir)
+        draw_graph(self.epoch_ls, self.train_pr_ls, self.val_pr_ls, "PR", log_dir)
+
+    def write_xlsx(self):
+        with open(self.xlsx_log, "w", newline="") as excel_log:
+            csv_writer = csv.writer(excel_log)
+            csv_writer.writerow(write_csv_title())
+            # for idx in range(len(self.epoch_ls)):
+
     def write_log(self):
         with open(self.bn_log, "a+") as bn_file:
             bn_file.write("Current bn : {} --> {}".format(self.curr_epoch, self.bn_mean_ls[-1]))
@@ -373,6 +390,8 @@ class Trainer:
                 break
 
         self.time_spent = time.time() - begin_time
+        self.draw_graph()
+        self.write_xlsx()
 
 
 if __name__ == '__main__':
