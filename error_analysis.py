@@ -1,4 +1,4 @@
-import tqdm
+from tqdm import tqdm
 import torch
 import os
 from config.config import device
@@ -15,12 +15,13 @@ posenet = PoseModel()
 
 
 class ErrorAnalyser:
-    def __init__(self, test_loader, model_path, print_info=True):
+    def __init__(self, test_loader, model_path, default_threshold=0.05):
         self.loader = test_loader
         self.model_path = model_path
         self.option_file = check_option_file(model_path)
-        self.print = print_info
+        self.thresh = default_threshold
         self.performance = defaultdict(list)
+        self.add_customized_threshold()
 
     def build(self, backbone, kps, cfg, DUC, crit, model_height=256, model_width=256):
         posenet.build(backbone, cfg)
@@ -30,21 +31,24 @@ class ErrorAnalyser:
         self.kps = kps
         self.height = model_height
         self.width = model_width
+        self.default_threshold = [self.thresh] * self.kps
 
     def build_with_opt(self):
         self.load_from_option()
         posenet.build(self.backbone, self.cfg)
         self.model = posenet.model
         self.build_criterion(self.crit)
+        self.default_threshold = [self.thresh] * self.kps
 
     def add_customized_threshold(self):
-        if
+        try:
+            option = torch.load(self.option_file)
+            self.customize_threshold = parse_thresh(option.thresh)
+        except:
+            self.customize_threshold = None
 
-    def analyser(self):
+    def analyse(self):
         accLogger, distLogger, lossLogger = DataLogger(), DataLogger(), DataLogger()
-        # pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
-        # pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
-        # pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
         self.model.eval()
 
         test_loader_desc = tqdm(self.loader)
@@ -59,19 +63,19 @@ class ErrorAnalyser:
                 out = self.model(inps)
                 loss = self.criterion(out.mul(setMask), labels)
 
-            acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, loader.dataset.accIdxs)
+            acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
 
             accLogger.update(acc[0], inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))
             distLogger.update(dist[0], inps.size(0))
 
-            self.performance[img_info[4]] = [acc[0], dist[0], loss.items()]
+            default_valid = self.get_valid_percent(maxval, self.default_threshold)
+            performance = [acc[0], dist[0], loss.items(), default_valid]
+            if self.customize_threshold:
+                customized_valid = self.get_valid_percent(maxval, self.customize_threshold)
+                performance.append(customized_valid)
 
-            # for k, v in pts_acc_Loggers.items():
-            #     pts_curve_Loggers[k].update(maxval[k], gt[k])
-            #     if exists[k] > 0:
-            #         pts_acc_Loggers[k].update(acc[k + 1], exists[k])
-            #         pts_dist_Loggers[k].update(dist[k + 1], exists[k])
+            self.performance[img_info[3]] = performance
 
             test_loader_desc.set_description(
                 'Test: | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
@@ -84,8 +88,6 @@ class ErrorAnalyser:
         test_loader_desc.close()
         print("----------------------------------------------------------------------------------------------------")
 
-        self.test_loss, self.test_acc, self.test_dist, self.test_auc, self.test_pr = lossLogger.avg, accLogger.avg, \
-                                                                                     distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
 
     def build_criterion(self, crit):
         self.criterion = criterion.build(crit)
@@ -103,14 +105,15 @@ class ErrorAnalyser:
         else:
             raise FileNotFoundError("The option.pkl doesn't exist! ")
 
-    def get_valid_joint(self, values, thresholds):
+    def get_valid_percent(self, values, thresholds):
         valid = 0
         for value, threshold in zip(values, thresholds):
-            if value < threshold:
+            if value > threshold:
                 valid += 1
-        return valid
+        return valid/self.kps
 
     def summarize(self):
+        return self.performance
 
 
 def error_analysis(model_path, data_info, batchsize=8, num_worker=1, use_option=False, DUC=0, kps=17,
@@ -122,9 +125,13 @@ def error_analysis(model_path, data_info, batchsize=8, num_worker=1, use_option=
         analyser.build_with_opt()
     else:
         analyser.build(backbone, kps, cfg, DUC, criteria, height, width)
-    analyser.analyser()
-    benchmark, performance, parts, thresh = tester.summarize()
+    analyser.analyse()
+    performance = analyser.summarize()
+    return performance
 
+
+# class AutoErrorAnalyser:
+#     def __init__(self):
 
 if __name__ == '__main__':
     pass

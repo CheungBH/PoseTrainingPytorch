@@ -169,10 +169,10 @@ class Trainer:
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
         train_loader_desc.close()
 
-        self.train_acc_ls.append(body_part_acc)
-        self.train_dist_ls.append(body_part_dist)
-        self.train_auc_ls.append(body_part_auc)
-        self.train_pr_ls.append(body_part_pr)
+        self.part_train_acc.append(body_part_acc)
+        self.part_train_dist.append(body_part_dist)
+        self.part_train_auc.append(body_part_auc)
+        self.part_train_pr.append(body_part_pr)
 
         curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = lossLogger.avg, accLogger.avg, distLogger.avg, \
                                                             curveLogger.cal_AUC(), curveLogger.cal_PR()
@@ -266,10 +266,10 @@ class Trainer:
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
         val_loader_desc.close()
 
-        self.val_acc_ls.append(body_part_acc)
-        self.val_dist_ls.append(body_part_dist)
-        self.val_auc_ls.append(body_part_auc)
-        self.val_pr_ls.append(body_part_pr)
+        self.part_val_acc.append(body_part_acc)
+        self.part_val_dist.append(body_part_dist)
+        self.part_val_auc.append(body_part_auc)
+        self.part_val_pr.append(body_part_pr)
 
         curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = lossLogger.avg, accLogger.avg, distLogger.avg, \
                                                             curveLogger.cal_AUC(), curveLogger.cal_PR()
@@ -311,6 +311,11 @@ class Trainer:
 
     def update_indicators(self, acc, loss, dist, auc, pr, iter, phase):
         if phase == "train":
+            self.train_acc_ls.append(acc)
+            self.train_loss_ls.append(loss)
+            self.train_dist_ls.append(dist)
+            self.train_auc_ls.append(auc)
+            self.train_pr_ls.append(pr)
             if acc > self.train_acc:
                 self.train_acc = acc
             if auc > self.train_auc:
@@ -324,6 +329,11 @@ class Trainer:
             self.opt.trainAcc, self.opt.trainLoss, self.opt.trainDist, self.opt.trainAuc, self.opt.trainPR, \
                 self.opt.trainIters = acc, loss, dist, auc, pr, iter
         elif phase == "val":
+            self.val_acc_ls.append(acc)
+            self.val_loss_ls.append(loss)
+            self.val_dist_ls.append(dist)
+            self.val_auc_ls.append(auc)
+            self.val_pr_ls.append(pr)
             if acc > self.val_acc:
                 self.val_acc = acc
                 self.best_epoch = self.curr_epoch
