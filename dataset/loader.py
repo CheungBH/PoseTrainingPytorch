@@ -25,5 +25,12 @@ class TrainDataset:
             self.val_dataset, batch_size=val_batch, shuffle=shuffle, num_workers=val_worker, pin_memory=pin_memory)
         return train_loader, val_loader
 
-# class TestLoader:
 
+class TestDataset:
+    def __init__(self, data_info, hmGauss=1, rotate=40):
+        self.dataset = MyDataset(data_info, train=False, sigma=hmGauss, rot_factor=rotate)
+
+    def build_dataloader(self, batch, worker, shuffle=True, pin_memory=True):
+        loader = torch.utils.data.DataLoader(
+            self.dataset, batch_size=batch, shuffle=shuffle, num_workers=worker, pin_memory=pin_memory)
+        return loader

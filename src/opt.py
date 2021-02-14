@@ -49,8 +49,8 @@ parser.add_argument('--sparse_s', default=0, type=float,
 #                     help='sparse_decay')
 parser.add_argument('--patience', default=6, type=float,
                     help='epoch of lr decay')
-parser.add_argument('--lr_decay_time', default=2, type=float,
-                    help='epoch of lr decay')
+# parser.add_argument('--lr_decay_time', default=2, type=float,
+#                     help='epoch of lr decay')
 
 "----------------------------- Training options -----------------------------"
 parser.add_argument('--nEpochs', default=500, type=int,

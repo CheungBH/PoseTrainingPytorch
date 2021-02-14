@@ -86,9 +86,9 @@ for op, mdl, name, fold in zip(option_ls, model_ls, name_ls, folder_ls):
         log.append(thr)
         thre_str += str(thr)
         thre_str += ","
-    # info.thresh = thre_str[:-1]
+    info.thresh = thre_str[:-1]
     log.append(" ")
-    # torch.save(info, op)
+    torch.save(info, op)
 
     csv_writer.writerow(log)
 
