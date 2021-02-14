@@ -42,6 +42,8 @@ class Trainer:
 
         os.makedirs(self.expFolder, exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
+        self.txt_log = os.path.join(self.expFolder, "assets/log.txt")
+        self.bn_log = os.path.join(self.expFolder, "assets/bn.txt")
         self.freeze = False
         self.stop = False
         self.best_epoch = self.curr_epoch
@@ -171,7 +173,7 @@ class Trainer:
 
         curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = lossLogger.avg, accLogger.avg, distLogger.avg, \
                                                             curveLogger.cal_AUC(), curveLogger.cal_PR()
-        self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, "train")
+        self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, self.trainIter, "train")
 
     def valid(self):
         drawn_kp, drawn_hm = False, False
@@ -334,6 +336,21 @@ class Trainer:
                 self.opt.valIters = acc, loss, dist, auc, pr, iter
         else:
             raise ValueError("The code is wrong!")
+
+    def write_log(self):
+        with open(self.bn_log, "a+") as bn_file:
+            bn_file.write("Current bn : {} --> {}".format(self.curr_epoch, self.bn_mean_ls[-1]))
+            bn_file.write("\n")
+
+        with open(self.txt_log, "a+") as result_file:
+            result_file.write('Train:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
+                    idx=self.curr_epoch, loss=self.train_loss_ls[-1], acc=self.train_acc_ls[-1],
+                    dist=self.train_dist_ls[-1], AUC=self.train_auc_ls[-1], PR=self.train_pr_ls[-1],
+                ))
+            result_file.write('Valid:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
+                    idx=self.curr_epoch, loss=self.val_loss_ls[-1], acc=self.val_acc_ls[-1],
+                    dist=self.val_dist_ls[-1], AUC=self.val_auc_ls[-1], PR=self.val_pr_ls[-1],
+                ))
 
     def process(self):
         begin_time = time.time()
