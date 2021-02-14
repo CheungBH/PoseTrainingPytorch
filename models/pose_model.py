@@ -1,10 +1,11 @@
 import torch
-from .utils.benchmark import print_model_param_flops, print_model_param_nums, get_inference_time
+from models.utils.benchmark import print_model_param_flops, print_model_param_nums, get_inference_time
 
 
 class PoseModel:
-    def __init__(self):
+    def __init__(self, device="cuda:0"):
         self.is_freeze = False
+        self.device = device
 
     def build(self, backbone, cfg):
         self.backbone = backbone
@@ -33,6 +34,8 @@ class PoseModel:
 
         # self.model_cfg = cfg
         self.model = createModel(cfg)
+        if self.device != "cpu":
+            self.model.cuda()
 
     def load(self, model_path, duc=False):
         if duc:
@@ -44,7 +47,7 @@ class PoseModel:
         if percent != 0:
             self.is_freeze = True
         feature_num = int(percent * self.feature_layer_num)
-        for idx, (n, p) in enumerate(self.model.named_parameters):
+        for idx, (n, p) in enumerate(self.model.named_parameters()):
             if self.feature_layer_name in n and idx < feature_num:
                 p.requires_grad = False
             else:
@@ -56,7 +59,7 @@ class PoseModel:
                 p.requires_grad = False
 
     def init_with_opt(self, opt):
-        self.model = self.build(opt.backbone, opt.struct)
+        self.build(opt.backbone, opt.struct)
         if opt.freeze_bn:
             self.freeze_bn()
         self.freeze(opt.freeze)

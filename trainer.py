@@ -1,12 +1,12 @@
-import tqdm
-from utils.eval import DataLogger, cal_accuracy, CurveLogger
+from tqdm import tqdm
+from utils.logger import DataLogger, CurveLogger
+from utils.eval import cal_accuracy
 from config import config
 import torch
 from utils.train_utils import Criterion, Optimizer
 from models.pose_model import PoseModel
 import cv2
 import os
-#from src.opt import opt
 from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
@@ -19,10 +19,6 @@ except ImportError:
     mix_precision = False
 torch.backends.cudnn.benchmark = True
 
-criterion = Criterion()
-optimizer = Optimizer()
-posenet = PoseModel()
-
 device = config.device
 lr_warm_up_dict = config.warm_up
 lr_decay_dict = config.lr_decay_dict
@@ -31,16 +27,21 @@ loss_weight = config.loss_weight
 sparse_decay_dict = config.sparse_decay_dict
 dataset_info = config.train_info
 
+criterion = Criterion()
+optimizer = Optimizer()
+posenet = PoseModel(device=device)
+
 
 class Trainer:
-    def __init__(self, exp_folder, begin_with=0, vis_in_training=False):
-        self.expFolder = exp_folder
-        self.opt_path = os.path.join(exp_folder, "option.pkl")
+    def __init__(self, opt, vis_in_training=False):
+        self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
+        self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
-        self.curr_epoch = begin_with
+        self.curr_epoch = opt.epoch
+        self.build_with_opt(opt)
 
         os.makedirs(self.expFolder, exist_ok=True)
-        self.tb_writer = SummaryWriter(exp_folder)
+        self.tb_writer = SummaryWriter(self.expFolder)
         self.freeze = False
         self.stop = False
         self.best_epoch = self.curr_epoch
@@ -54,7 +55,7 @@ class Trainer:
         
     def build_with_opt(self, opt):
         self.opt = opt
-        self.total_epochs = opt.epoch
+        self.total_epochs = opt.nEpochs
         self.kps = opt.kps
         self.lr = opt.LR
         self.trainIter, self.valIter = opt.trainIters, opt.valIters
@@ -62,7 +63,6 @@ class Trainer:
         posenet.init_with_opt(opt)
         self.params_to_update, _ = posenet.get_updating_param()
         self.freeze = posenet.is_freeze
-        posenet.model_transfer(device)
         self.model = posenet.model
 
         self.dataset = TrainDataset(dataset_info, hmGauss=opt.hmGauss, rotate=opt.rotate)
@@ -71,9 +71,10 @@ class Trainer:
 
         self.build_criterion(opt.crit)
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
+        posenet.model_transfer(device)
 
         if opt.lr_schedule == "step":
-            from utils.train_utils import StepLRAdjuster as scheduler
+            from utils.train_utils import StepLRScheduler as scheduler
         else:
             raise ValueError("Scheduler not supported")
         self.lr_scheduler = scheduler(self.total_epochs, lr_warm_up_dict, lr_decay_dict, self.lr)
@@ -126,7 +127,7 @@ class Trainer:
                     pts_dist_Loggers[k].update(dist[k + 1], exists[k])
 
             if mix_precision:
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
+                with amp.scale_loss(loss, self.optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
                 loss.backward()
@@ -267,7 +268,7 @@ class Trainer:
 
         curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = lossLogger.avg, accLogger.avg, distLogger.avg, \
                                                             curveLogger.cal_AUC(), curveLogger.cal_PR()
-        self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, "val")
+        self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, self.valIter, "val")
 
     def build_criterion(self, crit):
         self.criterion = criterion.build(crit)
@@ -355,3 +356,8 @@ class Trainer:
 
         self.time_spent = time.time() - begin_time
 
+
+if __name__ == '__main__':
+    from src.opt import opt
+    trainer = Trainer(opt)
+    trainer.process()

@@ -1,5 +1,6 @@
 
 mobile_opt = {"0": None,
+              None:None,
               "small": [
                 # t, c, n, s
                 [1, 12, 1, 1],
