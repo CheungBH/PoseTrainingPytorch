@@ -36,6 +36,7 @@ posenet = PoseModel(device=device)
 
 class Trainer:
     def __init__(self, opt, vis_in_training=False):
+        print(opt)
         self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
@@ -297,7 +298,7 @@ class Trainer:
     def save(self):
         torch.save(self.opt, self.opt_path)
         if self.curr_epoch % self.save_interval == 0 and self.curr_epoch != 0:
-            torch.save(self.model.modules.state_dict(), os.path.join(self.expFolder, "{}.pkl".format(self.curr_epoch)))
+            torch.save(self.model.module.state_dict(), os.path.join(self.expFolder, "{}.pkl".format(self.curr_epoch)))
 
     def record_bn(self):
         bn_sum, bn_num = 0, 0
@@ -336,14 +337,22 @@ class Trainer:
             self.val_pr_ls.append(pr)
             if acc > self.val_acc:
                 self.val_acc = acc
+                torch.save(self.model.module.state_dict(),
+                           os.path.join(self.expFolder, "best_acc.pkl".format(self.curr_epoch)))
                 self.best_epoch = self.curr_epoch
             if auc > self.val_auc:
+                torch.save(self.model.module.state_dict(),
+                           os.path.join(self.expFolder, "best_auc.pkl".format(self.curr_epoch)))
                 self.val_auc = auc
             if pr > self.val_pr:
+                torch.save(self.model.module.state_dict(),
+                           os.path.join(self.expFolder, "best_pr.pkl".format(self.curr_epoch)))
                 self.val_pr = pr
             if loss < self.val_loss:
                 self.val_loss = loss
             if dist < self.val_dist:
+                torch.save(self.model.module.state_dict(),
+                           os.path.join(self.expFolder, "best_dist.pkl".format(self.curr_epoch)))
                 self.val_dist = dist
             self.opt.valAcc, self.opt.valLoss, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
                 self.opt.valIters = acc, loss, dist, auc, pr, iter
@@ -398,6 +407,7 @@ class Trainer:
             self.check_stop()
             if self.stop:
                 break
+            self.curr_epoch += 1
 
         self.time_spent = time.time() - begin_time
         self.draw_graph()

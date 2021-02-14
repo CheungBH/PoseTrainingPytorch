@@ -342,10 +342,10 @@ def main():
             train_dataset.img_val, train_dataset.bbox_val, train_dataset.part_val
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=opt.trainBatch, shuffle=True, num_workers=opt.trainNW,
+        train_dataset, batch_size=opt.trainBatch, shuffle=True, num_workers=opt.train_worker,
         pin_memory=True)
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=opt.validBatch, shuffle=True, num_workers=opt.valNW, pin_memory=True)
+        val_dataset, batch_size=opt.validBatch, shuffle=True, num_workers=opt.val_worker, pin_memory=True)
 
     # for k, v in config.train_info.items():
     #     train_dataset = Mscoco([v[0], v[1]], train=True, val_img_num=v[2])

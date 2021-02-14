@@ -55,7 +55,7 @@ class Tester:
 
                 loss = self.criterion(out.mul(setMask), labels)
 
-            acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, loader.dataset.accIdxs)
+            acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
 
             accLogger.update(acc[0], inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))

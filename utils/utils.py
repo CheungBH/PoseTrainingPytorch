@@ -70,7 +70,7 @@ def warm_up_lr(optimizer, epoch):
 
 
 def get_sparse_value():
-    if opt.epoch > opt.nEpochs * config.sparse_decay_time:
+    if opt.epoch > opt.nEpochs * 0.5:
         return opt.sparse_s * opt.sparse_decay
     return opt.sparse_s
 
