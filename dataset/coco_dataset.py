@@ -15,7 +15,6 @@ from utils.utils import check_hm, check_part
 from src.opt import opt
 
 
-
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
 open_source_dataset = config.open_source_dataset
 draw = False

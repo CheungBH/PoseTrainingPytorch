@@ -53,7 +53,7 @@ folder = opt.expFolder
 optimize = opt.optMethod
 open_source_dataset = config.open_source_dataset
 warm_up_epoch = max(config.warm_up.keys())
-loss_params = config.loss_param
+loss_params = config.loss_weight
 lr_dict = config.lr_decay_dict
 draw_pred_img = False
 

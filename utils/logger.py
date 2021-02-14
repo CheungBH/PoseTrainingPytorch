@@ -66,6 +66,7 @@ class CurveLogger:
         except:
             return 0
 
+
 class ErrorLogger:
     pass
 
