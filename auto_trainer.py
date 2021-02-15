@@ -41,8 +41,7 @@ class AutoTrainer:
 
 if __name__ == '__main__':
     from src.opt import opt
-    AutoTrainer(opt)
-    AutoTrainer.train()
+    AutoTrainer(opt).train()
 
 
 

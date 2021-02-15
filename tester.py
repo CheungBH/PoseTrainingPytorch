@@ -142,4 +142,5 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=Fals
 
 
 if __name__ == '__main__':
-    pass
+    test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
+    test_model("", test_data, use_option=True)
