@@ -127,7 +127,7 @@ class Tester:
         return benchmark, performance, parts_performance, self.body_part_thresh
 
 
-def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=False, DUC=0, kps=17,
+def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True, DUC=0, kps=17,
                backbone="seresnet101", cfg="0", criteria="MSC", height=256, width=256):
     from dataset.loader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
@@ -143,4 +143,4 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=Fals
 
 if __name__ == '__main__':
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    test_model("", test_data, use_option=True)
+    test_model("", test_data)
