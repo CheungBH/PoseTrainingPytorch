@@ -3,7 +3,7 @@ from utils.logger import DataLogger, CurveLogger
 from utils.eval import cal_accuracy
 from config import config
 import torch
-from utils.train_utils import Criterion, Optimizer
+from utils.train_utils import Criterion, Optimizer, write_csv_title, summary_title
 from models.pose_model import PoseModel
 import cv2
 import os
@@ -11,7 +11,7 @@ from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
 from dataset.loader import TrainDataset
-from utils.utils import draw_graph, write_csv_title
+from utils.utils import draw_graph
 import csv
 
 try:
@@ -49,7 +49,7 @@ class Trainer:
         self.txt_log = os.path.join(self.expFolder, "{}/log.txt".format(opt.expID))
         self.bn_log = os.path.join(self.expFolder, "{}/bn.txt".format(opt.expID))
         self.xlsx_log = os.path.join(self.expFolder, "{}/train_xlsx.xlsx".format(opt.expID))
-        self.result_log = os.path.join("result", "{}_result_{}.csv".format(opt.expFolder, computer))
+        self.summary_log = os.path.join("result", "{}_result_{}.csv".format(opt.expFolder, computer))
 
         self.freeze = False
         self.stop = False
@@ -73,6 +73,7 @@ class Trainer:
         self.params_to_update, _ = posenet.get_updating_param()
         self.freeze = posenet.is_freeze
         self.model = posenet.model
+        self.flops, self.params, self.inf_time = posenet.benchmark(height=self.opt.inputResH, width=self.opt.inputResW)
 
         self.dataset = TrainDataset(dataset_info, hmGauss=opt.hmGauss, rotate=opt.rotate)
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
@@ -401,12 +402,25 @@ class Trainer:
     def write_xlsx(self):
         with open(self.xlsx_log, "w", newline="") as excel_log:
             csv_writer = csv.writer(excel_log)
-            csv_writer.writerow(write_csv_title())
+            csv_writer.writerow(write_csv_title(opt.kps))
             for idx in range(len(self.epoch_ls)):
                 csv_writer.writerow(self.epoch_result(idx))
 
-    def write_result(self):
-        self.result_log
+    def write_summary(self):
+        with open(self.summary_log, "a+") as summary:
+            if os.path.exists(self.summary_log):
+                summary.write(summary_title())
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
+                       "{},{},{},{},{},{},{},{},{}\n". \
+                format(self.opt.expID, self.opt.backbone, self.opt.struct, self.opt.se_ratio, self.opt.DUC,
+                       self.opt.inputResH, self.opt.inputResW, self.params, self.flops, self.inf_time,
+                       self.opt.loss_weight, self.opt.addDPG, self.opt.kps, self.opt.trainBatch, self.opt.optMethod,
+                       self.opt.freeze_bn, self.opt.freeze, self.opt.sparse_s, self.opt.nEpochs, self.opt.LR,
+                       self.opt.hmGauss, self.opt.ratio, self.opt.weightDecay, self.opt.loadModel, config.computer,
+                       self.expFolder, self.time_elapse, self.train_acc, self.train_loss, self.train_dist,
+                       self.train_auc, self.train_pr, self.val_acc, self.val_loss, self.val_dist, self.val_auc,
+                       self.val_pr, self.best_epoch, self.curr_epoch)
+            summary.write(info_str)
 
     def write_log(self):
         with open(self.bn_log, "a+") as bn_file:
@@ -446,9 +460,10 @@ class Trainer:
                 break
             self.curr_epoch += 1
 
-        self.time_spent = time.time() - begin_time
+        self.time_elapse = time.time() - begin_time
         self.draw_graph()
         self.write_xlsx()
+        self.write_summary()
 
 
 if __name__ == '__main__':

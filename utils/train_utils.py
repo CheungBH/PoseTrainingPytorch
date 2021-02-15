@@ -1,4 +1,5 @@
 import torch
+from config import config
 
 
 class Criterion:
@@ -78,3 +79,46 @@ class SparseScheduler:
 
     def update(self, epoch):
         return self.decay_sparse(epoch)
+
+
+def generate_cmd(ls):
+    string = ""
+    for idx, item in enumerate(ls):
+        string += item
+        string += " "
+    return string[:-1] + "\n"
+
+
+def summary_title():
+    title_str = "id,backbone,structure,se ratio, input height, input weidthDUC,params,flops,time,loss_weight,addDPG," \
+                "kps,batch_size,optimizer,freeze_bn,freeze,sparse,total epochs,LR,Gaussian,thresh,weightDecay," \
+                "loadModel,model_location, ,folder_name,training_time,train_acc,train_loss,train_dist,train_AUC," \
+                "train_PR,val_acc,val_loss, val_dist,val_AUC,val_PR,best_epoch,final_epoch"
+    return title_str
+
+
+def csv_body_part(phase, indicator, kps=17):
+    ls = []
+    body_parts = [item for item in config.body_parts.values()]
+    if kps == 17:
+        body_parts = body_parts
+    elif kps == 13:
+        body_parts = [body_parts[0]] + body_parts[5:]
+    for item in body_parts:
+        ls.append(phase + "_" + item + "_" + indicator)
+    ls.append(" ")
+    return ls
+
+
+def write_csv_title(kps=17):
+    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "train_auc", "train_pr", "val_loss",
+             "val_acc", "val_dist", "val_auc", "val_pr", " "]
+    title += csv_body_part("train", "acc", kps)
+    title += csv_body_part("train", "dist", kps)
+    title += csv_body_part("train", "AUC", kps)
+    title += csv_body_part("train", "PR", kps)
+    title += csv_body_part("val", "acc", kps)
+    title += csv_body_part("val", "dist", kps)
+    title += csv_body_part("val", "AUC", kps)
+    title += csv_body_part("val", "PR", kps)
+    return title
