@@ -28,6 +28,7 @@ stop_dicts = config.bad_epochs
 loss_weight = config.loss_weight
 sparse_decay_dict = config.sparse_decay_dict
 dataset_info = config.train_info
+computer = config.computer
 
 criterion = Criterion()
 optimizer = Optimizer()
@@ -48,6 +49,8 @@ class Trainer:
         self.txt_log = os.path.join(self.expFolder, "{}/log.txt".format(opt.expID))
         self.bn_log = os.path.join(self.expFolder, "{}/bn.txt".format(opt.expID))
         self.xlsx_log = os.path.join(self.expFolder, "{}/train_xlsx.xlsx".format(opt.expID))
+        self.result_log = os.path.join("result", "{}_result_{}.csv".format(opt.expFolder, computer))
+
         self.freeze = False
         self.stop = False
         self.best_epoch = self.curr_epoch
@@ -298,6 +301,8 @@ class Trainer:
 
     def save(self):
         torch.save(self.opt, self.opt_path)
+        torch.save(self.optimizer, '{}/optimizer.pkl'.format(self.expFolder))
+
         if self.curr_epoch % self.save_interval == 0 and self.curr_epoch != 0:
             torch.save(self.model.module.state_dict(), os.path.join(self.expFolder, "{}.pkl".format(self.curr_epoch)))
 
@@ -360,6 +365,31 @@ class Trainer:
         else:
             raise ValueError("The code is wrong!")
 
+    def epoch_result(self, epoch):
+        ep_line = [self.opt.expID, self.epoch_ls[epoch], self.lr_ls[epoch], ""]
+        ep_performance = [self.train_loss_ls[epoch], self.train_acc_ls[epoch], self.train_dist_ls[epoch],
+                          self.train_auc_ls[epoch], self.train_pr_ls[epoch], self.val_loss_ls[epoch],
+                          self.val_acc_ls[epoch], self.val_dist_ls[epoch], self.val_auc_ls[epoch],
+                          self.val_pr_ls[epoch], ""]
+        ep_line += ep_performance
+        ep_line += self.part_train_acc[epoch]
+        ep_line.append("")
+        ep_line += self.part_train_dist[epoch]
+        ep_line.append("")
+        ep_line += self.part_train_auc[epoch]
+        ep_line.append("")
+        ep_line += self.part_train_pr[epoch]
+        ep_line.append("")
+        ep_line += self.part_val_acc[epoch]
+        ep_line.append("")
+        ep_line += self.part_val_dist[epoch]
+        ep_line.append("")
+        ep_line += self.part_val_auc[epoch]
+        ep_line.append("")
+        ep_line += self.part_val_pr[epoch]
+        ep_line.append("")
+        return ep_line
+
     def draw_graph(self):
         log_dir = os.path.join(self.expFolder, self.opt.expID)
         draw_graph(self.epoch_ls, self.train_loss_ls, self.val_loss_ls, "loss", log_dir)
@@ -372,7 +402,11 @@ class Trainer:
         with open(self.xlsx_log, "w", newline="") as excel_log:
             csv_writer = csv.writer(excel_log)
             csv_writer.writerow(write_csv_title())
-            # for idx in range(len(self.epoch_ls)):
+            for idx in range(len(self.epoch_ls)):
+                csv_writer.writerow(self.epoch_result(idx))
+
+    def write_result(self):
+        self.result_log
 
     def write_log(self):
         with open(self.bn_log, "a+") as bn_file:
@@ -392,6 +426,7 @@ class Trainer:
 
     def process(self):
         begin_time = time.time()
+
         for epoch in range(self.total_epochs)[self.curr_epoch:]:
             self.epoch_ls.append(epoch)
             print('############# Starting Epoch {} #############'.format(epoch))
