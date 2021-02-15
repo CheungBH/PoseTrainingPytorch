@@ -71,16 +71,17 @@ class ErrorAnalyser:
             lossLogger.update(loss.item(), inps.size(0))
             distLogger.update(dist[0], inps.size(0))
 
+            maxval = maxval.t().squeeze().tolist()
             default_valid = self.get_valid_percent(maxval, self.default_threshold)
-            performance = [acc[0], dist[0], loss.items(), default_valid]
+            performance = [acc[0].tolist(), dist[0].tolist(), loss.tolist(), default_valid]
             if self.customize_threshold:
                 customized_valid = self.get_valid_percent(maxval, self.customize_threshold)
                 performance.append(customized_valid)
 
-            self.performance[img_info[3]] = performance
+            self.performance[img_info[3][0]] = performance
 
             test_loader_desc.set_description(
-                'Test: | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+                'Test | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
                     loss=lossLogger.avg,
                     acc=accLogger.avg * 100,
                     dist=distLogger.avg,
@@ -89,7 +90,6 @@ class ErrorAnalyser:
 
         test_loader_desc.close()
         print("----------------------------------------------------------------------------------------------------")
-
 
     def build_criterion(self, crit):
         self.criterion = criterion.build(crit)
@@ -118,7 +118,7 @@ class ErrorAnalyser:
         return self.performance
 
 
-def error_analysis(model_path, data_info, batchsize=8, num_worker=1, use_option=True, DUC=0, kps=17,
+def error_analysis(model_path, data_info, batchsize=1, num_worker=1, use_option=True, DUC=0, kps=17,
                backbone="seresnet101", cfg="0", criteria="MSE", height=256, width=256):
     from dataset.loader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
@@ -137,4 +137,5 @@ def error_analysis(model_path, data_info, batchsize=8, num_worker=1, use_option=
 
 if __name__ == '__main__':
     analyse_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    error_analysis("", analyse_data)
+    error = error_analysis("exp/test/default/default_best_acc.pkl", analyse_data)
+    print(error)

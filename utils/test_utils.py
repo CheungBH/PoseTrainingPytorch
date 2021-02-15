@@ -14,4 +14,5 @@ def list_to_str(ls):
 
 
 def parse_thresh(thresh):
-    return thresh.split(",")
+    thresh = thresh.split(",")
+    return [float(item) for item in thresh]

@@ -94,7 +94,7 @@ class Tester:
                                                                                      distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
 
     def get_benchmark(self):
-        self.flops, self.params, self.infer_time = self.model.benchmark()
+        self.flops, self.params, self.infer_time = posenet.benchmark()
         if self.print:
             print("FLOPs of current model is {}".format(self.flops))
             print("Parameters of current model is {}".format(self.params))
@@ -139,10 +139,11 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
     else:
         tester.build(backbone, kps, cfg, DUC, criteria, height, width)
     tester.test()
+    tester.get_benchmark()
     benchmark, performance, parts, thresh = tester.summarize()
     tester.save_thresh_to_option()
 
 
 if __name__ == '__main__':
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    test_model("", test_data)
+    test_model("exp/test/default/default_best_acc.pkl", test_data)

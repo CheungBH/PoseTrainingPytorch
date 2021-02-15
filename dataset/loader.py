@@ -28,7 +28,7 @@ class TrainDataset:
 
 class TestDataset:
     def __init__(self, data_info, hmGauss=1, rotate=40):
-        self.dataset = MyDataset(data_info, train=False, sigma=hmGauss, rot_factor=rotate)
+        self.dataset = MyDataset(data_info, train=True, sigma=hmGauss, rot_factor=rotate)
 
     def build_dataloader(self, batch, worker, shuffle=True, pin_memory=True):
         loader = torch.utils.data.DataLoader(
