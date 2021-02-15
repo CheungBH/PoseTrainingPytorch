@@ -339,21 +339,21 @@ class Trainer:
             if acc > self.val_acc:
                 self.val_acc = acc
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "best_acc.pkl".format(self.curr_epoch)))
+                           os.path.join(self.expFolder, "{}_best_acc.pkl".format(opt.expID)))
                 self.best_epoch = self.curr_epoch
             if auc > self.val_auc:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "best_auc.pkl".format(self.curr_epoch)))
+                           os.path.join(self.expFolder, "{}_best_auc.pkl".format(opt.expID)))
                 self.val_auc = auc
             if pr > self.val_pr:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "best_pr.pkl".format(self.curr_epoch)))
+                           os.path.join(self.expFolder, "{}_best_pr.pkl".format(opt.expID)))
                 self.val_pr = pr
             if loss < self.val_loss:
                 self.val_loss = loss
             if dist < self.val_dist:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "best_dist.pkl".format(self.curr_epoch)))
+                           os.path.join(self.expFolder, "{}_best_dist.pkl".format(opt.expID)))
                 self.val_dist = dist
             self.opt.valAcc, self.opt.valLoss, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
                 self.opt.valIters = acc, loss, dist, auc, pr, iter
@@ -376,10 +376,11 @@ class Trainer:
 
     def write_log(self):
         with open(self.bn_log, "a+") as bn_file:
-            bn_file.write("Current bn : {} --> {}".format(self.curr_epoch, self.bn_mean_ls[-1]))
+            bn_file.write("Current bn: {} --> {}".format(self.curr_epoch, self.bn_mean_ls[-1]))
             bn_file.write("\n")
 
         with open(self.txt_log, "a+") as result_file:
+            result_file.write('############# Starting Epoch {} #############\n'.format(self.curr_epoch))
             result_file.write('Train:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
                     idx=self.curr_epoch, loss=self.train_loss_ls[-1], acc=self.train_acc_ls[-1],
                     dist=self.train_dist_ls[-1], AUC=self.train_auc_ls[-1], PR=self.train_pr_ls[-1],
