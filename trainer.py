@@ -78,6 +78,7 @@ class Trainer:
         self.build_criterion(opt.crit)
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
         posenet.model_transfer(device)
+        self.model = posenet.model
 
         if opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler
@@ -175,7 +176,7 @@ class Trainer:
         self.part_train_auc.append(body_part_auc)
         self.part_train_pr.append(body_part_pr)
 
-        curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = lossLogger.avg, accLogger.avg, distLogger.avg, \
+        curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
                                                             curveLogger.cal_AUC(), curveLogger.cal_PR()
         self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, self.trainIter, "train")
 
@@ -272,7 +273,7 @@ class Trainer:
         self.part_val_auc.append(body_part_auc)
         self.part_val_pr.append(body_part_pr)
 
-        curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = lossLogger.avg, accLogger.avg, distLogger.avg, \
+        curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
                                                             curveLogger.cal_AUC(), curveLogger.cal_PR()
         self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, self.valIter, "val")
 
