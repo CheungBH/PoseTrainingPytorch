@@ -25,6 +25,8 @@ class Tester:
         self.model = posenet.model
         self.crit = crit
         self.build_criterion(self.crit)
+        self.backbone = backbone
+        self.cfg = cfg
         self.kps = kps
         self.height = model_height
         self.width = model_width

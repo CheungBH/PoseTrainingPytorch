@@ -31,6 +31,8 @@ class ErrorAnalyser:
         self.kps = kps
         self.height = model_height
         self.width = model_width
+        self.backbone = backbone
+        self.cfg = cfg
         self.default_threshold = [self.thresh] * self.kps
 
     def build_with_opt(self):
