@@ -68,12 +68,12 @@ class PoseModel:
 
     def benchmark(self, height=256, width=256):
         flops = print_model_param_flops(self.model)
-        print("FLOPs of current model is {}".format(flops))
+        # print("FLOPs of current model is {}".format(flops))
         params = print_model_param_nums(self.model)
-        print("Parameters of current model is {}".format(params))
+        # print("Parameters of current model is {}".format(params))
         inf_time = get_inference_time(self.model, height=height, width=width)
-        print("Inference time is {}".format(inf_time))
-        print("----------------------------------------------------------------------------------------------------")
+        # print("Inference time is {}".format(inf_time))
+        # print("----------------------------------------------------------------------------------------------------")
         return flops, params, inf_time
 
     def get_updating_param(self):

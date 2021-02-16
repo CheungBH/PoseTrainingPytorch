@@ -30,12 +30,14 @@ class Tester:
         self.kps = kps
         self.height = model_height
         self.width = model_width
+        posenet.load(self.model_path)
 
     def build_with_opt(self):
         self.load_from_option()
         posenet.build(self.backbone, self.cfg)
         self.model = posenet.model
         self.build_criterion(self.crit)
+        posenet.load(self.model_path)
 
     def test(self):
         accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
@@ -141,9 +143,9 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
     tester.test()
     tester.get_benchmark()
     benchmark, performance, parts, thresh = tester.summarize()
-    tester.save_thresh_to_option()
+    # tester.save_thresh_to_option()
 
 
 if __name__ == '__main__':
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    test_model("exp/test/default/default_best_acc.pkl", test_data)
+    test_model("exp/test/default_bad/default_best_acc.pkl", test_data)

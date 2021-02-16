@@ -6,7 +6,7 @@ import csv
 from utils.utils import write_test_title
 from config.config import computer
 
-model_folders = "D:/pose_test1"
+model_folders = "exp/test"
 test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
 test_mark = ["best_acc", "best_auc", "best_pr", "best_dist"]
 
@@ -86,7 +86,7 @@ for op, mdl, name, fold in zip(option_ls, model_ls, name_ls, folder_ls):
         log.append(thr)
         thre_str += str(thr)
         thre_str += ","
-    info.thresh = thre_str[:-1]
+    # info.thresh = thre_str[:-1]
     log.append(" ")
     torch.save(info, op)
 

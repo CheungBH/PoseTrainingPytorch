@@ -41,6 +41,7 @@ class ErrorAnalyser:
         self.model = posenet.model
         self.build_criterion(self.crit)
         self.default_threshold = [self.thresh] * self.kps
+        posenet.load(self.model_path)
 
     def add_customized_threshold(self):
         try:
