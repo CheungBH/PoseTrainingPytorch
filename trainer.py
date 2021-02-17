@@ -345,15 +345,15 @@ class Trainer:
             if acc > self.val_acc:
                 self.val_acc = acc
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_acc.pkl".format(opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_acc.pkl".format(self.opt.expID)))
                 self.best_epoch = self.curr_epoch
             if auc > self.val_auc:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_auc.pkl".format(opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_auc.pkl".format(self.opt.expID)))
                 self.val_auc = auc
             if pr > self.val_pr:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_pr.pkl".format(opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_pr.pkl".format(self.opt.expID)))
                 self.val_pr = pr
             if loss < self.val_loss:
                 self.val_loss = loss
@@ -406,7 +406,7 @@ class Trainer:
             for idx in range(len(self.epoch_ls)):
                 csv_writer.writerow(self.epoch_result(idx))
 
-    def write_summary(self):
+    def write_summary(self, error_str=""):
         with open(self.summary_log, "a+") as summary:
             if os.path.exists(self.summary_log):
                 summary.write(summary_title())
@@ -420,7 +420,7 @@ class Trainer:
                        self.expFolder, self.time_elapse, self.train_acc, self.train_loss, self.train_dist,
                        self.train_auc, self.train_pr, self.val_acc, self.val_loss, self.val_dist, self.val_auc,
                        self.val_pr, self.best_epoch, self.curr_epoch)
-            summary.write(info_str)
+            summary.write(info_str + error_str)
 
     def write_log(self):
         with open(self.bn_log, "a+") as bn_file:
@@ -440,30 +440,37 @@ class Trainer:
 
     def process(self):
         begin_time = time.time()
+        error_string = ""
+        try:
+            for epoch in range(self.total_epochs)[self.curr_epoch:]:
+                self.epoch_ls.append(epoch)
+                print('############# Starting Epoch {} #############'.format(epoch))
 
-        for epoch in range(self.total_epochs)[self.curr_epoch:]:
-            self.epoch_ls.append(epoch)
-            print('############# Starting Epoch {} #############'.format(epoch))
+                curr_lr = self.lr_scheduler.update(self.optimizer, epoch)
+                self.lr_ls.append(curr_lr)
+                self.sparse_s = self.sparse_scheduler.update(epoch)
 
-            curr_lr = self.lr_scheduler.update(self.optimizer, epoch)
-            self.lr_ls.append(curr_lr)
-            self.sparse_s = self.sparse_scheduler.update(epoch)
+                self.train()
+                self.valid()
+                self.record_bn()
+                self.write_log()
+                self.save()
 
-            self.train()
-            self.valid()
-            self.record_bn()
-            self.write_log()
-            self.save()
-
-            self.check_stop()
-            if self.stop:
-                break
-            self.curr_epoch += 1
+                self.check_stop()
+                if self.stop:
+                    break
+                self.curr_epoch += 1
+        except IOError:
+            error_string = ",Some file is closed"
+        except ZeroDivisionError:
+            error_string = ",Gradient flow"
+        except KeyboardInterrupt:
+            error_string = ",Process was killed"
 
         self.time_elapse = time.time() - begin_time
         self.draw_graph()
         self.write_xlsx()
-        self.write_summary()
+        self.write_summary(error_string)
 
 
 if __name__ == '__main__':
