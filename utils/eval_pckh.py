@@ -121,10 +121,9 @@ if __name__ == '__main__':
     # if_exist = if_exist.t()
     cal_pckh(preds, gt, if_exist,refp=0.5)
 
-#
 # 8 samples, only shoulders
 #
-# hadsiz = [2,2,2,2,2,2,2,2]
+# headsize = [2,2,2,2,2,2,2,2]
 # dists = [100000, 0.5, 10, 10, 0.5, 0.5, 0.5, 0.5]
 #
 # pckh_shoulder: [0,1,0,0,1,1,1,1] --> 0.836
