@@ -359,7 +359,7 @@ class Trainer:
                 self.val_loss = loss
             if dist < self.val_dist:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_dist.pkl".format(opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_dist.pkl".format(self.opt.expID)))
                 self.val_dist = dist
             self.opt.valAcc, self.opt.valLoss, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
                 self.opt.valIters = acc, loss, dist, auc, pr, iter
@@ -402,13 +402,13 @@ class Trainer:
     def write_xlsx(self):
         with open(self.xlsx_log, "w", newline="") as excel_log:
             csv_writer = csv.writer(excel_log)
-            csv_writer.writerow(write_csv_title(opt.kps))
+            csv_writer.writerow(write_csv_title(self.opt.kps))
             for idx in range(len(self.epoch_ls)):
                 csv_writer.writerow(self.epoch_result(idx))
 
     def write_summary(self, error_str=""):
         with open(self.summary_log, "a+") as summary:
-            if os.path.exists(self.summary_log):
+            if not os.path.exists(self.summary_log):
                 summary.write(summary_title())
             info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
                        "{},{},{},{},{},{},{},{},{}\n". \
@@ -458,6 +458,7 @@ class Trainer:
 
                 self.check_stop()
                 if self.stop:
+                    error_string = ", The accuracy is too low"
                     break
                 self.curr_epoch += 1
         except IOError:
