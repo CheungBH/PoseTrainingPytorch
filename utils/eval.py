@@ -104,6 +104,7 @@ def cal_ave(weights, inps):
 def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
     num_samples = len(y_true)
     name_value = {}
+    ls, rs, le, re, lw, rw, lh, rh, lk, rk, la, ra, pckh = [], [], [], [], [], [], [], [], [], [], [], [], []
     for i in range(num_samples):
         central = y_true[i][-11] + y_true[i][-12]
         head_size = np.linalg.norm(np.subtract(central,y_true[i][0]))
@@ -119,28 +120,74 @@ def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
         less_than_threshold = valid_joints(a)
         joint_radio = 100.0 * less_than_threshold / jnt_count
         PCKh = np.ma.array(scale, mask=False)
-        name_value[i] = [('lS', 100*PCKh[i][0]),
-                         ('RS',100*PCKh[i][1]),
-                         ('LE',100*PCKh[i][2]),
-                         ('RE',100*PCKh[i][3]),
-                         ('LW',100*PCKh[i][4]),
-                         ('RW',100*PCKh[i][5]),
-                         ('LH',100*PCKh[i][6]),
-                         ('RH',100*PCKh[i][7]),
-                         ('LK',100*PCKh[i][8]),
-                         ('RK',100*PCKh[i][9]),
-                         ('LA',100*PCKh[i][10]),
-                         ('RA',100*PCKh[i][11]),
-                         ('PCKh', joint_radio)]
-        name_value = OrderedDict(name_value)
-        # print(name_value)
-    return name_value
+        # name_value[i] = [('lS', 100*PCKh[i][0]),
+        #                  ('RS',100*PCKh[i][1]),
+        #                  ('LE',100*PCKh[i][2]),
+        #                  ('RE',100*PCKh[i][3]),
+        #                  ('LW',100*PCKh[i][4]),
+        #                  ('RW',100*PCKh[i][5]),
+        #                  ('LH',100*PCKh[i][6]),
+        #                  ('RH',100*PCKh[i][7]),
+        #                  ('LK',100*PCKh[i][8]),
+        #                  ('RK',100*PCKh[i][9]),
+        #                  ('LA',100*PCKh[i][10]),
+        #                  ('RA',100*PCKh[i][11]),
+        #                  ('PCKh', joint_radio)]
+        # name_value = OrderedDict(name_value)
+        name = list(scale)
+        ls.append(name[i][0])
+        rs.append(name[i][1])
+        le.append(name[i][2])
+        re.append(name[i][3])
+        lw.append(name[i][4])
+        rw.append(name[i][5])
+        lh.append(name[i][6])
+        rh.append(name[i][7])
+        lk.append(name[i][8])
+        rk.append(name[i][9])
+        la.append(name[i][10])
+        ra.append(name[i][11])
+        pckh.append(joint_radio)
 
-# def cal_average(name_value):
-#     pckh_dict = []
-#     for i in range(len(name_value)):
-
-
+    b = cal_average(ls)
+    c = cal_average(rs)
+    d = cal_average(le)
+    e = cal_average(re)
+    f = cal_average(lw)
+    g = cal_average(rw)
+    h = cal_average(lh)
+    x = cal_average(rh)
+    y = cal_average(lk)
+    z = cal_average(rk)
+    p = cal_average(la)
+    q = cal_average(ra)
+    PCkh = cal_average(pckh)
+    PCKH = [('lS', b ),
+            ('RS', c ),
+            ('LE', d ),
+            ('RE', e ),
+            ('LW', f ),
+            ('RW', g ),
+            ('LH', h ),
+            ('RH', x ),
+            ('LK', y ),
+            ('RK', z ),
+            ('LA', p ),
+            ('RA', q ),
+            ('PCKh', PCkh)]
+    PCKH = OrderedDict(PCKH)
+    return PCKH
+def cal_average(a):
+    count =0
+    num = 0
+    for i in range(len(a)):
+        if a[i] !=0:
+            num = num+a[i]
+            count +=1
+        else:
+            num = num
+            count += 0
+    return num/count
 
 def valid_joints(if_exist):
     count = 0
