@@ -39,7 +39,7 @@ class AutoTester:
         else:
             self.load_model_and_option()
 
-        for model in zip(self.model_ls):
+        for model in self.model_ls:
             test = Tester(self.test_loader, model)
             test.build_with_opt()
             test.test()
@@ -50,10 +50,8 @@ class AutoTester:
 
 
 if __name__ == '__main__':
-    model_folder = ""
-    data_info = {}
+    model_folder = "exp/auto_test"
+    data_info = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
     separate = False
     auto_tester = AutoTester(model_folder, data_info, separate=separate)
-
-
-
+    auto_tester.run()

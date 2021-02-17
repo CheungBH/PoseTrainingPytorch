@@ -49,7 +49,7 @@ class Trainer:
         self.txt_log = os.path.join(self.expFolder, "{}/log.txt".format(opt.expID))
         self.bn_log = os.path.join(self.expFolder, "{}/bn.txt".format(opt.expID))
         self.xlsx_log = os.path.join(self.expFolder, "{}/train_xlsx.xlsx".format(opt.expID))
-        self.summary_log = os.path.join("result", "{}_result_{}.csv".format(opt.expFolder, computer))
+        self.summary_log = os.path.join("exp", opt.expFolder, "train_{}.csv".format(opt.expFolder, computer))
 
         self.freeze = False
         self.stop = False
