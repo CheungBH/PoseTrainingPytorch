@@ -40,7 +40,7 @@ class AutoTester:
             self.load_model_and_option()
 
         for model in self.model_ls:
-            test = Tester(self.test_loader, model)
+            test = Tester(self.test_loader, model, print_info=False)
             test.build_with_opt()
             test.test()
             test.get_benchmark()
