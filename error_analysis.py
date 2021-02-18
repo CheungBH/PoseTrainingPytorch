@@ -21,7 +21,8 @@ class ErrorAnalyser:
         self.option_file = check_option_file(model_path)
         self.thresh = default_threshold
         self.performance = defaultdict(list)
-        self.add_customized_threshold()
+        self.max_val_dict = defaultdict(list)
+        # self.add_customized_threshold()
 
     def build(self, backbone, kps, cfg, DUC, crit, model_height=256, model_width=256):
         posenet.build(backbone, cfg)
@@ -43,12 +44,12 @@ class ErrorAnalyser:
         self.default_threshold = [self.thresh] * self.kps
         posenet.load(self.model_path)
 
-    def add_customized_threshold(self):
-        try:
-            option = torch.load(self.option_file)
-            self.customize_threshold = parse_thresh(option.thresh)
-        except:
-            self.customize_threshold = None
+    # def add_customized_threshold(self):
+    #     try:
+    #         option = torch.load(self.option_file)
+    #         self.customize_threshold = parse_thresh(option.thresh)
+    #     except:
+    #         self.customize_threshold = None
 
     def analyse(self):
         accLogger, distLogger, lossLogger = DataLogger(), DataLogger(), DataLogger()
