@@ -13,6 +13,9 @@ class AutoTester:
 
     def load_model_and_option(self):
         for folder in os.listdir(self.model_folder):
+            if "csv" in folder:
+                continue
+
             for file in os.listdir(os.path.join(self.model_folder, folder)):
                 for kw in self.keyword:
                     if kw in file:
@@ -40,6 +43,7 @@ class AutoTester:
             self.load_model_and_option()
 
         for model in self.model_ls:
+            print("Processing model {}".format(model))
             test = Tester(self.test_loader, model, print_info=False)
             test.build_with_opt()
             test.test()

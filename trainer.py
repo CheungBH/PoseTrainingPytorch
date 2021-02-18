@@ -407,8 +407,11 @@ class Trainer:
                 csv_writer.writerow(self.epoch_result(idx))
 
     def write_summary(self, error_str=""):
+        exist = False
+        if os.path.exists(self.summary_log):
+            exist = True
         with open(self.summary_log, "a+") as summary:
-            if not os.path.exists(self.summary_log):
+            if not exist:
                 summary.write(summary_title())
             info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
                        "{},{},{},{},{},{},{},{},{}\n". \
