@@ -192,7 +192,7 @@ def cal_pckh2(y_pred, y_true, if_exist, refp=0.5):
         ratio = dist/ head_size
         scale = ratio * valid
         correct_num = sum((0 < scale) & (scale <= refp))#valid_joints(a)
-        pckh.append(100.0 * correct_num / sum(valid))
+        pckh.append(correct_num / sum(valid))
 
         for idx, (s, v) in enumerate(zip(scale, valid)):
             if v == 1 and s <= refp:
