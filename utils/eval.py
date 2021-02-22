@@ -182,13 +182,13 @@ def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
 
 
 def cal_pckh2(y_pred, y_true, if_exist, refp=0.5):
-    parts_valid = sum(if_exist).tolist()
+    parts_valid = sum(if_exist)[-12:].tolist()
     parts_correct, pckh = [0]*12, []
     for i in range(len(y_true)):
         central = (y_true[i][-11] + y_true[i][-12]) / 2
         head_size = np.linalg.norm(np.subtract(central, y_true[i][0]))
         valid = np.array(if_exist[i][5:17])
-        dist = np.linalg.norm(y_true[i][5:17] - y_pred[i][5:17],axis=1)
+        dist = np.linalg.norm(y_true[i][5:17] - y_pred[i][5:17], axis=1)
         ratio = dist/ head_size
         scale = ratio * valid
         correct_num = sum((0 < scale) & (scale <= refp))#valid_joints(a)
@@ -199,8 +199,8 @@ def cal_pckh2(y_pred, y_true, if_exist, refp=0.5):
                 parts_correct[idx] += 1
 
     parts_pckh = []
-    for correct, valid in zip(parts_correct, parts_valid):
-        parts_pckh.append(correct/ valid) if valid > 0 else parts_pckh.append(0)
+    for correct_pt, valid_pt in zip(parts_correct, parts_valid):
+        parts_pckh.append(correct_pt/ valid_pt) if valid_pt > 0 else parts_pckh.append(0)
 
     # parts_pckh = [correct/ valid for correct, valid in zip(parts_correct, parts_valid)]
     return [sum(pckh)/len(pckh)] + parts_pckh
