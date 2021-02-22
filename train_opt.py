@@ -63,9 +63,11 @@ torch.backends.cudnn.benchmark = True
 
 def train(train_loader, m, criterion, optimizer, writer):
     accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
+    pckhLogger = DataLogger()
     pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_curve_Loggers = {i: CurveLogger() for i in range(opt.kps)}
+    pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
 
     m.train()
 
@@ -98,6 +100,7 @@ def train(train_loader, m, criterion, optimizer, writer):
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
         distLogger.update(dist[0], inps.size(0))
+        pckhLogger.update(pckh[0], inps.size(0))
         curveLogger.update(maxval.reshape(1,-1).squeeze(), gt.reshape(1,-1).squeeze())
         ave_auc = curveLogger.cal_AUC()
         pr_area = curveLogger.cal_PR()
@@ -107,6 +110,10 @@ def train(train_loader, m, criterion, optimizer, writer):
             if exists[k] > 0:
                 pts_acc_Loggers[k].update(acc[k+1], exists[k])
                 pts_dist_Loggers[k].update(dist[k+1], exists[k])
+        pckh_exist = exists[-12:]
+        for k, v in pts_pckh_Loggers.items():
+            if exists[k] > 0:
+                pts_pckh_Loggers[k].update(pckh[k+1], pckh_exist[k])
 
         if mix_precision:
             with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -124,16 +131,18 @@ def train(train_loader, m, criterion, optimizer, writer):
         # Tensorboard
         writer.add_scalar('Train/Loss', lossLogger.avg, opt.trainIters)
         writer.add_scalar('Train/Acc', accLogger.avg, opt.trainIters)
+        writer.add_scalar('Train/PCKh', accLogger.avg, opt.trainIters)
         writer.add_scalar('Train/Dist', distLogger.avg, opt.trainIters)
         writer.add_scalar('Train/AUC', ave_auc, opt.trainIters)
         writer.add_scalar('Train/PR', pr_area, opt.trainIters)
-        
+
         # TQDM
         train_loader_desc.set_description(
-            'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+            'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.4f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                 epoch=opt.epoch,
                 loss=lossLogger.avg,
                 acc=accLogger.avg * 100,
+                pckh=pckhLogger.avg * 100,
                 dist=distLogger.avg,
                 AUC=ave_auc,
                 PR=pr_area
@@ -144,6 +153,7 @@ def train(train_loader, m, criterion, optimizer, writer):
     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
     body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
     body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
+    body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
     train_loader_desc.close()
 
     return lossLogger.avg, accLogger.avg, distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR(), \
@@ -153,9 +163,11 @@ def train(train_loader, m, criterion, optimizer, writer):
 def valid(val_loader, m, criterion, writer):
     drawn_kp, drawn_hm = False, False
     accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
+    pckhLogger = DataLogger()
     pts_acc_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_dist_Loggers = {i: DataLogger() for i in range(opt.kps)}
     pts_curve_Loggers = {i: CurveLogger() for i in range(opt.kps)}
+    pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
     m.eval()
 
     val_loader_desc = tqdm(val_loader)
@@ -204,6 +216,7 @@ def valid(val_loader, m, criterion, writer):
         accLogger.update(acc[0], inps.size(0))
         lossLogger.update(loss.item(), inps.size(0))
         distLogger.update(dist[0], inps.size(0))
+        pckhLogger.update(pckh[0], inps.size(0))
         curveLogger.update(maxval.reshape(1,-1).squeeze(), gt.reshape(1,-1).squeeze())
         ave_auc = curveLogger.cal_AUC()
         pr_area = curveLogger.cal_PR()
@@ -213,6 +226,10 @@ def valid(val_loader, m, criterion, writer):
             if exists[k] > 0:
                 pts_acc_Loggers[k].update(acc[k+1], exists[k])
                 pts_dist_Loggers[k].update(dist[k+1], exists[k])
+        pckh_exist = exists[-12:]
+        for k, v in pts_pckh_Loggers.items():
+            if exists[k] > 0:
+                pts_pckh_Loggers[k].update(pckh[k+1], pckh_exist[k])
 
         opt.valIters += 1
 
@@ -224,10 +241,11 @@ def valid(val_loader, m, criterion, writer):
         writer.add_scalar('Valid/PR', pr_area, opt.valIters)
 
         val_loader_desc.set_description(
-            'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+            'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.4f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                 epoch=opt.epoch,
                 loss=lossLogger.avg,
                 acc=accLogger.avg * 100,
+                pckh=pckhLogger.avg * 100,
                 dist=distLogger.avg,
                 AUC=ave_auc,
                 PR=pr_area
@@ -238,6 +256,7 @@ def valid(val_loader, m, criterion, writer):
     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
     body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
     body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
+    body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
     val_loader_desc.close()
 
     return lossLogger.avg, accLogger.avg, distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR(), \
