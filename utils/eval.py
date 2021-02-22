@@ -104,6 +104,7 @@ def cal_ave(weights, inps):
 def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
     num_samples = len(y_true)
     name_value = {}
+    valid_joint_num, acc_num = if_exist.sum(), 0
     ls, rs, le, re, lw, rw, lh, rh, lk, rk, la, ra, pckh = [], [], [], [], [], [], [], [], [], [], [], [], []
     for i in range(num_samples):
         central = y_true[i][-11] + y_true[i][-12]
@@ -222,7 +223,7 @@ def cal_accuracy(output, label, idxs):
 
     sum_dist[0] = cal_ave(exist, sum_dist[1:])
     acc[0] = cal_ave(exist, acc[1:])
-    return acc, sum_dist, exist,pckh,(preds_maxval.squeeze(dim=2).t(), if_exist)
+    return acc, sum_dist, exist, pckh, (preds_maxval.squeeze(dim=2).t(), if_exist)
 
 
 def acc_dist(dists, thr=0.5):

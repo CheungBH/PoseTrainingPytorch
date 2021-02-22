@@ -53,7 +53,7 @@ folder = opt.expFolder
 optimize = opt.optMethod
 open_source_dataset = config.open_source_dataset
 warm_up_epoch = max(config.warm_up.keys())
-loss_params = config.loss_param
+loss_params = config.loss_weight
 patience_decay = config.patience_decay
 draw_pred_img = False
 
@@ -90,7 +90,7 @@ def train(train_loader, m, criterion, optimizer, writer):
 
         # for idx, logger in pts_loss_Loggers.items():
         #     logger.update(criterion(out.mul(setMask)[:, [idx], :, :], labels[:, [idx], :, :]), inps.size(0))
-        acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, train_loader.dataset.accIdxs)
+        acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, train_loader.dataset.accIdxs)
         # acc, exists = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset, img_info[-1])
 
         optimizer.zero_grad()
@@ -198,7 +198,7 @@ def valid(val_loader, m, criterion, writer):
             #
             # out = (flip_out + out) / 2
 
-        acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, val_loader.dataset.accIdxs)
+        acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, val_loader.dataset.accIdxs)
         # acc, exists = accuracy(out.mul(setMask), labels, val_loader.dataset, img_info[-1])
 
         accLogger.update(acc[0], inps.size(0))
