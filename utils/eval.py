@@ -187,8 +187,8 @@ def cal_pckh2(y_pred, y_true, if_exist, refp=0.5):
     for i in range(len(y_true)):
         central = (y_true[i][-11] + y_true[i][-12]) / 2
         head_size = np.linalg.norm(np.subtract(central, y_true[i][0]))
-        valid = np.array(if_exist[i][5:17])
-        dist = np.linalg.norm(y_true[i][5:17] - y_pred[i][5:17], axis=1)
+        valid = np.array(if_exist[i][-12:])
+        dist = np.linalg.norm(y_true[i][-12:] - y_pred[i][-12:], axis=1)
         ratio = dist/ head_size
         scale = ratio * valid
         correct_num = sum((0 < scale) & (scale <= refp))#valid_joints(a)
