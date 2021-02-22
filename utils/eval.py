@@ -104,10 +104,9 @@ def cal_ave(weights, inps):
 def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
     num_samples = len(y_true)
     name_value = {}
-    valid_joint_num, acc_num = if_exist.sum(), 0
     ls, rs, le, re, lw, rw, lh, rh, lk, rk, la, ra, pckh = [], [], [], [], [], [], [], [], [], [], [], [], []
     for i in range(num_samples):
-        central = y_true[i][-11] + y_true[i][-12]
+        central = (y_true[i][-11] + y_true[i][-12])/2
         head_size = np.linalg.norm(np.subtract(central,y_true[i][0]))
     # for coco datasets, abandon eyes and ears keypoints
         used_joints = range(5,17)
@@ -119,8 +118,9 @@ def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
         scale = dist * valid
         a = (0 < scale[i, :]) & (scale[i, :] <= refp)
         less_than_threshold = valid_joints(a)
+        # acc_num +=
         joint_radio = 100.0 * less_than_threshold / jnt_count
-        PCKh = np.ma.array(scale, mask=False)
+        # PCKh = np.ma.array(scale, mask=False)
         # name_value[i] = [('lS', 100*PCKh[i][0]),
         #                  ('RS',100*PCKh[i][1]),
         #                  ('LE',100*PCKh[i][2]),
@@ -162,22 +162,50 @@ def cal_pckh(y_pred, y_true,if_exist,refp=0.5):
     z = cal_average(rk)
     p = cal_average(la)
     q = cal_average(ra)
-    PCkh = cal_average(pckh)
-    PCKH = [('lS', b ),
-            ('RS', c ),
-            ('LE', d ),
-            ('RE', e ),
-            ('LW', f ),
-            ('RW', g ),
-            ('LH', h ),
-            ('RH', x ),
-            ('LK', y ),
-            ('RK', z ),
-            ('LA', p ),
-            ('RA', q ),
-            ('PCKh', PCkh)]
-    PCKH = OrderedDict(PCKH)
+    PCkh = sum(pckh) / len(pckh)
+    # PCKH = [('lS', b ),
+    #         ('RS', c ),
+    #         ('LE', d ),
+    #         ('RE', e ),
+    #         ('LW', f ),
+    #         ('RW', g ),
+    #         ('LH', h ),
+    #         ('RH', x ),
+    #         ('LK', y ),
+    #         ('RK', z ),
+    #         ('LA', p ),
+    #         ('RA', q ),
+    #         ('PCKh', PCkh)]
+    # PCKH = OrderedDict(PCKH)
+    PCKH = [PCkh, b, c, d, e, f, g, h, x, y, z,  p, q]
     return PCKH
+
+
+def cal_pckh2(y_pred, y_true, if_exist, refp=0.5):
+    parts_valid = sum(if_exist)[-12:].tolist()
+    parts_correct, pckh = [0]*12, []
+    for i in range(len(y_true)):
+        central = (y_true[i][-11] + y_true[i][-12]) / 2
+        head_size = np.linalg.norm(np.subtract(central, y_true[i][0]))
+        valid = np.array(if_exist[i][-12:])
+        dist = np.linalg.norm(y_true[i][-12:] - y_pred[i][-12:], axis=1)
+        ratio = dist/ head_size
+        scale = ratio * valid
+        correct_num = sum((0 < scale) & (scale <= refp))#valid_joints(a)
+        pckh.append(correct_num / sum(valid))
+
+        for idx, (s, v) in enumerate(zip(scale, valid)):
+            if v == 1 and s <= refp:
+                parts_correct[idx] += 1
+
+    parts_pckh = []
+    for correct_pt, valid_pt in zip(parts_correct, parts_valid):
+        parts_pckh.append(correct_pt/ valid_pt) if valid_pt > 0 else parts_pckh.append(0)
+
+    # parts_pckh = [correct/ valid for correct, valid in zip(parts_correct, parts_valid)]
+    return [sum(pckh)/len(pckh)] + parts_pckh
+
+
 def cal_average(a):
     count =0
     num = 0
@@ -211,7 +239,8 @@ def cal_accuracy(output, label, idxs):
     dists = calc_dists(preds, gt, norm)
     acc, sum_dist, exist = torch.zeros(len(idxs) + 1), torch.zeros(len(idxs) + 1), torch.zeros(len(idxs))
 
-    pckh = cal_pckh(gt,preds,if_exist.t(),refp=0.5)
+    # pckh = cal_pckh(gt,preds,if_exist.t(),refp=0.5)
+    pckh = cal_pckh2(gt,preds,if_exist.t(),refp=0.5)
     # pckh = cal_everage(name_value)
 
     for i, kps_dist in enumerate(dists):
