@@ -131,3 +131,14 @@ def write_csv_title(kps=17):
     title += csv_body_part("val", "AUC", kps)
     title += csv_body_part("val", "PR", kps)
     return title
+
+
+def warm_up_lr(optimizer, lr, epoch, warm_up_dict):
+    bound = sorted(list(warm_up_dict.keys()))
+    for b in bound:
+        if epoch < b:
+            lr = lr * warm_up_dict[b]
+
+    for pg in optimizer.param_groups:
+        pg["lr"] = lr
+    return optimizer, lr
