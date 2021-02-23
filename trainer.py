@@ -342,9 +342,9 @@ class Trainer:
 
     def update_indicators(self, acc, loss, dist, pckh, auc, pr, iter, phase):
         if phase == "train":
-            self.train_acc_ls.append(acc.tolist())
+            self.train_acc_ls.append(acc)
             self.train_loss_ls.append(loss)
-            self.train_dist_ls.append(dist.tolist())
+            self.train_dist_ls.append(dist)
             self.train_auc_ls.append(auc)
             self.train_pr_ls.append(pr)
             self.train_pckh_ls.append(pckh)
@@ -363,9 +363,9 @@ class Trainer:
             self.opt.trainAcc, self.opt.trainLoss, self.opt.trainPCKh, self.opt.trainDist, self.opt.trainAuc, \
                 self.opt.trainPR, self.opt.trainIters = acc, loss, pckh, dist, auc, pr, iter
         elif phase == "val":
-            self.val_acc_ls.append(acc.tolist())
+            self.val_acc_ls.append(acc)
             self.val_loss_ls.append(loss)
-            self.val_dist_ls.append(dist.tolist())
+            self.val_dist_ls.append(dist)
             self.val_auc_ls.append(auc)
             self.val_pr_ls.append(pr)
             self.val_pckh_ls.append(pckh)
