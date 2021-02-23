@@ -5,24 +5,24 @@ from config.config import device
 from collections import defaultdict
 
 from utils.eval import cal_accuracy
-from utils.logger import DataLogger
+from utils.logger import DataLogger, CurveLogger
 from utils.train_utils import Criterion
 from models.pose_model import PoseModel
-from utils.test_utils import check_option_file, parse_thresh
+from utils.test_utils import check_option_file, list_to_str, parse_thresh
 
 criterion = Criterion()
 posenet = PoseModel()
 
 
 class ErrorAnalyser:
-    def __init__(self, test_loader, model_path, default_threshold=0.05):
+    def __init__(self, test_loader, model_path, default_threshold=0.05, write_threshold=False):
         self.loader = test_loader
         self.model_path = model_path
         self.option_file = check_option_file(model_path)
         self.thresh = default_threshold
         self.performance = defaultdict(list)
         self.max_val_dict = defaultdict(list)
-        # self.add_customized_threshold()
+        self.write_threshold = write_threshold
 
     def build(self, backbone, kps, cfg, DUC, crit, model_height=256, model_width=256):
         posenet.build(backbone, cfg)
@@ -52,7 +52,8 @@ class ErrorAnalyser:
     #         self.customize_threshold = None
 
     def analyse(self):
-        accLogger, distLogger, lossLogger = DataLogger(), DataLogger(), DataLogger()
+        accLogger, distLogger, lossLogger, pckhLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger()
+        pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
         self.model.eval()
 
         test_loader_desc = tqdm(self.loader)
@@ -67,31 +68,38 @@ class ErrorAnalyser:
                 out = self.model(inps)
                 loss = self.criterion(out.mul(setMask), labels)
 
-            acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
+            acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
 
-            accLogger.update(acc[0], inps.size(0))
+            accLogger.update(acc[0].item(), inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))
-            distLogger.update(dist[0], inps.size(0))
+            distLogger.update(dist[0].item(), inps.size(0))
+            pckhLogger.update(pckh[0], inps.size(0))
+
+            for k, v in pts_curve_Loggers.items():
+                pts_curve_Loggers[k].update(maxval[k], gt[k])
 
             maxval = maxval.t().squeeze().tolist()
             default_valid = self.get_valid_percent(maxval, self.default_threshold)
-            performance = [acc[0].tolist(), dist[0].tolist(), loss.tolist(), default_valid]
-            if self.customize_threshold:
-                customized_valid = self.get_valid_percent(maxval, self.customize_threshold)
-                performance.append(customized_valid)
+            performance = [acc[0].item(), dist[0].item(), loss.item(), pckh[0].item(), default_valid]
 
             self.performance[img_info[3][0]] = performance
+            self.max_val_dict[img_info[3][0]] = maxval
 
             test_loader_desc.set_description(
-                'Test | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f}'.format(
+                'Test | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f}'.format(
                     loss=lossLogger.avg,
                     acc=accLogger.avg * 100,
+                    pckh=pckhLogger.avg * 100,
                     dist=distLogger.avg,
                 )
             )
 
         test_loader_desc.close()
         print("----------------------------------------------------------------------------------------------------")
+        self.customized_thresholds = [Logger.get_thresh() for k, Logger in pts_curve_Loggers.items()]
+        self.add_customized_thresh()
+        if self.write_threshold:
+            self.save_thresh_to_option()
 
     def build_criterion(self, crit):
         self.criterion = criterion.build(crit)
@@ -115,6 +123,16 @@ class ErrorAnalyser:
             if value > threshold:
                 valid += 1
         return valid/self.kps
+
+    def add_customized_thresh(self):
+        for img_name, max_val in self.max_val_dict.items():
+            customized_valid = self.get_valid_percent(max_val, self.customized_thresholds)
+            self.performance[img_name].append(customized_valid)
+
+    def save_thresh_to_option(self):
+        thresh_str = list_to_str(self.customized_thresholds)
+        self.option.thresh = thresh_str
+        torch.save(self.option, self.option_file)
 
     def summarize(self):
         return self.performance

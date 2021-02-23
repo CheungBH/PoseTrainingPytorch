@@ -33,7 +33,10 @@ class PoseModel:
             raise ValueError("Your model name is wrong")
 
         # self.model_cfg = cfg
-        self.model = createModel(cfg)
+        try:
+            self.model = createModel(cfg)
+        except:
+            self.model = createModel(model_ls[cfg])
         if self.device != "cpu":
             self.model.cuda()
 
