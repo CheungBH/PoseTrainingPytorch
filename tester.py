@@ -134,8 +134,9 @@ class Tester:
 
     def summarize(self):
         benchmark = [self.flops, self.params, self.infer_time]
-        performance = [self.test_acc, self.test_loss, self.test_dist, self.test_auc, self.test_pr]
-        parts_performance = [self.body_part_acc, self.body_part_dist, self.body_part_auc, self.body_part_pr]
+        performance = [self.test_acc, self.test_loss, self.test_pckh, self.test_dist, self.test_auc, self.test_pr]
+        parts_performance = [self.body_part_pckh, self.body_part_acc, self.body_part_dist, self.body_part_auc,
+                             self.body_part_pr]
         return benchmark, performance, parts_performance, self.body_part_thresh
 
 

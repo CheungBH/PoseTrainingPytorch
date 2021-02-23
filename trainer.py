@@ -404,6 +404,8 @@ class Trainer:
         ep_line += ep_performance
         ep_line += self.part_train_acc[epoch]
         ep_line.append("")
+        ep_line += self.part_train_pckh[epoch]
+        ep_line.append("")
         ep_line += self.part_train_dist[epoch]
         ep_line.append("")
         ep_line += self.part_train_auc[epoch]
@@ -411,6 +413,8 @@ class Trainer:
         ep_line += self.part_train_pr[epoch]
         ep_line.append("")
         ep_line += self.part_val_acc[epoch]
+        ep_line.append("")
+        ep_line += self.part_val_pckh[epoch]
         ep_line.append("")
         ep_line += self.part_val_dist[epoch]
         ep_line.append("")
@@ -427,6 +431,7 @@ class Trainer:
         draw_graph(self.epoch_ls, self.train_auc_ls, self.val_auc_ls, "AUC", log_dir)
         draw_graph(self.epoch_ls, self.train_dist_ls, self.val_dist_ls, "dist", log_dir)
         draw_graph(self.epoch_ls, self.train_pr_ls, self.val_pr_ls, "PR", log_dir)
+        draw_graph(self.epoch_ls, self.train_pckh_ls, self.val_pckh_ls, "PCKh", log_dir)
 
     def write_xlsx(self):
         with open(self.xlsx_log, "w", newline="") as excel_log:
@@ -443,15 +448,15 @@ class Trainer:
             if not exist:
                 summary.write(summary_title())
             info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
-                       "{},{},{},{},{},{},{},{},{}\n". \
+                       "{},{},{},{},{},{},{},{},{},{},{}\n". \
                 format(self.opt.expID, self.opt.backbone, self.opt.struct, self.opt.se_ratio, self.opt.DUC,
                        self.opt.inputResH, self.opt.inputResW, self.params, self.flops, self.inf_time,
                        self.opt.loss_weight, self.opt.addDPG, self.opt.kps, self.opt.trainBatch, self.opt.optMethod,
                        self.opt.freeze_bn, self.opt.freeze, self.opt.sparse_s, self.opt.nEpochs, self.opt.LR,
                        self.opt.hmGauss, self.opt.ratio, self.opt.weightDecay, self.opt.loadModel, config.computer,
-                       self.expFolder, self.time_elapse, self.train_acc, self.train_loss, self.train_dist,
-                       self.train_auc, self.train_pr, self.val_acc, self.val_loss, self.val_dist, self.val_auc,
-                       self.val_pr, self.best_epoch, self.curr_epoch)
+                       self.expFolder, self.time_elapse, self.train_acc, self.train_loss, self.train_pckh,
+                       self.train_dist, self.train_auc, self.train_pr, self.val_acc, self.val_loss, self.val_pckh,
+                       self.val_dist, self.val_auc, self.val_pr, self.best_epoch, self.curr_epoch)
             summary.write(info_str + error_str)
 
     def write_log(self):

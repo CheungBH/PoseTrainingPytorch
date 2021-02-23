@@ -109,15 +109,24 @@ def csv_body_part(phase, indicator, kps=17):
     ls.append(" ")
     return ls
 
+def pckh_title(phase):
+    ls = []
+    for kps_name in ["left shoulder", "right shoulder", "left elbow", "right elbow", "left wrist", "right_wrist",
+                     "left hip", "right hip", "left knee", "right knee", "left ankle", "right ankle"]:
+        ls.append(phase + "_" + kps_name)
+    ls.append(" ")
+    return ls
 
 def write_csv_title(kps=17):
     title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "train_auc", "train_pr", "val_loss",
              "val_acc", "val_dist", "val_auc", "val_pr", " "]
     title += csv_body_part("train", "acc", kps)
+    title += pckh_title("train")
     title += csv_body_part("train", "dist", kps)
     title += csv_body_part("train", "AUC", kps)
     title += csv_body_part("train", "PR", kps)
     title += csv_body_part("val", "acc", kps)
+    title += pckh_title("val")
     title += csv_body_part("val", "dist", kps)
     title += csv_body_part("val", "AUC", kps)
     title += csv_body_part("val", "PR", kps)

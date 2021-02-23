@@ -3,13 +3,14 @@ import os
 from tester import Tester
 from utils.test_utils import write_test_title
 from config.config import computer
+import csv
 
 
 class AutoTester:
-    def __init__(self, model_folder, data_info, separate=False, batchsize=8, num_worker=1):
+    def __init__(self, model_folder, data_info, shared_option=False, batchsize=8, num_worker=1):
         self.model_folder = model_folder
-        self.keyword = ["acc", "auc", "pr", "dist"]
-        self.separate = separate
+        self.keyword = ["acc", "auc", "pr", "dist", "pckh"]
+        self.shared_option = shared_option
         self.test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
         self.model_ls = []
         self.test_csv = os.path.join(self.model_folder, "test_{}.csv".format(computer))
@@ -41,9 +42,10 @@ class AutoTester:
                 raise FileNotFoundError("Target model doesn't exist!")
 
     def write_result(self):
-        with open(self.test_csv, "a+") as test_file:
-            if self.test_exist:
-                test_file.write(write_test_title())
+        with open(self.test_csv, "a+", newline="") as test_file:
+            csv_writer = csv.writer(test_file)
+            if not self.test_exist:
+                csv_writer.writerow(write_test_title())
             test_row = [self.model_folder.replace("\\", "/").split("/")[-1], self.model]
             test_row += self.benchmark
             test_row.append(computer)
@@ -53,9 +55,10 @@ class AutoTester:
                 test_row += part
             test_row.append("")
             test_row += self.thresh
+            csv_writer.writerow(test_row)
 
     def run(self):
-        if self.separate:
+        if not self.shared_option:
             self.load_model_option_1by1()
         else:
             self.load_model_and_option()
@@ -70,13 +73,13 @@ class AutoTester:
             self.benchmark, self.performance, self.parts, self.thresh = test.summarize()
             self.write_result()
 
-            if self.separate:
+            if not self.shared_option:
                 test.save_thresh_to_option()
 
 
 if __name__ == '__main__':
     model_folder = "exp/auto_test"
     data_info = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    separate = False
-    auto_tester = AutoTester(model_folder, data_info, separate=separate)
+    shared_option = True
+    auto_tester = AutoTester(model_folder, data_info, shared_option=shared_option)
     auto_tester.run()

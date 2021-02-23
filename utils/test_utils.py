@@ -1,4 +1,5 @@
 from utils.utils import csv_body_part
+from .train_utils import pckh_title
 
 
 def check_option_file(path):
@@ -21,8 +22,9 @@ def parse_thresh(thresh):
 
 
 def write_test_title():
-    title = ["model ID", "model name", "flops", "params", "inf_time", "location", "test_loss", "test_acc", "test_dist",
-             "test_auc", "test_pr", " "]
+    title = ["model ID", "model name", "flops", "params", "inf_time", "location", "test_loss", "test_acc", "test_pckh",
+             "test_dist", "test_auc", "test_pr", " "]
+    title += pckh_title("test")
     title += csv_body_part("test", "acc")
     title += csv_body_part("test", "dist")
     title += csv_body_part("test", "AUC")
