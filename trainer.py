@@ -449,7 +449,7 @@ class Trainer:
         with open(self.summary_log, "a+") as summary:
             if not exist:
                 summary.write(summary_title())
-            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
                        "{},{},{},{},{},{},{},{},{},{},{}\n". \
                 format(self.opt.expID, self.opt.backbone, self.opt.struct, self.opt.se_ratio, self.opt.DUC,
                        self.opt.inputResH, self.opt.inputResW, self.params, self.flops, self.inf_time,
