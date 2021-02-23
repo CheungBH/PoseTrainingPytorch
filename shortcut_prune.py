@@ -279,4 +279,4 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
 if __name__ == '__main__':
     opt.backbone = "seresnet18"
-    pruning("exp/seresnet18/sparse/sparse_best_dist.pkl", "pruned_{}.pth".format(opt.backbone), "cfg_{}.txt".format(opt.backbone))
+    pruning("exp/seresnet18/sparse/sparse_best_dist.pkl", "pruned_shortcut_{}.pth".format(opt.backbone), "cfg_{}.txt".format(opt.backbone))
