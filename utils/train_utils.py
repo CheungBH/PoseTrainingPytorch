@@ -92,8 +92,8 @@ def generate_cmd(ls):
 def summary_title():
     title_str = "id,backbone,structure,se ratio,DUC,input height,input width,params,flops,time,loss_weight,addDPG," \
                 "kps,batch_size,optimizer,freeze_bn,freeze,sparse,total epochs,LR,Gaussian,thresh,weightDecay," \
-                "loadModel,model_location, ,folder_name,training_time,train_acc,train_loss,train_dist,train_AUC," \
-                "train_PR,val_acc,val_loss,val_dist,val_AUC,val_PR,best_epoch,final_epoch\n"
+                "loadModel,model_location, ,folder_name,training_time,train_acc,train_loss,train_pckh,train_dist," \
+                "train_AUC,train_PR,val_acc,val_loss,val_pckh,val_dist,val_AUC,val_PR,best_epoch,final_epoch\n"
     return title_str
 
 
@@ -118,8 +118,8 @@ def pckh_title(phase):
     return ls
 
 def write_csv_title(kps=17):
-    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "train_auc", "train_pr", "val_loss",
-             "val_acc", "val_dist", "val_auc", "val_pr", " "]
+    title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_pckh", "train_dist", "train_auc",
+             "train_pr", "val_loss", "val_acc", "val_pckh", "val_dist", "val_auc", "val_pr", " "]
     title += csv_body_part("train", "acc", kps)
     title += pckh_title("train")
     title += csv_body_part("train", "dist", kps)
