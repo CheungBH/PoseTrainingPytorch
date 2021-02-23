@@ -126,9 +126,9 @@ class Trainer:
 
             self.optimizer.zero_grad()
 
-            accLogger.update(acc[0], inps.size(0))
+            accLogger.update(acc[0].item(), inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))
-            distLogger.update(dist[0], inps.size(0))
+            distLogger.update(dist[0].item(), inps.size(0))
             pckhLogger.update(pckh[0], inps.size(0))
             curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
             ave_auc = curveLogger.cal_AUC()
@@ -137,8 +137,8 @@ class Trainer:
             for k, v in pts_acc_Loggers.items():
                 pts_curve_Loggers[k].update(maxval[k], gt[k])
                 if exists[k] > 0:
-                    pts_acc_Loggers[k].update(acc[k + 1], exists[k])
-                    pts_dist_Loggers[k].update(dist[k + 1], exists[k])
+                    pts_acc_Loggers[k].update(acc.tolist()[k + 1], exists[k])
+                    pts_dist_Loggers[k].update(dist.tolist()[k + 1], exists[k])
             pckh_exist = exists[-12:]
             for k, v in pts_pckh_Loggers.items():
                 if exists[k] > 0:
@@ -167,7 +167,7 @@ class Trainer:
 
             # TQDM
             train_loader_desc.set_description(
-                'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.4f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+                'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                     epoch=self.curr_epoch,
                     loss=lossLogger.avg,
                     acc=accLogger.avg * 100,
@@ -178,8 +178,8 @@ class Trainer:
                 )
             )
 
-        body_part_acc = [Logger.avg.tolist() for k, Logger in pts_acc_Loggers.items()]
-        body_part_dist = [Logger.avg.tolist() for k, Logger in pts_dist_Loggers.items()]
+        body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
+        body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
         body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
         body_part_pckh = [Logger.avg.tolist() for k, Logger in pts_pckh_Loggers.items()]
@@ -193,14 +193,14 @@ class Trainer:
 
         curr_acc, curr_loss, curr_dist, curr_pckh, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
                                                             pckhLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
-        self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, self.trainIter, "train")
+        self.update_indicators(curr_acc, curr_loss, curr_dist, curr_pckh, curr_auc, curr_pr, self.trainIter, "train")
 
     def valid(self):
         drawn_kp, drawn_hm = False, False
         accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
         pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
         pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
-        pts_pckh_Loggers = {i: DataLogger() for i in range(self.kps)}
+        pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
         pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
         self.model.eval()
 
@@ -246,9 +246,9 @@ class Trainer:
                                                                  self.val_loader.dataset.accIdxs)
             # acc, exists = accuracy(out.mul(setMask), labels, val_loader.dataset, img_info[-1])
 
-            accLogger.update(acc[0], inps.size(0))
+            accLogger.update(acc[0].item(), inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))
-            distLogger.update(dist[0], inps.size(0))
+            distLogger.update(dist[0].item(), inps.size(0))
             pckhLogger.update(pckh[0], inps.size(0))
             curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
             ave_auc = curveLogger.cal_AUC()
@@ -257,8 +257,8 @@ class Trainer:
             for k, v in pts_acc_Loggers.items():
                 pts_curve_Loggers[k].update(maxval[k], gt[k])
                 if exists[k] > 0:
-                    pts_acc_Loggers[k].update(acc[k + 1], exists[k])
-                    pts_dist_Loggers[k].update(dist[k + 1], exists[k])
+                    pts_acc_Loggers[k].update(acc.tolist()[k + 1], exists[k])
+                    pts_dist_Loggers[k].update(dist.tolist()[k + 1], exists[k])
             pckh_exist = exists[-12:]
             for k, v in pts_pckh_Loggers.items():
                 if exists[k] > 0:
@@ -274,7 +274,7 @@ class Trainer:
             self.tb_writer.add_scalar('Valid/PCKh', pckhLogger.avg, self.valIter)
 
             val_loader_desc.set_description(
-                'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.4f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+                'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                     epoch=self.curr_epoch,
                     loss=lossLogger.avg,
                     pckh=pckhLogger.avg * 100,
@@ -285,8 +285,8 @@ class Trainer:
                 )
             )
 
-        body_part_acc = [Logger.avg.tolist() for k, Logger in pts_acc_Loggers.items()]
-        body_part_dist = [Logger.avg.tolist() for k, Logger in pts_dist_Loggers.items()]
+        body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
+        body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
         body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
         body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
@@ -300,7 +300,7 @@ class Trainer:
 
         curr_acc, curr_loss, curr_pckh, curr_dist, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
                                                             pckhLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
-        self.update_indicators(curr_acc, curr_loss, curr_pckh, curr_dist, curr_auc, curr_pr, self.valIter, "val")
+        self.update_indicators(curr_acc, curr_loss, curr_dist, curr_pckh, curr_auc, curr_pr, self.valIter, "val")
 
     def build_criterion(self, crit):
         self.criterion = criterion.build(crit)

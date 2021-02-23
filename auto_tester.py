@@ -14,7 +14,7 @@ class AutoTester:
         self.test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
         self.model_ls = []
         self.test_csv = os.path.join(self.model_folder, "test_{}.csv".format(computer))
-        self.test_exist = os.path.exists(self.test_csv)
+        self.tested = os.path.exists(self.test_csv)
 
     def load_model_and_option(self):
         for folder in os.listdir(self.model_folder):
@@ -44,8 +44,9 @@ class AutoTester:
     def write_result(self):
         with open(self.test_csv, "a+", newline="") as test_file:
             csv_writer = csv.writer(test_file)
-            if not self.test_exist:
+            if not self.tested:
                 csv_writer.writerow(write_test_title())
+                self.tested = True
             test_row = [self.model_folder.replace("\\", "/").split("/")[-1], self.model]
             test_row += self.benchmark
             test_row.append(computer)

@@ -62,9 +62,9 @@ class Tester:
 
             acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
 
-            accLogger.update(acc[0], inps.size(0))
+            accLogger.update(acc[0].item(), inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))
-            distLogger.update(dist[0], inps.size(0))
+            distLogger.update(dist[0].item(), inps.size(0))
             pckhLogger.update(pckh[0], inps.size(0))
             curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
             ave_auc = curveLogger.cal_AUC()
@@ -73,15 +73,15 @@ class Tester:
             for k, v in pts_acc_Loggers.items():
                 pts_curve_Loggers[k].update(maxval[k], gt[k])
                 if exists[k] > 0:
-                    pts_acc_Loggers[k].update(acc[k + 1], exists[k])
-                    pts_dist_Loggers[k].update(dist[k + 1], exists[k])
+                    pts_acc_Loggers[k].update(acc.tolist()[k + 1], exists[k])
+                    pts_dist_Loggers[k].update(dist.tolist()[k + 1], exists[k])
             pckh_exist = exists[-12:]
             for k, v in pts_pckh_Loggers.items():
                 if exists[k] > 0:
                     pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
 
             test_loader_desc.set_description(
-                'Test: | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.4f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+                'Test: | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                     loss=lossLogger.avg,
                     acc=accLogger.avg * 100,
                     pckh=pckhLogger.avg * 100,
@@ -101,7 +101,8 @@ class Tester:
         print("----------------------------------------------------------------------------------------------------")
 
         self.test_loss, self.test_acc, self.test_pckh, self.test_dist, self.test_auc, self.test_pr \
-            = lossLogger.avg, accLogger.avg, pckhLogger.avg, distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
+            = lossLogger.avg, accLogger.avg, pckhLogger.avg, distLogger.avg, curveLogger.cal_AUC(), \
+              curveLogger.cal_PR()
 
     def get_benchmark(self):
         self.flops, self.params, self.infer_time = posenet.benchmark()

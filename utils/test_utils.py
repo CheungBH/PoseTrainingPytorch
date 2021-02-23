@@ -22,7 +22,7 @@ def parse_thresh(thresh):
 
 
 def write_test_title():
-    title = ["model ID", "model name", "flops", "params", "inf_time", "location", "test_loss", "test_acc", "test_pckh",
+    title = ["model ID", "model name", "flops", "params", "inf_time", "location", "test_acc", "test_loss", "test_pckh",
              "test_dist", "test_auc", "test_pr", " "]
     title += pckh_title("test")
     title += csv_body_part("test", "acc")

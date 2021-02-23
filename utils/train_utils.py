@@ -113,7 +113,7 @@ def pckh_title(phase):
     ls = []
     for kps_name in ["left shoulder", "right shoulder", "left elbow", "right elbow", "left wrist", "right_wrist",
                      "left hip", "right hip", "left knee", "right knee", "left ankle", "right ankle"]:
-        ls.append(phase + "_" + kps_name)
+        ls.append(phase + "_" + kps_name + "_pckh")
     ls.append(" ")
     return ls
 
