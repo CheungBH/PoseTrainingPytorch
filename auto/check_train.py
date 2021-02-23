@@ -1,4 +1,4 @@
-from train_result.config import task_folder, batch_folder, computer
+from .config import task_folder, batch_folder, computer
 import os
 
 generate_remaining = True

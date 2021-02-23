@@ -1,5 +1,5 @@
 import os
-from train_result.config import task_folder, batch_folder
+from .config import task_folder, batch_folder
 
 with open("{}/{}/remaining.txt".format(task_folder, batch_folder), "r") as f:
     lines = [line for line in f.readlines() if line != "\n"]

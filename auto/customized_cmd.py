@@ -1,5 +1,5 @@
 import os
-from train_result.config import task_folder, batch_folder
+from .config import task_folder, batch_folder
 
 CUDA = "0,1,2,3"
 train_begin, train_end = 1, 192

@@ -1,7 +1,7 @@
-from train_result.customized_cmd import customize
-from train_result.csv2cmd import csvTransform
+from .customized_cmd import customize
+from .csv2cmd import csvTransform
 import os
-from train_result.config import batch_folder, task_folder
+from .config import batch_folder, task_folder
 
 CUDA_dict = {0: [],
              1: [],

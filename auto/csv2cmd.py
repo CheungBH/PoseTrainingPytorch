@@ -1,6 +1,6 @@
 import csv    #加载csv包便于读取csv文件
 import os
-from train_result.config import task_folder, batch_folder
+from .config import task_folder, batch_folder
 
 include_cuda = True
 
