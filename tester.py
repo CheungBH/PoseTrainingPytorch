@@ -40,10 +40,11 @@ class Tester:
         posenet.load(self.model_path)
 
     def test(self):
-        accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
+        accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
         pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
         pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
         pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
+        pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
         self.model.eval()
 
         test_loader_desc = tqdm(self.loader)
@@ -59,11 +60,12 @@ class Tester:
 
                 loss = self.criterion(out.mul(setMask), labels)
 
-            acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
+            acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
 
             accLogger.update(acc[0], inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))
             distLogger.update(dist[0], inps.size(0))
+            pckhLogger.update(pckh[0], inps.size(0))
             curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
             ave_auc = curveLogger.cal_AUC()
             pr_area = curveLogger.cal_PR()
@@ -73,11 +75,16 @@ class Tester:
                 if exists[k] > 0:
                     pts_acc_Loggers[k].update(acc[k + 1], exists[k])
                     pts_dist_Loggers[k].update(dist[k + 1], exists[k])
+            pckh_exist = exists[-12:]
+            for k, v in pts_pckh_Loggers.items():
+                if exists[k] > 0:
+                    pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
 
             test_loader_desc.set_description(
-                'Test: | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+                'Test: | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.4f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                     loss=lossLogger.avg,
                     acc=accLogger.avg * 100,
+                    pckh=pckhLogger.avg * 100,
                     dist=distLogger.avg,
                     AUC=ave_auc,
                     PR=pr_area
@@ -88,12 +95,13 @@ class Tester:
         self.body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
         self.body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         self.body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
+        self.body_part_pckh = [Logger.avg.tolist() for k, Logger in pts_pckh_Loggers.items()]
         self.body_part_thresh = [Logger.get_thresh() for k, Logger in pts_curve_Loggers.items()]
         test_loader_desc.close()
         print("----------------------------------------------------------------------------------------------------")
 
-        self.test_loss, self.test_acc, self.test_dist, self.test_auc, self.test_pr = lossLogger.avg, accLogger.avg, \
-                                                                                     distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
+        self.test_loss, self.test_acc, self.test_pckh, self.test_dist, self.test_auc, self.test_pr \
+            = lossLogger.avg, accLogger.avg, pckhLogger.avg, distLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
 
     def get_benchmark(self):
         self.flops, self.params, self.infer_time = posenet.benchmark()

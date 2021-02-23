@@ -135,7 +135,7 @@ def train(train_loader, m, criterion, optimizer, writer):
         # Tensorboard
         writer.add_scalar('Train/Loss', lossLogger.avg, opt.trainIters)
         writer.add_scalar('Train/Acc', accLogger.avg, opt.trainIters)
-        writer.add_scalar('Train/PCKh', accLogger.avg, opt.trainIters)
+        writer.add_scalar('Train/PCKh', pckhLogger.avg, opt.trainIters)
         writer.add_scalar('Train/Dist', distLogger.avg, opt.trainIters)
         writer.add_scalar('Train/AUC', ave_auc, opt.trainIters)
         writer.add_scalar('Train/PR', pr_area, opt.trainIters)

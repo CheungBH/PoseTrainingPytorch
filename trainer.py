@@ -56,6 +56,7 @@ class Trainer:
         self.best_epoch = self.curr_epoch
 
         self.epoch_ls, self.lr_ls, self.bn_mean_ls = [], [], []
+        self.train_pckh, self.val_pckh, self.train_pckh_ls, self.val_pckh_ls, self.part_train_pckh, self.part_val_pckh = 0, 0, [], [], [], []
         self.train_acc, self.val_acc, self.train_acc_ls, self.val_acc_ls, self.part_train_acc, self.part_val_acc = 0, 0, [], [], [], []
         self.train_auc, self.val_auc, self.train_auc_ls, self.val_auc_ls, self.part_train_auc, self.part_val_auc = 0, 0, [], [], [], []
         self.train_pr, self.val_pr, self.train_pr_ls, self.val_pr_ls, self.part_train_pr, self.part_val_pr = 0, 0, [], [], [], []
@@ -94,10 +95,11 @@ class Trainer:
         self.build_sparse_scheduler(opt.sparse_s)
         
     def train(self):
-        accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
+        accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
         pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
         pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
         pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
+        pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
 
         self.model.train()
         train_loader_desc = tqdm(self.train_loader)
@@ -118,7 +120,7 @@ class Trainer:
 
             # for idx, logger in pts_loss_Loggers.items():
             #     logger.update(criterion(out.mul(setMask)[:, [idx], :, :], labels[:, [idx], :, :]), inps.size(0))
-            acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data,
+            acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data,
                                                            self.train_loader.dataset.accIdxs)
             # acc, exists = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset, img_info[-1])
 
@@ -127,6 +129,7 @@ class Trainer:
             accLogger.update(acc[0], inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))
             distLogger.update(dist[0], inps.size(0))
+            pckhLogger.update(pckh[0], inps.size(0))
             curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
             ave_auc = curveLogger.cal_AUC()
             pr_area = curveLogger.cal_PR()
@@ -136,6 +139,10 @@ class Trainer:
                 if exists[k] > 0:
                     pts_acc_Loggers[k].update(acc[k + 1], exists[k])
                     pts_dist_Loggers[k].update(dist[k + 1], exists[k])
+            pckh_exist = exists[-12:]
+            for k, v in pts_pckh_Loggers.items():
+                if exists[k] > 0:
+                    pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
 
             if mix_precision:
                 with amp.scale_loss(loss, self.optimizer) as scaled_loss:
@@ -154,15 +161,17 @@ class Trainer:
             self.tb_writer.add_scalar('Train/Loss', lossLogger.avg, self.trainIter)
             self.tb_writer.add_scalar('Train/Acc', accLogger.avg, self.trainIter)
             self.tb_writer.add_scalar('Train/Dist', distLogger.avg, self.trainIter)
+            self.tb_writer.add_scalar('Train/pckh', distLogger.avg, self.trainIter)
             self.tb_writer.add_scalar('Train/AUC', ave_auc, self.trainIter)
             self.tb_writer.add_scalar('Train/PR', pr_area, self.trainIter)
 
             # TQDM
             train_loader_desc.set_description(
-                'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+                'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.4f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                     epoch=self.curr_epoch,
                     loss=lossLogger.avg,
                     acc=accLogger.avg * 100,
+                    pckh=pckhLogger.avg * 100,
                     dist=distLogger.avg,
                     AUC=ave_auc,
                     PR=pr_area
@@ -173,22 +182,25 @@ class Trainer:
         body_part_dist = [Logger.avg.tolist() for k, Logger in pts_dist_Loggers.items()]
         body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
+        body_part_pckh = [Logger.avg.tolist() for k, Logger in pts_pckh_Loggers.items()]
         train_loader_desc.close()
 
         self.part_train_acc.append(body_part_acc)
         self.part_train_dist.append(body_part_dist)
         self.part_train_auc.append(body_part_auc)
         self.part_train_pr.append(body_part_pr)
+        self.part_train_pckh.append(body_part_pckh)
 
-        curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
-                                                            curveLogger.cal_AUC(), curveLogger.cal_PR()
+        curr_acc, curr_loss, curr_dist, curr_pckh, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
+                                                            pckhLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
         self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, self.trainIter, "train")
 
     def valid(self):
         drawn_kp, drawn_hm = False, False
-        accLogger, distLogger, lossLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), CurveLogger()
+        accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
         pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
         pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
+        pts_pckh_Loggers = {i: DataLogger() for i in range(self.kps)}
         pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
         self.model.eval()
 
@@ -230,13 +242,14 @@ class Trainer:
                 #
                 # out = (flip_out + out) / 2
 
-            acc, dist, exists, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data,
-                                                           self.val_loader.dataset.accIdxs)
+            acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data,
+                                                                 self.val_loader.dataset.accIdxs)
             # acc, exists = accuracy(out.mul(setMask), labels, val_loader.dataset, img_info[-1])
 
             accLogger.update(acc[0], inps.size(0))
             lossLogger.update(loss.item(), inps.size(0))
             distLogger.update(dist[0], inps.size(0))
+            pckhLogger.update(pckh[0], inps.size(0))
             curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
             ave_auc = curveLogger.cal_AUC()
             pr_area = curveLogger.cal_PR()
@@ -246,6 +259,10 @@ class Trainer:
                 if exists[k] > 0:
                     pts_acc_Loggers[k].update(acc[k + 1], exists[k])
                     pts_dist_Loggers[k].update(dist[k + 1], exists[k])
+            pckh_exist = exists[-12:]
+            for k, v in pts_pckh_Loggers.items():
+                if exists[k] > 0:
+                    pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
 
             self.valIter += 1
             # Tensorboard
@@ -254,11 +271,13 @@ class Trainer:
             self.tb_writer.add_scalar('Valid/Dist', distLogger.avg, self.valIter)
             self.tb_writer.add_scalar('Valid/AUC', ave_auc, self.valIter)
             self.tb_writer.add_scalar('Valid/PR', pr_area, self.valIter)
+            self.tb_writer.add_scalar('Valid/PCKh', pckhLogger.avg, self.valIter)
 
             val_loader_desc.set_description(
-                'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+                'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.4f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
                     epoch=self.curr_epoch,
                     loss=lossLogger.avg,
+                    pckh=pckhLogger.avg * 100,
                     acc=accLogger.avg * 100,
                     dist=distLogger.avg,
                     AUC=ave_auc,
@@ -270,16 +289,18 @@ class Trainer:
         body_part_dist = [Logger.avg.tolist() for k, Logger in pts_dist_Loggers.items()]
         body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
+        body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
         val_loader_desc.close()
 
         self.part_val_acc.append(body_part_acc)
         self.part_val_dist.append(body_part_dist)
         self.part_val_auc.append(body_part_auc)
         self.part_val_pr.append(body_part_pr)
+        self.part_val_pckh.append(body_part_pckh)
 
-        curr_acc, curr_loss, curr_dist, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
-                                                            curveLogger.cal_AUC(), curveLogger.cal_PR()
-        self.update_indicators(curr_acc, curr_loss, curr_dist, curr_auc, curr_pr, self.valIter, "val")
+        curr_acc, curr_loss, curr_pckh, curr_dist, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
+                                                            pckhLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
+        self.update_indicators(curr_acc, curr_loss, curr_pckh, curr_dist, curr_auc, curr_pr, self.valIter, "val")
 
     def build_criterion(self, crit):
         self.criterion = criterion.build(crit)
@@ -317,15 +338,18 @@ class Trainer:
         bn_ave = bn_sum / bn_num
         self.bn_mean_ls.append(bn_ave)
 
-    def update_indicators(self, acc, loss, dist, auc, pr, iter, phase):
+    def update_indicators(self, acc, loss, dist, pckh, auc, pr, iter, phase):
         if phase == "train":
             self.train_acc_ls.append(acc.tolist())
             self.train_loss_ls.append(loss)
             self.train_dist_ls.append(dist.tolist())
             self.train_auc_ls.append(auc)
             self.train_pr_ls.append(pr)
+            self.train_pckh_ls.append(pckh)
             if acc > self.train_acc:
                 self.train_acc = acc
+            if pckh > self.train_pckh:
+                self.train_pckh = pckh
             if auc > self.train_auc:
                 self.train_auc = auc
             if pr > self.train_pr:
@@ -334,19 +358,24 @@ class Trainer:
                 self.train_loss = loss
             if dist < self.train_dist:
                 self.train_dist = dist
-            self.opt.trainAcc, self.opt.trainLoss, self.opt.trainDist, self.opt.trainAuc, self.opt.trainPR, \
-                self.opt.trainIters = acc, loss, dist, auc, pr, iter
+            self.opt.trainAcc, self.opt.trainLoss, self.opt.trainPCKh, self.opt.trainDist, self.opt.trainAuc, \
+                self.opt.trainPR, self.opt.trainIters = acc, loss, pckh, dist, auc, pr, iter
         elif phase == "val":
             self.val_acc_ls.append(acc.tolist())
             self.val_loss_ls.append(loss)
             self.val_dist_ls.append(dist.tolist())
             self.val_auc_ls.append(auc)
             self.val_pr_ls.append(pr)
+            self.val_pckh_ls.append(pckh)
             if acc > self.val_acc:
                 self.val_acc = acc
                 torch.save(self.model.module.state_dict(),
                            os.path.join(self.expFolder, "{}_best_acc.pkl".format(self.opt.expID)))
                 self.best_epoch = self.curr_epoch
+            if pckh > self.val_pckh:
+                self.val_pckh = pckh
+                torch.save(self.model.module.state_dict(),
+                           os.path.join(self.expFolder, "{}_best_pckh.pkl".format(self.opt.expID)))
             if auc > self.val_auc:
                 torch.save(self.model.module.state_dict(),
                            os.path.join(self.expFolder, "{}_best_auc.pkl".format(self.opt.expID)))
@@ -361,17 +390,17 @@ class Trainer:
                 torch.save(self.model.module.state_dict(),
                            os.path.join(self.expFolder, "{}_best_dist.pkl".format(self.opt.expID)))
                 self.val_dist = dist
-            self.opt.valAcc, self.opt.valLoss, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
-                self.opt.valIters = acc, loss, dist, auc, pr, iter
+            self.opt.valAcc, self.opt.valLoss, self.opt.valPCKh, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
+                self.opt.valIters = acc, loss, pckh, dist, auc, pr, iter
         else:
             raise ValueError("The code is wrong!")
 
     def epoch_result(self, epoch):
         ep_line = [self.opt.expID, self.epoch_ls[epoch], self.lr_ls[epoch], ""]
-        ep_performance = [self.train_loss_ls[epoch], self.train_acc_ls[epoch], self.train_dist_ls[epoch],
-                          self.train_auc_ls[epoch], self.train_pr_ls[epoch], self.val_loss_ls[epoch],
-                          self.val_acc_ls[epoch], self.val_dist_ls[epoch], self.val_auc_ls[epoch],
-                          self.val_pr_ls[epoch], ""]
+        ep_performance = [self.train_loss_ls[epoch], self.train_acc_ls[epoch], self.train_pckh_ls[epoch],
+                          self.train_dist_ls[epoch], self.train_auc_ls[epoch], self.train_pr_ls[epoch],
+                          self.val_loss_ls[epoch], self.val_acc_ls[epoch], self.val_pckh_ls[epoch],
+                          self.val_dist_ls[epoch], self.val_auc_ls[epoch], self.val_pr_ls[epoch], ""]
         ep_line += ep_performance
         ep_line += self.part_train_acc[epoch]
         ep_line.append("")
