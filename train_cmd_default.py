@@ -1,13 +1,7 @@
 cmds = [
 
-    "python train_opt.py --dataset coco --expFolder prune_test --expID coco_original --backbone seresnet18",
-    "python train_opt.py --dataset coco --expFolder prune_test --expID coco_s1E-4 --backbone seresnet18 --loadModel ",
-    "python train_opt.py --dataset coco --expFolder prune_test --expID coco_s1E-3 --backbone seresnet18 --loadModel ",
-    "python train_opt.py --dataset coco --expFolder prune_test --expID coco_s5E-4 --backbone seresnet18 --loadModel ",
-    "python train_opt.py --dataset aic --expFolder prune_test --expID aic_original --backbone seresnet18",
-    "python train_opt.py --dataset aic --expFolder prune_test --expID aic_s1E-4 --backbone seresnet18 --loadModel ",
-    "python train_opt.py --dataset aic --expFolder prune_test --expID aic_s1E-3 --backbone seresnet18 --loadModel ",
-    "python train_opt.py --dataset aic --expFolder prune_test --expID aic_s5E-4 --backbone seresnet18 --loadModel ",
+    "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 2 --backbone seresnet18 --addDPG False --nEpoch 10 --se_ratio 16",
+    "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 1 --backbone seresnet18 --addDPG True --nEpoch 10",
 ]
 
 import os
