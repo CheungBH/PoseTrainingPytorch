@@ -183,7 +183,7 @@ class Trainer:
         body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
         body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
-        body_part_pckh = [Logger.avg.tolist() for k, Logger in pts_pckh_Loggers.items()]
+        body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
         train_loader_desc.close()
 
         self.part_train_acc.append(body_part_acc)
