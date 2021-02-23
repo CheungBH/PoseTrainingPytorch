@@ -70,6 +70,7 @@ class Tester:
             ave_auc = curveLogger.cal_AUC()
             pr_area = curveLogger.cal_PR()
 
+            exists = exists.tolist()
             for k, v in pts_acc_Loggers.items():
                 pts_curve_Loggers[k].update(maxval[k], gt[k])
                 if exists[k] > 0:
@@ -95,7 +96,7 @@ class Tester:
         self.body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
         self.body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
         self.body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
-        self.body_part_pckh = [Logger.avg.tolist() for k, Logger in pts_pckh_Loggers.items()]
+        self.body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
         self.body_part_thresh = [Logger.get_thresh() for k, Logger in pts_curve_Loggers.items()]
         test_loader_desc.close()
         print("----------------------------------------------------------------------------------------------------")

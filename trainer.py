@@ -134,6 +134,7 @@ class Trainer:
             ave_auc = curveLogger.cal_AUC()
             pr_area = curveLogger.cal_PR()
 
+            exists = exists.tolist()
             for k, v in pts_acc_Loggers.items():
                 pts_curve_Loggers[k].update(maxval[k], gt[k])
                 if exists[k] > 0:
@@ -254,6 +255,7 @@ class Trainer:
             ave_auc = curveLogger.cal_AUC()
             pr_area = curveLogger.cal_PR()
 
+            exists = exists.tolist()
             for k, v in pts_acc_Loggers.items():
                 pts_curve_Loggers[k].update(maxval[k], gt[k])
                 if exists[k] > 0:
