@@ -80,6 +80,41 @@ def obtain_bn_mask(bn_module, thre, device="cpu"):
     return mask
 
 
+def adjust_final_mask(CBLidx2mask, CBLidx2filter, model, final_conv_idx=93):
+    final_layer_group = [77,87,93]
+    final_CNN_weight = list(model.named_modules())[final_conv_idx+1][1].weight.data.abs().clone()
+    final_CNN_mask = CBLidx2mask[final_conv_idx]
+    num = CBLidx2filter[final_conv_idx]
+    total_num = len(final_CNN_weight.tolist())
+    for idx in range(total_num):
+        if final_CNN_mask[idx] == 1:
+            final_CNN_weight[idx] = 0
+
+    remaining_idx = 4 - num % 4
+    _, sorted_idx = final_CNN_weight.sort(descending=True)
+    padding_idx = sorted_idx[:remaining_idx]
+    for layer in final_layer_group:
+        CBLidx2filter[layer] = num + remaining_idx
+        for idx in padding_idx:
+            CBLidx2mask[layer][idx] = 1
+
+
+def adjust_mask(CBLidx2mask, CBLidx2filter, model, head_idx):
+    CNN_weight = list(model.named_modules())[head_idx][1].weight.data.abs().clone()
+    CNN_mask = CBLidx2mask[head_idx-1]
+    num = CBLidx2filter[head_idx-1]
+    total_num = len(CNN_weight.tolist())
+    for idx in range(total_num):
+        if CNN_mask[idx] == 1:
+            CNN_weight[idx] = 0
+    remaining_idx = 4 - num % 4
+    _, sorted_idx = CNN_weight.sort(descending=True)
+    padding_idx = sorted_idx[:remaining_idx]
+    CBLidx2filter[head_idx-1] = num + remaining_idx
+    for idx in padding_idx:
+        CBLidx2mask[head_idx-1][idx] = 1
+
+
 def obtain_filters_mask(model, prune_idx, thre):
     pruned = 0
     bn_count = 0
@@ -137,6 +172,7 @@ def init_weights_from_loose_model_shortcut(compact_model, loose_model, CBLidx2ma
             last_conv_index = layer_nums[idx - 3]
             in_channel_idx = np.argwhere(CBLidx2mask[last_conv_index])[:, 0].tolist()
         elif layer_num + 1 in head_idx:
+            break
             in_channel_idx = list(range(list(loose_model.named_modules())[layer_num][1].in_channels))
         else:
             last_conv_index = layer_nums[idx - 1]
@@ -153,10 +189,10 @@ def init_weights_from_loose_model_shortcut(compact_model, loose_model, CBLidx2ma
         tmp = loose_conv.weight.data[:, in_channel_idx, :, :].clone()
         compact_conv.weight.data = tmp[out_channel_idx, :, :, :].clone()
 
-    for layer_num, (layer_name, layer) in enumerate(list(loose_model.named_modules())):
-        if "fc.0" in layer_name or "fc.2" in layer_name:
-            compact_fc, loose_fc = list(compact_model.modules())[layer_num], list(loose_model.modules())[layer_num]
-            compact_fc.weight.data = loose_fc.weight.data.clone()
+    # for layer_num, (layer_name, layer) in enumerate(list(loose_model.named_modules())):
+        #     if "fc.0" in layer_name or "fc.2" in layer_name:
+        #     compact_fc, loose_fc = list(compact_model.modules())[layer_num], list(loose_model.modules())[layer_num]
+    #     compact_fc.weight.data = loose_fc.weight.data.clone()
 
 
 def merge_mask(CBLidx2mask, CBLidx2filter):
@@ -201,10 +237,14 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
         from config.model_cfg import shufflenet_cfg as model_ls
     else:
         raise ValueError("Your model name is wrong")
-    model_cfg = model_ls[opt.struct]
     # opt.loadModel = weight
 
-    model = createModel(cfg=model_cfg)
+    try:
+        model_cfg = model_ls[opt.struct]
+        model = createModel(cfg=model_cfg)
+    except:
+        model = createModel(cfg=opt.struct)
+
     model.load_state_dict(torch.load(weight))
     if device == "cpu":
         model.cpu()
@@ -224,6 +264,9 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     CBLidx2mask = {idx - 1: mask.astype('float32') for idx, mask in zip(all_bn_id, pruned_maskers)}
     CBLidx2filter = {idx - 1: filter_num for idx, filter_num in zip(all_bn_id, pruned_filters)}
     merge_mask(CBLidx2mask, CBLidx2filter)
+    adjust_final_mask(CBLidx2mask, CBLidx2filter, model)
+    for head in head_idx:
+        adjust_mask(CBLidx2mask, CBLidx2filter, model, head)
 
     valid_filter = {k: v for k, v in CBLidx2filter.items() if k + 1 in prune_idx}
     channel_str = ",".join(map(lambda x: str(x), valid_filter.values()))
@@ -236,4 +279,6 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
 if __name__ == '__main__':
     opt.backbone = "seresnet18"
-    pruning("exp/seresnet18/sparse/sparse_best_dist.pkl", "pruned_{}.pth".format(opt.backbone), "cfg_{}.txt".format(opt.backbone))
+    opt.se_ratio = 16
+    opt.kps = 13
+    pruning("exp/prune_test/aic_lr5E-4_s1E-6/aic_lr5E-4_s1E-6_160.pkl", "pruned_shortcut_{}.pth".format(opt.backbone), "cfg_shortcut_{}.txt".format(opt.backbone), thresh=70)
