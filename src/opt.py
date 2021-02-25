@@ -11,7 +11,7 @@ parser.add_argument('--dataset', default='multiple', type=str,
                     help='Dataset choice: mpii | coco')
 
 "----------------------------- Model options -----------------------------"
-parser.add_argument('--backbone', default="seresnet101", type=str,
+parser.add_argument('--backbone', default="mobilenet", type=str,
                     help='The backbone of the model')
 parser.add_argument('--struct', default=None, type=str,
                     help='The structure of the model')

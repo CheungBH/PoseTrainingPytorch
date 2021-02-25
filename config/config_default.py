@@ -54,9 +54,9 @@ sparse_decay_dict = {0.5: 0.1}
 warm_up = {1: 0.1, 2: 0.5}
 
 all_kps = [-item for item in list(range(opt.kps + 1))[1:]]
-if opt.loss_allocate == 0:
+if opt.loss_weight == 0:
     loss_weight = {1: all_kps}
-elif opt.loss_allocate == 1:
+elif opt.loss_weight == 1:
     loss_weight = {3: [-1, -2, -7, -8, -11, -12]}
     loss_weight[1] = [-item for item in all_kps if -item not in loss_weight[3]]
 else:
