@@ -24,7 +24,9 @@ class ErrorAnalyser:
         self.max_val_dict = defaultdict(list)
         self.write_threshold = write_threshold
 
-    def build(self, backbone, kps, cfg, DUC, crit, model_height=256, model_width=256):
+    def build(self, backbone, kps, cfg, DUC, crit, se_ratio=16, model_height=256, model_width=256):
+        from src.opt import opt
+        opt.se_ratio = se_ratio
         posenet.build(backbone, cfg)
         self.model = posenet.model
         self.crit = crit
@@ -107,6 +109,8 @@ class ErrorAnalyser:
     def load_from_option(self):
         if os.path.exists(self.option_file):
             self.option = torch.load(self.option_file)
+            from src.opt import opt
+            opt.se_ratio = self.option.se_ratio
             self.height = self.option.inputResH
             self.width = self.option.inputResW
             self.backbone = self.option.backbone
@@ -139,14 +143,14 @@ class ErrorAnalyser:
 
 
 def error_analysis(model_path, data_info, batchsize=1, num_worker=1, use_option=True, DUC=0, kps=17,
-               backbone="seresnet101", cfg="0", criteria="MSE", height=256, width=256):
+               backbone="seresnet101", cfg="0", criteria="MSE", se=16, height=256, width=256):
     from dataset.loader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
     analyser = ErrorAnalyser(test_loader, model_path)
     if use_option:
         analyser.build_with_opt()
     else:
-        analyser.build(backbone, kps, cfg, DUC, criteria, height, width)
+        analyser.build(backbone, kps, cfg, DUC, criteria, se, height, width)
     analyser.analyse()
     performance = analyser.summarize()
     return performance
