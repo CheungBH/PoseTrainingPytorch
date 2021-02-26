@@ -13,6 +13,8 @@ backbone = ""
 cfg = ""
 height = ""
 width = ""
+opt.kps = 13
+opt.se_ratio = 16
 
 option_path = get_option_path(model_path)
 if os.path.join(option_path):
