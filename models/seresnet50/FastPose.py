@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from layers.SE_Resnet import SEResnet
+from .layers.SE_Resnet import SEResnet
 from models.duc.DUC import DUC
 from src.opt import opt
 
@@ -31,7 +31,7 @@ class SeResPose50(nn.Module):
         self.conv_out = nn.Conv2d(int(duc2_out/4), opt.kps, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x: Variable):
-        out = self.preact(x)
+        out = self.seresnet50(x)
         out = self.shuffle1(out)
         out = self.duc1(out)
         out = self.duc2(out)
