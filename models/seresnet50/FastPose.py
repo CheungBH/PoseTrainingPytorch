@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from .layers.SE_Resnet import SEResnet
+from layers.SE_Resnet import SEResnet
 from models.duc.DUC import DUC
 from src.opt import opt
 
@@ -14,7 +14,7 @@ class SeResPose50(nn.Module):
         super(SeResPose50, self).__init__()
 
         cfg = None
-        head_inp, duc1_out, duc2_out = 512, 256, 128
+        head_inp, duc1_out, duc2_out = 2048, 1024, 512
         if cfg_file:
             with open(cfg_file) as file:
                 data = file.readlines()
@@ -23,15 +23,14 @@ class SeResPose50(nn.Module):
 
         self.preact = SEResnet(cfg=cfg)
 
-        self.suffle1 = nn.PixelShuffle(2)
-        self.duc1 = DUC(512, 1024, upscale_factor=2)
-        self.duc2 = DUC(256, 512, upscale_factor=2)
-
-        self.conv_out = nn.Conv2d(self.DIM, opt.kps, kernel_size=3, stride=1, padding=1)
+        self.shuffle1 = nn.PixelShuffle(2)
+        self.duc1 = DUC(int(head_inp/4), duc1_out, upscale_factor=2)
+        self.duc2 = DUC(int(duc1_out/4), duc2_out, upscale_factor=2)
+        self.conv_out = nn.Conv2d(int(duc2_out/4), opt.kps, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x: Variable):
         out = self.preact(x)
-        out = self.suffle1(out)
+        out = self.shuffle1(out)
         out = self.duc1(out)
         out = self.duc2(out)
 
@@ -45,6 +44,7 @@ def createModel(cfg=None):
 
 
 def test():
+    opt.se_ratio = 16
     net = createModel()
     y = net(torch.randn(1,3,64,64))
     print(net, file=open("FastPose.txt","w"))

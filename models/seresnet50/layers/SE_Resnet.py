@@ -21,7 +21,7 @@ class SeBottleneck(nn.Module):
         self.conv3 = nn.Conv2d(cfg[1], planes * 4, kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes * 4)
         if reduction:
-            self.se = SELayer(planes * 4)
+            self.se = SELayer(planes * 4, reduction=se_ratio)
 
         self.reduc = reduction
         self.downsample = downsample
@@ -61,7 +61,7 @@ class SeResnet(nn.Module):
             # only purned layer
             cfg = [[64, 64], [64, 64]*2, 
                    [128, 128], [128, 128]*3, 
-                   [256, 256], [256, 256]*22, 
+                   [256, 256], [256, 256]*5,
                    [512, 512], [512, 512]*2 ]
             cfg = [item for sub_list in cfg for item in sub_list]
 
