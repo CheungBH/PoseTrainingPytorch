@@ -142,10 +142,10 @@ class ErrorAnalyser:
         return self.performance
 
 
-def error_analysis(model_path, data_info, batchsize=1, num_worker=1, use_option=True, DUC=0, kps=17,
-               backbone="seresnet101", cfg="0", criteria="MSE", se=16, height=256, width=256):
+def error_analysis(model_path, data_info, num_worker=1, use_option=True, DUC=0, kps=17, backbone="seresnet101", cfg="0",
+                   criteria="MSE", se=16, height=256, width=256):
     from dataset.loader import TestDataset
-    test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
+    test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
     analyser = ErrorAnalyser(test_loader, model_path)
     if use_option:
         analyser.build_with_opt()
