@@ -37,7 +37,7 @@ posenet = PoseModel(device=device)
 
 class Trainer:
     def __init__(self, opt, vis_in_training=False):
-        print(opt)
+        #print(opt)
         self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
