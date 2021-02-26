@@ -79,6 +79,9 @@ seresnet_cfg = {"0": None,
 seresnet18_cfg = {"0": None,
                   "cfg": "config/pose_cfg/seresnet18.txt"}
 
+seresnet50_cfg = {"0": None,
+                  "cfg": "config/pose_cfg/seresnet18.txt"}
+
 efficientnet_cfg = {str(i): "b"+str(i) for i in range(9)}
 
 shufflenet_cfg = {"0": None}

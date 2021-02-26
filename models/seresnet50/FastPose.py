@@ -20,6 +20,8 @@ class SeResPose50(nn.Module):
                 data = file.readlines()
             cfg = data[0].replace("[", "").replace("]", "").replace("\n", "").replace(" ", "").split(",")
             cfg = [int(i) for i in cfg]
+            if len(cfg) > 20:
+                head_inp, duc1_out, duc2_out = cfg[-3], cfg[-2], cfg[-1]
 
         self.preact = SEResnet(cfg=cfg)
 
