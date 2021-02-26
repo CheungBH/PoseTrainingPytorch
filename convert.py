@@ -2,6 +2,7 @@ from models.pose_model import PoseModel
 from utils.utils import get_option_path
 import torch
 import os
+from src.opt import opt
 
 model_path = ""
 onnx_path = ""
@@ -20,6 +21,8 @@ if os.path.join(option_path):
     cfg = option.struct
     height = option.inputResH
     width = option.inputResW
+    opt.kps = option.kps
+    opt.se_ratio = option.se_ratio
 
 posenet = PoseModel()
 posenet.build(backbone, cfg)
