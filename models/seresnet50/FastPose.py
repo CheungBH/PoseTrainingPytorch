@@ -23,7 +23,7 @@ class SeResPose50(nn.Module):
             if len(cfg) > 20:
                 head_inp, duc1_out, duc2_out = cfg[-3], cfg[-2], cfg[-1]
 
-        self.preact = SEResnet(cfg=cfg)
+        self.seresnet50 = SEResnet(cfg=cfg)
 
         self.shuffle1 = nn.PixelShuffle(2)
         self.duc1 = DUC(int(head_inp/4), duc1_out, upscale_factor=2)

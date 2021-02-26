@@ -31,6 +31,7 @@ class PoseModel:
         elif backbone == "seresnet50":
             from models.seresnet50.FastPose import createModel
             from config.model_cfg import seresnet50_cfg as model_ls
+            self.feature_layer_num, self.feature_layer_name = 75, "seresnet50"
         else:
             raise ValueError("Your model name is wrong")
 
