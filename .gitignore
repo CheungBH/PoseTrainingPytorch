@@ -63,3 +63,4 @@ res_collect
 *DS_Store
 *onnx
 *.pth
+*.pt
