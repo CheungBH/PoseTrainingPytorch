@@ -468,12 +468,12 @@ class Trainer:
 
         with open(self.txt_log, "a+") as result_file:
             result_file.write('############# Starting Epoch {} #############\n'.format(self.curr_epoch))
-            result_file.write('Train:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
-                    idx=self.curr_epoch, loss=self.train_loss_ls[-1], acc=self.train_acc_ls[-1],
+            result_file.write('Train:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | PCKh:{pckh: .4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
+                    idx=self.curr_epoch, loss=self.train_loss_ls[-1], acc=self.train_acc_ls[-1], pckh=self.train_pckh_ls[-1],
                     dist=self.train_dist_ls[-1], AUC=self.train_auc_ls[-1], PR=self.train_pr_ls[-1],
                 ))
-            result_file.write('Valid:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
-                    idx=self.curr_epoch, loss=self.val_loss_ls[-1], acc=self.val_acc_ls[-1],
+            result_file.write('Valid:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | PCKh:{pckh: .4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
+                    idx=self.curr_epoch, loss=self.val_loss_ls[-1], acc=self.val_acc_ls[-1], pckh=self.val_pckh_ls[-1],
                     dist=self.val_dist_ls[-1], AUC=self.val_auc_ls[-1], PR=self.val_pr_ls[-1],
                 ))
 
