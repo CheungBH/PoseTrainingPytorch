@@ -16,7 +16,7 @@ class AutoConverter:
         for folder in os.listdir(self.model_folder):
             cfg = None
             for file in os.listdir(os.path.join(self.model_folder, folder)):
-                file_path =  os.path.join(self.model_folder, folder, file)
+                file_path = os.path.join(self.model_folder, folder, file)
                 if "option" not in file and ".pkl" in file or ".pth" in file:
                     model = file_path
                 elif "cfg" in file or "config" in file:
