@@ -61,5 +61,5 @@ pretrained
 tmp
 res_collect
 *DS_Store
-*.onnx
+*onnx
 *.pth

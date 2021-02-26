@@ -4,13 +4,13 @@ import torch
 import os
 from src.opt import opt
 
-model_path = ""
-onnx_path = ""
-libtorch_path = ""
+model_path = "onnx/models_bh_0226/seresnet18/aic_original_best_acc.pkl"
+cfg = ""
+onnx_path = "onnx/models_bh_0226/seresnet18/model.onnx"
+libtorch_path = "onnx/models_bh_0226/seresnet18/model.pt"
 
 '''Must be assigned if option.pkl is not exist'''
 backbone = ""
-cfg = ""
 height = ""
 width = ""
 opt.kps = 13
@@ -20,11 +20,14 @@ option_path = get_option_path(model_path)
 if os.path.join(option_path):
     option = torch.load(option_path)
     backbone = option.backbone
-    cfg = option.struct
+    # cfg = option.struct
     height = option.inputResH
     width = option.inputResW
     opt.kps = option.kps
-    opt.se_ratio = option.se_ratio
+    try:
+        opt.se_ratio = option.se_ratio
+    except:
+        opt.se_ratio = 1
 
 posenet = PoseModel()
 posenet.build(backbone, cfg)

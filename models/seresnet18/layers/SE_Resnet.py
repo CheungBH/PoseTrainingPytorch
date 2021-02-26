@@ -76,6 +76,7 @@ class SeResnet(nn.Module):
             elif len(cfg_ls) == 22:
                 cfg = [cfg_ls[1], cfg_ls[3], cfg_ls[5], cfg_ls[8], cfg_ls[10], cfg_ls[13], cfg_ls[15], cfg_ls[18]]
                 planes = [cfg_ls[4], cfg_ls[9], cfg_ls[14], cfg_ls[19]]
+                self.inplanes = planes[0]
             else:
                 raise ValueError("The configuration file is wrong!")
 

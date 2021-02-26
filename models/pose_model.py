@@ -12,7 +12,6 @@ class PoseModel:
         if backbone == "mobilenet":
             from models.mobilenet.MobilePose import createModel
             from config.model_cfg import mobile_opt as model_ls
-            cfg = model_ls[cfg]
             self.feature_layer_num, self.feature_layer_name = 155, "features"
         elif backbone == "seresnet101":
             from models.seresnet.FastPose import createModel
