@@ -11,17 +11,17 @@ class SeBottleneck(nn.Module):
     """ SeBottleneck """
     expansion = 4
 
-    def __init__(self, inplanes, planes, cfg, stride=1, downsample=None, reduction=False):
+    def __init__(self, inplanes, outplanes, cfg, stride=1, downsample=None, reduction=False):
         super(SeBottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, cfg[0], kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(cfg[0])
         self.conv2 = nn.Conv2d(cfg[0], cfg[1], kernel_size=3, stride=stride,
                                padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(cfg[1])
-        self.conv3 = nn.Conv2d(cfg[1], planes * 4, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.conv3 = nn.Conv2d(cfg[1], outplanes, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(outplanes)
         if reduction:
-            self.se = SELayer(planes * 4, reduction=se_ratio)
+            self.se = SELayer(outplanes, reduction=se_ratio)
 
         self.reduc = reduction
         self.downsample = downsample
@@ -55,39 +55,45 @@ class SeResnet(nn.Module):
 
         self.inplanes = 64
         self.block = block
+        self.planes = [256, 512, 1024, 2048]
 
         if cfg is None:
             # Construct config variable.
             # only purned layer
-            cfg = [[64, 64], [64, 64]*2, 
-                   [128, 128], [128, 128]*3, 
-                   [256, 256], [256, 256]*5,
-                   [512, 512], [512, 512]*2 ]
+            cfg = [[64, 64]*3,
+                   [128, 128]*4,
+                   [256, 256]*6,
+                   [512, 512]*3]
             cfg = [item for sub_list in cfg for item in sub_list]
+        elif len(cfg) > 40:  # For shortcut pruning
+            self.inplanes = cfg[0]
+            self.planes = [cfg[3], cfg[13], cfg[26], cfg[45]]
+            cfg = [cfg[1], cfg[2], cfg[5], cfg[6], cfg[8], cfg[9],
+                   cfg[11], cfg[12], cfg[15], cfg[16], cfg[18], cfg[19], cfg[21], cfg[22],
+                   cfg[24], cfg[25], cfg[28], cfg[29], cfg[31], cfg[32], cfg[34], cfg[35], cfg[37], cfg[38], cfg[40], cfg[41],
+                   cfg[43], cfg[44], cfg[47], cfg[48], cfg[50], cfg[51]]
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7,
+        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7,
                                stride=2, padding=3, bias=False)
-        self.bn1 = nn.BatchNorm2d(64, eps=1e-5, momentum=0.01, affine=True)
+        self.bn1 = nn.BatchNorm2d(self.inplanes, eps=1e-5, momentum=0.01, affine=True)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.layer1 = self.make_layer(block, 64, num_blocks[0], 
-                                  cfg = cfg[0:2*sum(num_blocks[0:1])], stride=1)
-        self.layer2 = self.make_layer(block, 128, num_blocks[1], 
+        self.layer1 = self.make_layer(block, self.planes[0], num_blocks[0], cfg=cfg[0:2*sum(num_blocks[0:1])], stride=1)
+        self.layer2 = self.make_layer(block, self.planes[1], num_blocks[1],
                                   cfg = cfg[2*sum(num_blocks[0:1]):2*sum(num_blocks[0:2])], stride=2)
-        self.layer3 = self.make_layer(block, 256, num_blocks[2], 
+        self.layer3 = self.make_layer(block, self.planes[2], num_blocks[2],
                                   cfg = cfg[2*sum(num_blocks[0:2]):2*sum(num_blocks[0:3])], stride=2)
-        self.layer4 = self.make_layer(block, 512, num_blocks[3], 
+        self.layer4 = self.make_layer(block, self.planes[3], num_blocks[3],
                                   cfg = cfg[2*sum(num_blocks[0:3]):2*sum(num_blocks[0:4])], stride=2)
         # self.linear = nn.Linear(512*block.expansion, num_classes)
 
     def make_layer(self, block, planes, blocks, cfg, stride=1):
         downsample = None
-        if stride != 1 or self.inplanes != planes * block.expansion:
+        if stride != 1 or self.inplanes != planes:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion,
-                          kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * block.expansion),
+                nn.Conv2d(self.inplanes, planes, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes),
             )
 
         layers = []
@@ -95,7 +101,7 @@ class SeResnet(nn.Module):
             layers.append(block(self.inplanes, planes, cfg[0:2], stride, downsample, reduction=True))
         else:
             layers.append(block(self.inplanes, planes, cfg[0:2], stride, downsample))
-        self.inplanes = planes * block.expansion
+        self.inplanes = planes
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, cfg[2*i: 2*(i+1)]))
 
