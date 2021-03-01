@@ -178,6 +178,41 @@ def init_weights_from_loose_model_shortcut(compact_model, loose_model, CBLidx2ma
         #     compact_fc, loose_fc = list(compact_model.modules())[layer_num], list(loose_model.modules())[layer_num]
     #     compact_fc.weight.data = loose_fc.weight.data.clone()
 
+
+def init_weights_from_loose_model_shortcut50(compact_model, loose_model, CBLidx2mask, valid_filter, downsample_idx, head_idx):
+    layer_nums = [k for k in CBLidx2mask.keys()]
+    for idx, layer_num in enumerate(layer_nums):
+        # if layer_num in valid_filter:
+        out_channel_idx = np.argwhere(CBLidx2mask[layer_num])[:, 0].tolist()
+
+        if idx == 0:
+            in_channel_idx = [0, 1, 2]
+        elif layer_num + 1 in downsample_idx:
+            downsample_id = downsample_idx.index(layer_num+1)
+            if downsample_id == 0:
+                last_conv_index = layer_nums[0]
+            else:
+                last_conv_index = downsample_idx[downsample_id-1] - 1
+            in_channel_idx = np.argwhere(CBLidx2mask[last_conv_index])[:, 0].tolist()
+        elif layer_num + 1 in head_idx:
+            break
+            in_channel_idx = list(range(list(loose_model.named_modules())[layer_num][1].in_channels))
+        else:
+            last_conv_index = layer_nums[idx - 1]
+            in_channel_idx = np.argwhere(CBLidx2mask[last_conv_index])[:, 0].tolist()
+
+        compact_bn, loose_bn = list(compact_model.modules())[layer_num + 1], list(loose_model.modules())[layer_num + 1]
+        compact_bn.weight.data = loose_bn.weight.data[out_channel_idx].clone()
+        compact_bn.bias.data = loose_bn.bias.data[out_channel_idx].clone()
+        compact_bn.running_mean.data = loose_bn.running_mean.data[out_channel_idx].clone()
+        compact_bn.running_var.data = loose_bn.running_var.data[out_channel_idx].clone()
+        # input mask is
+
+        compact_conv, loose_conv = list(compact_model.modules())[layer_num], list(loose_model.modules())[layer_num]
+        tmp = loose_conv.weight.data[:, in_channel_idx, :, :].clone()
+        compact_conv.weight.data = tmp[out_channel_idx, :, :, :].clone()
+
+
 def merge_mask50(CBLidx2mask, CBLidx2filter):
     if opt.backbone == "seresnet50":
         mask_groups = [[13, 23, 30, 37],
@@ -298,6 +333,8 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
     if opt.backbone == "seresnet18":
         init_weights_from_loose_model_shortcut(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
+    elif opt.backbone == "seresnet50":
+        init_weights_from_loose_model_shortcut50(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
     torch.save(compact_model.state_dict(), compact_model_path)
 
 
