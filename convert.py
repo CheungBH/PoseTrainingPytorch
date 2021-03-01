@@ -65,8 +65,8 @@ class Converter:
 
 
 if __name__ == '__main__':
-    pytorch_model = "pruned_shortcut_seresnet50.pth"
-    cfg = "cfg_shortcut_seresnet50.txt"
+    pytorch_model = "pruned_seresnet50.pth"
+    cfg = "cfg_seresnet50.txt"
     convert = Converter(pytorch_model, cfg=cfg)
     convert.convert()
 
