@@ -192,7 +192,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     channel_str = ",".join(map(lambda x: str(x), valid_filter.values()))
     print(channel_str, file=open(compact_model_cfg, "w"))
     compact_model = createModel(cfg=compact_model_cfg).cpu()
-
+    print(compact_model, file=open("pruned.txt", 'w'))
     init_weights_from_loose_model(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
     torch.save(compact_model.state_dict(), compact_model_path)
 

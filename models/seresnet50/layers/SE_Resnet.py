@@ -72,6 +72,9 @@ class SeResnet(nn.Module):
                    cfg[11], cfg[12], cfg[15], cfg[16], cfg[18], cfg[19], cfg[21], cfg[22],
                    cfg[24], cfg[25], cfg[28], cfg[29], cfg[31], cfg[32], cfg[34], cfg[35], cfg[37], cfg[38], cfg[40], cfg[41],
                    cfg[43], cfg[44], cfg[47], cfg[48], cfg[50], cfg[51]]
+        else:
+            self.inplanes = cfg[0]
+            cfg = cfg[1:]
 
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7,
                                stride=2, padding=3, bias=False)
