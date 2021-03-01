@@ -29,6 +29,23 @@ def obtain_prune_idx(path):
     prune_idx = prune_idx  # 去除第一个bn1层
     return prune_idx, bn3_id
 
+def obtain_prune_idx_50(model):
+    all_bn_id, normal_idx, head_idx, shortcut_idx, downsample_idx = [], [], [], [], []
+    for i, layer in enumerate(list(model.named_modules())):
+        if isinstance(layer[1], nn.BatchNorm2d):
+            all_bn_id.append(i)
+            if "seresnet50" in layer[0]:
+                if "downsample" in layer[0]:
+                    downsample_idx.append(i)
+                elif "bn1" in layer[0] or "bn2" in layer[0] and i > 5:
+                    normal_idx.append(i)
+                elif "bn3" in layer[0]:
+                    shortcut_idx.append(i)
+                else:
+                    print("???????")
+            else:
+                head_idx.append(i)
+    return all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx
 
 def obtain_prune_idx2(model):
     all_bn_id, normal_idx, head_idx, shortcut_idx, downsample_idx = [], [], [], [], []
@@ -80,8 +97,12 @@ def obtain_bn_mask(bn_module, thre, device="cpu"):
     return mask
 
 
-def adjust_final_mask(CBLidx2mask, CBLidx2filter, model, final_conv_idx=93):
-    final_layer_group = [77,87,93]
+def adjust_final_mask(CBLidx2mask, CBLidx2filter, model):
+    if opt.backbone == "seresnet18":
+        final_layer_group, final_conv_idx = [77, 87, 93], 93
+    elif opt.backbone == "seresnet50":
+        final_layer_group, final_conv_idx = [136, 146, 153, 160], 160
+
     final_CNN_weight = list(model.named_modules())[final_conv_idx+1][1].weight.data.abs().clone()
     final_CNN_mask = CBLidx2mask[final_conv_idx]
     num = CBLidx2filter[final_conv_idx]
@@ -194,6 +215,32 @@ def init_weights_from_loose_model_shortcut(compact_model, loose_model, CBLidx2ma
         #     compact_fc, loose_fc = list(compact_model.modules())[layer_num], list(loose_model.modules())[layer_num]
     #     compact_fc.weight.data = loose_fc.weight.data.clone()
 
+def merge_mask50(CBLidx2mask, CBLidx2filter):
+    if opt.backbone == "seresnet50":
+        mask_groups = [[13, 23, 30, 37],
+                       [45, 55, 62, 69, 76],
+                       [84, 94, 101, 108, 115, 122, 129],
+                       [137, 147, 154, 161]]
+    elif opt.backbone == "seresnet18":
+        mask_groups = [[2,11,24], [41,31,47],[64,54,70],[77,87,93]]
+
+    for layers in mask_groups:
+        Merge_masks = []
+        for layer in layers:
+            Merge_masks.append(torch.Tensor(CBLidx2mask[layer-1]).unsqueeze(0))
+
+        Merge_masks = torch.cat(Merge_masks, 0)
+        merge_mask = (torch.sum(Merge_masks, dim=0) > 0).float()
+
+        filter_num = int(torch.sum(merge_mask).item())
+        merge_mask = np.array(merge_mask)
+
+        for layer in layers:
+            CBLidx2mask[layer-1] = merge_mask
+            CBLidx2filter[layer-1] = filter_num
+
+    return CBLidx2mask, CBLidx2filter
+
 
 def merge_mask(CBLidx2mask, CBLidx2filter):
     if opt.backbone == "seresnet18":
@@ -235,6 +282,9 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     elif opt.backbone == "shufflenet":
         from models.shufflenet.ShufflePose import createModel
         from config.model_cfg import shufflenet_cfg as model_ls
+    elif opt.backbone == "seresnet50":
+        from models.seresnet50.FastPose import createModel
+        from config.model_cfg import seresnet50_cfg as model_ls
     else:
         raise ValueError("Your model name is wrong")
     # opt.loadModel = weight
@@ -254,7 +304,13 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
     tmp = "./model.txt"
     print(model, file=open(tmp, 'w'))
-    all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx2(model)
+    if opt.backbone == "seresnet18":
+        all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx2(model)
+    elif opt.backbone == "seresnet50":
+        all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx_50(model)
+    else:
+        raise ValueError("Not a correct name")
+
 
     prune_idx = all_bn_id
     sorted_bn = sort_bn(model, prune_idx)
@@ -263,7 +319,11 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     pruned_filters, pruned_maskers = obtain_filters_mask(model, prune_idx, threshold)
     CBLidx2mask = {idx - 1: mask.astype('float32') for idx, mask in zip(all_bn_id, pruned_maskers)}
     CBLidx2filter = {idx - 1: filter_num for idx, filter_num in zip(all_bn_id, pruned_filters)}
-    merge_mask(CBLidx2mask, CBLidx2filter)
+    if opt.backbone == "seresnet18":
+        merge_mask(CBLidx2mask, CBLidx2filter)
+    elif opt.backbone == "seresnet50":
+        merge_mask50(CBLidx2mask, CBLidx2filter)
+
     adjust_final_mask(CBLidx2mask, CBLidx2filter, model)
     for head in head_idx:
         adjust_mask(CBLidx2mask, CBLidx2filter, model, head)
@@ -278,7 +338,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
 
 if __name__ == '__main__':
-    opt.backbone = "seresnet18"
+    opt.backbone = "seresnet50"
     opt.se_ratio = 16
-    opt.kps = 13
-    pruning("exp/prune_test/aic_lr5E-4_s1E-6/aic_lr5E-4_s1E-6_160.pkl", "pruned_shortcut_{}.pth".format(opt.backbone), "cfg_shortcut_{}.txt".format(opt.backbone), thresh=70)
+    opt.kps = 17
+    pruning("exp/resnet_test/aic_origin/aic_origin_best_acc.pkl", "pruned_shortcut_{}.pth".format(opt.backbone), "cfg_shortcut_{}.txt".format(opt.backbone), thresh=70)
