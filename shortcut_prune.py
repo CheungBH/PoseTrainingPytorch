@@ -296,7 +296,8 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     print(channel_str, file=open(compact_model_cfg, "w"))
     compact_model = createModel(cfg=compact_model_cfg).cpu()
 
-    init_weights_from_loose_model_shortcut(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
+    if opt.backbone == "seresnet18":
+        init_weights_from_loose_model_shortcut(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
     torch.save(compact_model.state_dict(), compact_model_path)
 
 

@@ -7,10 +7,10 @@ from src.opt import opt
 
 class Converter:
     '''Must be assigned if option.pkl is not exist'''
-    backbone = ""
-    height = 256
+    backbone = "seresnet50"
+    height = 320
     width = 256
-    opt.kps = 13
+    opt.kps = 17
     opt.se_ratio = 16
 
     def __init__(self, model_path, cfg=None, onnx_path="model.onnx", libtorch_path="model.pt", onnx_sim_path="model_sim.onnx", device="cpu"):
@@ -47,7 +47,7 @@ class Converter:
 
     def load_options(self):
         option_path = get_option_path(self.src_model_path)
-        if os.path.join(option_path):
+        if os.path.exists(option_path):
             option = torch.load(option_path)
             self.backbone = option.backbone
             self.height = option.inputResH
@@ -65,8 +65,9 @@ class Converter:
 
 
 if __name__ == '__main__':
-    pytorch_model = "onnx/models_bh_0226/mobile_13/87_best_acc.pkl"
-    convert = Converter(pytorch_model)
+    pytorch_model = "pruned_shortcut_seresnet50.pth"
+    cfg = "cfg_shortcut_seresnet50.txt"
+    convert = Converter(pytorch_model, cfg=cfg)
     convert.convert()
 
 '''
