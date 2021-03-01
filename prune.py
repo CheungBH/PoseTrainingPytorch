@@ -156,6 +156,9 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     elif opt.backbone == "shufflenet":
         from models.shufflenet.ShufflePose import createModel
         from config.model_cfg import shufflenet_cfg as model_ls
+    elif opt.backbone == "seresnet50":
+        from models.seresnet50.FastPose import createModel
+        from config.model_cfg import seresnet50_cfg as model_ls
     else:
         raise ValueError("Your model name is wrong")
     model_cfg = model_ls[opt.struct]
@@ -195,5 +198,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
 
 if __name__ == '__main__':
-    opt.backbone = "seresnet18"
-    pruning("exp/seresnet18/sparse/sparse_best_dist.pkl", "pruned_{}.pth".format(opt.backbone))
+    opt.backbone = "seresnet50"
+    opt.se_ratio = 16
+    opt.kps = 17
+    pruning("exp/resnet_test/aic_origin/aic_origin_best_acc.pkl", "pruned_{}.pth".format(opt.backbone), "cfg_{}.txt".format(opt.backbone))

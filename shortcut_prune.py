@@ -304,4 +304,4 @@ if __name__ == '__main__':
     opt.backbone = "seresnet50"
     opt.se_ratio = 16
     opt.kps = 17
-    pruning("exp/resnet_test/aic_origin/aic_origin_best_acc.pkl", "pruned_shortcut_{}.pth".format(opt.backbone), "cfg_shortcut_{}.txt".format(opt.backbone), thresh=70)
+    pruning("exp/resnet_test/aic_origin/aic_origin_best_acc.pkl", "pruned_shortcut_{}.pth".format(opt.backbone), "cfg_shortcut_{}.txt".format(opt.backbone))

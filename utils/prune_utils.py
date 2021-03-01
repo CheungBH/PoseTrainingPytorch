@@ -1,3 +1,5 @@
+from torch import nn
+
 def obtain_prune_idx_50(model):
     all_bn_id, normal_idx, head_idx, shortcut_idx, downsample_idx = [], [], [], [], []
     for i, layer in enumerate(list(model.named_modules())):
