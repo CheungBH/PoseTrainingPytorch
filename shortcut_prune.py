@@ -4,7 +4,6 @@ import torch.nn as nn
 import numpy as np
 # from config.config import device
 from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50
-from models.seresnet.FastPose import createModel
 from src.opt import opt
 
 
@@ -65,6 +64,8 @@ def adjust_final_mask(CBLidx2mask, CBLidx2filter, model):
         final_layer_group, final_conv_idx = [77, 87, 93], 93
     elif opt.backbone == "seresnet50":
         final_layer_group, final_conv_idx = [136, 146, 153, 160], 160
+    elif opt.backbone == "seresnet101":
+        final_layer_group, final_conv_idx = [255, 265, 272, 279], 279
 
     final_CNN_weight = list(model.named_modules())[final_conv_idx+1][1].weight.data.abs().clone()
     final_CNN_mask = CBLidx2mask[final_conv_idx]
@@ -221,6 +222,12 @@ def merge_mask50(CBLidx2mask, CBLidx2filter):
                        [137, 147, 154, 161]]
     elif opt.backbone == "seresnet18":
         mask_groups = [[2,11,24], [41,31,47],[64,54,70],[77,87,93]]
+    elif opt.backbone == "seresnet101":
+        mask_groups = [[13, 23, 30, 37],
+                       [45, 55, 62, 69, 76],
+                       [84, 94, 101, 108, 115, 122, 129, 136, 143, 150, 157, 164, 171, 178, 185, 192, 199, 206, 213,
+                        220, 227, 234, 241, 248],
+                       [256, 266, 273, 280]]
 
     for layers in mask_groups:
         Merge_masks = []
@@ -304,7 +311,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     print(model, file=open(tmp, 'w'))
     if opt.backbone == "seresnet18":
         all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx2(model)
-    elif opt.backbone == "seresnet50":
+    elif opt.backbone == "seresnet50" or opt.backbone == "seresnet101":
         all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx_50(model)
     else:
         raise ValueError("Not a correct name")
@@ -319,7 +326,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     CBLidx2filter = {idx - 1: filter_num for idx, filter_num in zip(all_bn_id, pruned_filters)}
     if opt.backbone == "seresnet18":
         merge_mask(CBLidx2mask, CBLidx2filter)
-    elif opt.backbone == "seresnet50":
+    elif opt.backbone == "seresnet50" or opt.backbone == "seresnet101":
         merge_mask50(CBLidx2mask, CBLidx2filter)
 
     adjust_final_mask(CBLidx2mask, CBLidx2filter, model)
@@ -333,14 +340,14 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
     if opt.backbone == "seresnet18":
         init_weights_from_loose_model_shortcut(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
-    elif opt.backbone == "seresnet50":
+    elif opt.backbone == "seresnet50" or opt.backbone == "seresnet101":
         init_weights_from_loose_model_shortcut50(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
     torch.save(compact_model.state_dict(), compact_model_path)
 
 
 if __name__ == '__main__':
-    opt.backbone = "seresnet50"
+    opt.backbone = "seresnet101"
     opt.se_ratio = 16
     opt.kps = 17
-    pruning("exp/resnet_test/aic_origin/aic_origin_best_acc.pkl", "buffer/pruned_shortcut_{}.pth".format(opt.backbone),
+    pruning("exp/seresnet101/default/default_best_auc.pkl", "buffer/pruned_shortcut_{}.pth".format(opt.backbone),
             "buffer/cfg_shortcut_{}.txt".format(opt.backbone))

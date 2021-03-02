@@ -4,32 +4,7 @@ import torch.nn as nn
 import numpy as np
 # from config.config import device
 from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50
-# from models.seresnet.FastPose import createModel
 from src.opt import opt
-
-
-def obtain_prune_idx(path):
-    lines = []
-    with open(path, 'r') as f:
-        file = f.readlines()
-        for line in file:
-            lines.append(line)
-
-    idx = 0
-    prune_idx = []
-    bn3_id = []
-    for line in lines:
-        if "):" in line:
-            idx += 1
-        if "BatchNorm2d" in line and "bn3" not in line:
-            # print(idx, line)
-            prune_idx.append(idx)
-        # if "(bn3)" in line:
-        #     bn3_id.append(idx)
-
-
-    prune_idx = prune_idx  # 去除第一个bn1层
-    return prune_idx,bn3_id
 
 
 def sort_bn(model, prune_idx):
@@ -194,10 +169,15 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
         from config.model_cfg import seresnet50_cfg as model_ls
     else:
         raise ValueError("Your model name is wrong")
-    model_cfg = model_ls[opt.struct]
-    # opt.loadModel = weight
 
-    model = createModel(cfg=model_cfg)
+    try:
+        model_cfg = model_ls[opt.struct]
+        # opt.loadModel = weight
+
+        model = createModel(cfg=model_cfg)
+    except:
+        model = createModel(cfg=opt.struct)
+
     model.load_state_dict(torch.load(weight))
     if device == "cpu":
         model.cpu()
@@ -209,7 +189,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     print(model, file=open(tmp, 'w'))
     if opt.backbone == "seresnet18":
         all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx2(model)
-    elif opt.backbone == "seresnet50":
+    elif opt.backbone == "seresnet50" or opt.backbone == "seresnet101":
         all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx_50(model)
     else:
         raise ValueError("Not a correct name")
@@ -229,14 +209,14 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
     if opt.backbone == "seresnet18":
         init_weights_from_loose_model(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
-    elif opt.backbone == "seresnet50":
+    elif opt.backbone == "seresnet50" or opt.backbone == "seresnet101":
         init_weights_from_loose_model50(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
     torch.save(compact_model.state_dict(), compact_model_path)
 
 
 if __name__ == '__main__':
-    opt.backbone = "seresnet50"
+    opt.backbone = "seresnet101"
     opt.se_ratio = 16
     opt.kps = 17
-    pruning("exp/resnet_test/aic_origin/aic_origin_best_acc.pkl", "buffer/pruned_{}.pth".format(opt.backbone),
+    pruning("exp/seresnet101/default/default_best_auc.pkl", "buffer/pruned_{}.pth".format(opt.backbone),
             "buffer/cfg_{}.txt".format(opt.backbone))

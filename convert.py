@@ -7,7 +7,7 @@ from src.opt import opt
 
 class Converter:
     '''Must be assigned if option.pkl is not exist'''
-    backbone = "seresnet50"
+    backbone = "seresnet101"
     height = 320
     width = 256
     opt.kps = 17
@@ -65,8 +65,8 @@ class Converter:
 
 
 if __name__ == '__main__':
-    pytorch_model = "pruned_seresnet50.pth"
-    cfg = "cfg_seresnet50.txt"
+    pytorch_model = "buffer/pruned_seresnet101.pth"
+    cfg = "buffer/cfg_seresnet101.txt"
     convert = Converter(pytorch_model, cfg=cfg)
     convert.convert()
 

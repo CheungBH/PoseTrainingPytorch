@@ -15,25 +15,25 @@ class FastPose(nn.Module):
         super(FastPose, self).__init__()
 
         cfg = None
+        head_inp, duc1_out, duc2_out = 2048, 1024, 512
         if cfg_file:
             with open(cfg_file) as file:
                 data = file.readlines()
             cfg = data[0].replace("[", "").replace("]", "").replace("\n", "").replace(" ", "").split(",")
             cfg = [int(i) for i in cfg]
+            if len(cfg) > 100:
+                head_inp, duc1_out, duc2_out = cfg[-3], cfg[-2], cfg[-1]
 
         self.preact = SEResnet(cfg=cfg)
 
-
         self.suffle1 = nn.PixelShuffle(2)
-        self.duc1 = DUC(512, 1024, upscale_factor=2)
-        self.duc2 = DUC(256, 512, upscale_factor=2)
-
-        self.conv_out = nn.Conv2d(self.DIM, opt.kps, kernel_size=3, stride=1, padding=1)
+        self.duc1 = DUC(int(head_inp/4), duc1_out, upscale_factor=2)
+        self.duc2 = DUC(int(duc1_out/4), duc2_out, upscale_factor=2)
+        self.conv_out = nn.Conv2d(int(duc2_out/4), opt.kps, kernel_size=3, stride=1, padding=1)
 
         if opt.loadModel:
             if "duc" in opt.loadModel:
                 self.conv_out = nn.Conv2d(self.DIM, 33, kernel_size=3, stride=1, padding=1)
-
 
     def forward(self, x: Variable):
         out = self.preact(x)

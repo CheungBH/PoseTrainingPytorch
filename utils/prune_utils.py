@@ -8,7 +8,7 @@ def obtain_prune_idx_50(model):
     for i, layer in enumerate(list(model.named_modules())):
         if isinstance(layer[1], nn.BatchNorm2d):
             all_bn_id.append(i)
-            if "seresnet50" in layer[0]:
+            if "seresnet50" in layer[0] or "preact" in layer[0]:
                 if "downsample" in layer[0]:
                     downsample_idx.append(i)
                 elif "bn1" in layer[0] or "bn2" in layer[0] and i > 5:
