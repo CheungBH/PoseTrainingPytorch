@@ -14,18 +14,21 @@ class SparseDetector:
 
     def __init__(self, model_path, device="cpu", thresh=(50, 99), step=1, method="ordinary", print_info=True):
         posenet = PoseModel()
+        self.option_file = check_option_file(model_path)
+        if os.path.exists(self.option_file):
+            self.load_from_option()
+
         posenet.build(self.backbone, self.cfg)
         self.model = posenet.model
         posenet.load(model_path)
+        if device != "cpu":
+            self.model.cuda()
+
         self.method = method
         self.thresh_range = thresh
         self.step = step
         self.print = print_info
-        self.option_file = check_option_file(model_path)
-        if os.path.exists(self.option_file):
-            self.load_from_option()
-        if device != "cpu":
-            self.model.cuda()
+
         self.sparse_dict = {}
 
     def load_from_option(self):
