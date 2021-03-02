@@ -205,7 +205,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
         model.cuda()
     # torch_out = torch.onnx.export(model, torch.rand(1, 3, 224, 224), "onnx_pose.onnx", verbose=False,)
 
-    tmp = "./model.txt"
+    tmp = "./buffer/model.txt"
     print(model, file=open(tmp, 'w'))
     if opt.backbone == "seresnet18":
         all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx2(model)
@@ -225,7 +225,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     channel_str = ",".join(map(lambda x: str(x), valid_filter.values()))
     print(channel_str, file=open(compact_model_cfg, "w"))
     compact_model = createModel(cfg=compact_model_cfg).cpu()
-    print(compact_model, file=open("pruned.txt", 'w'))
+    print(compact_model, file=open("buffer/pruned.txt", 'w'))
 
     if opt.backbone == "seresnet18":
         init_weights_from_loose_model(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
@@ -238,4 +238,5 @@ if __name__ == '__main__':
     opt.backbone = "seresnet50"
     opt.se_ratio = 16
     opt.kps = 17
-    pruning("exp/resnet_test/aic_origin/aic_origin_best_acc.pkl", "pruned_{}.pth".format(opt.backbone), "cfg_{}.txt".format(opt.backbone))
+    pruning("exp/resnet_test/aic_origin/aic_origin_best_acc.pkl", "buffer/pruned_{}.pth".format(opt.backbone),
+            "buffer/cfg_{}.txt".format(opt.backbone))

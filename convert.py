@@ -13,7 +13,7 @@ class Converter:
     opt.kps = 17
     opt.se_ratio = 16
 
-    def __init__(self, model_path, cfg=None, onnx_path="model.onnx", libtorch_path="model.pt", onnx_sim_path="model_sim.onnx", device="cpu"):
+    def __init__(self, model_path, cfg=None, onnx_path="buffer/model.onnx", libtorch_path="buffer/model.pt", onnx_sim_path="buffer/model_sim.onnx", device="cpu"):
         self.src_model_path = model_path
         self.onnx_path = onnx_path
         self.libtorch_path = libtorch_path
