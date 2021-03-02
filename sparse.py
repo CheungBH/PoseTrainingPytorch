@@ -13,11 +13,11 @@ class SparseDetector:
     opt.kps = 17
 
     def __init__(self, model_path, device="cpu", thresh=(50, 99), step=1, method="ordinary", print_info=True):
-        posenet = PoseModel()
         self.option_file = check_option_file(model_path)
         if os.path.exists(self.option_file):
             self.load_from_option()
 
+        posenet = PoseModel()
         posenet.build(self.backbone, self.cfg)
         self.model = posenet.model
         posenet.load(model_path)
@@ -58,10 +58,18 @@ class SparseDetector:
         percent_ls = range(self.thresh_range[0], self.thresh_range[1], self.step)
         for percent in percent_ls:
             threshold = obtain_bn_threshold(self.model, sorted_bn, percent/100)
-            self.sparse_dict[percent] = threshold
+            self.sparse_dict[percent] = threshold.tolist()
             if self.print:
                 print("{}---->{}".format(percent, threshold))
-
-    def get_sparse_result(self):
         return self.sparse_dict
 
+    def get_result_ls(self):
+        result = [v for k, v in self.sparse_dict.items()]
+        return result
+
+
+if __name__ == '__main__':
+    model_path = "exp/auto_test_pckh/2/2_best_acc.pkl"
+    sd = SparseDetector(model_path)
+    res = sd.detect()
+    print(res)

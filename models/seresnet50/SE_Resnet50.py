@@ -4,8 +4,6 @@ import torch.nn.functional as F
 from models.SE.SE_module import SELayer
 from src.opt import opt
 
-se_ratio = opt.se_ratio
-
 
 class SeBottleneck(nn.Module):
     """ SeBottleneck """
@@ -13,6 +11,7 @@ class SeBottleneck(nn.Module):
 
     def __init__(self, inplanes, outplanes, cfg, stride=1, downsample=None, reduction=False):
         super(SeBottleneck, self).__init__()
+        se_ratio = opt.se_ratio
         self.conv1 = nn.Conv2d(inplanes, cfg[0], kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(cfg[0])
         self.conv2 = nn.Conv2d(cfg[0], cfg[1], kernel_size=3, stride=stride,

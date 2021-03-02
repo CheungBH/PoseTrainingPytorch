@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from models.SE.SE_module import SELayer
 from src.opt import opt
 
-se_ratio = opt.se_ratio
+
 
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
@@ -24,6 +24,7 @@ class SeBasicBlock(nn.Module):
 
     def __init__(self, inplanes, planes, cfg, stride=1, downsample=None, reduction=False):
         super(SeBasicBlock, self).__init__()
+        se_ratio = opt.se_ratio
         self.conv1 = conv3x3(inplanes, cfg, stride)
         self.bn1 = nn.BatchNorm2d(cfg)
         self.relu = nn.ReLU(inplace=True)
