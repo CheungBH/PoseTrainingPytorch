@@ -11,6 +11,7 @@ class AutoErrorAnalyser:
         self.model_ls = []
         self.test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
         self.performance = defaultdict(list)
+        self.result_file = os.path.join(img_folder, "analyse_result.csv")
 
     def load_model(self):
         for folder in os.listdir(self.img_folder):
@@ -48,3 +49,8 @@ class AutoErrorAnalyser:
         self.write_result()
 
 
+if __name__ == '__main__':
+    img_folder = "exp/selected"
+    analyse_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
+    AEA = AutoErrorAnalyser(img_folder, analyse_data)
+    AEA.analyse()

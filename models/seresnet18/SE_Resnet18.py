@@ -49,7 +49,7 @@ class SeBasicBlock(nn.Module):
         out = self.conv3(out)
         out = self.bn3(out)
 
-        if self.reduc and se_ratio > 0:
+        if self.reduc:
             out = self.se(out)
 
         if self.downsample is not None:
