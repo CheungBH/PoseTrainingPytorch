@@ -269,7 +269,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
         from models.mobilenet.MobilePose import createModel
         from config.model_cfg import mobile_opt as model_ls
     elif opt.backbone == "seresnet101":
-        from models.seresnet.FastPose import createModel
+        from models.seresnet101.FastPose import createModel
         from config.model_cfg import seresnet_cfg as model_ls
     elif opt.backbone == "seresnet18":
         from models.seresnet18.FastPose import createModel

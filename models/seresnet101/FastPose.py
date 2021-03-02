@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from .layers.SE_Resnet import SEResnet
+from .SE_Resnet101 import SEResnet
 from models.duc.DUC import DUC
 from src.opt import opt
 from config.config import train_body_part, device

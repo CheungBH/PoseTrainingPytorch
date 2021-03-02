@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from .layers.SE_Resnet import SEResnet
+from .SE_Resnet50 import SEResnet
 from models.duc.DUC import DUC
 from src.opt import opt
 

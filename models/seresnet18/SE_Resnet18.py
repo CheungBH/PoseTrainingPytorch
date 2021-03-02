@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.seresnet.layers.SE_module import SELayer
+from models.SE.SE_module import SELayer
 from src.opt import opt
 
 se_ratio = opt.se_ratio
@@ -29,10 +29,12 @@ class SeBasicBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.conv3 = conv3x3(cfg, planes)
         self.bn3 = nn.BatchNorm2d(planes)
-        if reduction:
+        if reduction and se_ratio > 0:
             self.se = SELayer(planes, reduction=se_ratio)
 
         self.reduc = reduction
+        if se_ratio < 0:
+            self.reduc = False
         self.downsample = downsample
         self.stride = stride
 
@@ -46,7 +48,7 @@ class SeBasicBlock(nn.Module):
         out = self.conv3(out)
         out = self.bn3(out)
 
-        if self.reduc:
+        if self.reduc and se_ratio > 0:
             out = self.se(out)
 
         if self.downsample is not None:

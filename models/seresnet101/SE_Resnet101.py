@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.seresnet.layers.SE_module import SELayer
+from models.SE.SE_module import SELayer
 from src.opt import opt
 
 se_ratio = opt.se_ratio
@@ -21,9 +21,11 @@ class SeBottleneck(nn.Module):
         self.conv3 = nn.Conv2d(cfg[1], planes * 4, kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes * 4)
         if reduction:
-            self.se = SELayer(planes * 4)
+            self.se = SELayer(planes * 4, reduction=se_ratio)
 
         self.reduc = reduction
+        if se_ratio < 0:
+            self.reduc = False
         self.downsample = downsample
         self.stride = stride
 
