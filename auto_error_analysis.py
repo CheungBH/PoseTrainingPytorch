@@ -35,7 +35,18 @@ class AutoErrorAnalyser:
             self.cfg_ls.append(cfg)
 
     def write_result(self):
-        pass
+        '''
+        sample:
+        models---JQK
+        imgs---ab
+        index---"index1", "index2", "index3", "index4"
+        '''
+
+        m = ["J", "Q", "K"]
+        performance = {
+            "a": [[1,2,4,6], [2,5,6,9], [5,6,7,9]],
+            "b": [[5,6,7,8], [6,7,8,9], [3,4,6,8]],
+        }
 
     def analyse(self):
         self.load_model()
