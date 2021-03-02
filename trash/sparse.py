@@ -2,10 +2,9 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
-from models.pose_model import PoseModel
+# from config.config import device
+from models.seresnet.FastPose import createModel
 from src.opt import opt
-from utils.test_utils import check_option_file
-from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50
 
 
 def obtain_prune_idx(path):
@@ -100,59 +99,56 @@ def obtain_filters_mask(model, prune_idx, thre):
     return pruned_filters, pruned_maskers
 
 
-class SparseDetector:
-    backbone = "seresnet101"
-    cfg = None
-    opt.se_ratio = 16
-    opt.kps = 17
+def detect_sparse(weight, sparse_file, thresh=(50,99), device="cpu"):
 
-    def __init__(self, model_path, device="cpu", thresh=(50, 99), step=1, method="ordinary", print_info=True):
-        posenet = PoseModel()
-        posenet.build(self.backbone, self.cfg)
-        self.model = posenet.model
-        posenet.load(model_path)
-        self.method = method
-        self.thresh_range = thresh
-        self.step = step
-        self.print = print_info
-        self.option_file = check_option_file(model_path)
-        if os.path.exists(self.option_file):
-            self.load_from_option()
-        if device != "cpu":
-            self.model.cuda()
-        self.sparse_dict = {}
+    if opt.backbone == "mobilenet":
+        from models.mobilenet.MobilePose import createModel
+        from config.model_cfg import mobile_opt as model_ls
+    elif opt.backbone == "seresnet101":
+        from models.seresnet.FastPose import createModel
+        from config.model_cfg import seresnet_cfg as model_ls
+    elif opt.backbone == "efficientnet":
+        from models.efficientnet.EfficientPose import createModel
+        from config.model_cfg import efficientnet_cfg as model_ls
+    elif opt.backbone == "shufflenet":
+        from models.shufflenet.ShufflePose import createModel
+        from config.model_cfg import shufflenet_cfg as model_ls
+    else:
+        raise ValueError("Your model name is wrong")
+    model_cfg = model_ls[opt.struct]
+    opt.loadModel = weight
 
-    def load_from_option(self):
-        self.option = torch.load(self.option_file)
-        opt.kps = self.option.kps
-        opt.se_ratio = self.option.se_ratio
-        self.backbone = self.option.backbone
-        self.cfg = self.option.struct
-        self.DUC = self.option.DUC
+    # weights = "test_weight/ceiling_0911_s/to17kps_s5E-7_acc/to17kps_s5E-7_best_acc.pkl"
+    if device == "cpu":
+        model = createModel(cfg=model_cfg).cpu()
+        model.load_state_dict(torch.load(weight, map_location="cpu"))
+    else:
+        model = createModel(cfg=model_cfg)
+        model.load_state_dict(torch.load(weight))
 
-    def detect(self):
-        if self.backbone == "seresnet18":
-            all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx2(self.model)
-        elif self.backbone == "seresnet50":
-            all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx_50(self.model)
-        else:
-            raise ValueError("Not a correct name")
+    tmp = "./model.txt"
+    print(model, file=open(tmp, 'w'))
+    prune_idx = obtain_prune_idx(tmp)
+    sorted_bn = sort_bn(model, prune_idx)
+    percent_ls = range(thresh[0], thresh[1], 1)
+    if not os.path.exists(sparse_file):
+        with open(sparse_file, "a+") as f:
+            f.write("Model_name,"+",".join(map(lambda x: str(x), range(thresh[0], thresh[1]+1)))+"\n")
 
-        if self.method == "ordinary":
-            prune_idx = normal_idx + head_idx
-        elif self.method == "shortcut":
-            prune_idx = all_bn_id
-        else:
-            raise ValueError("Wrong pruning method name! ")
+    f = open(sparse_file, "a+")
+    model_res = weight.split("/")[-2] + "-" + weight.split("/")[-1] + ","
+    for percent in percent_ls:
+        threshold = obtain_bn_threshold(model, sorted_bn, percent/100)
+        print("{}---->{}".format(percent, threshold))
+        model_res += str(threshold.tolist())
+        model_res += ","
+    f.write(model_res + '\n')
 
-        sorted_bn = sort_bn(self.model, prune_idx)
-        percent_ls = range(self.thresh_range[0], self.thresh_range[1], self.step)
-        for percent in percent_ls:
-            threshold = obtain_bn_threshold(self.model, sorted_bn, percent/100)
-            self.sparse_dict[percent] = threshold
-            if self.print:
-                print("{}---->{}".format(percent, threshold))
+        # pruned_filters, pruned_maskers = obtain_filters_mask(model, prune_idx, threshold)
 
-    def get_sparse_result(self):
-        return self.sparse_dict
+# print(pruned_filters, file=open("ceiling.txt", "w"))
+# new_model = createModel(cfg="ceiling.txt").cpu()
 
+
+if __name__ == '__main__':
+    detect_sparse("test_weight/ceiling_0911/to17kps_s5E-7-acc/to17kps_s5E-7_best_acc.pkl", "sparse.csv")
