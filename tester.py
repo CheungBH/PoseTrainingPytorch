@@ -14,11 +14,12 @@ posenet = PoseModel()
 
 
 class Tester:
-    def __init__(self, test_loader, model_path, print_info=True):
+    def __init__(self, test_loader, model_path, model_cfg=None, print_info=True):
         self.loader = test_loader
         self.model_path = model_path
         self.option_file = check_option_file(model_path)
         self.print = print_info
+        self.cfg = model_cfg
 
     def build(self, backbone, kps, cfg, DUC, crit, se_ratio=16, model_height=256, model_width=256):
         from src.opt import opt
@@ -28,7 +29,6 @@ class Tester:
         self.crit = crit
         self.build_criterion(self.crit)
         self.backbone = backbone
-        self.cfg = cfg
         self.kps = kps
         self.height = model_height
         self.width = model_width
@@ -122,7 +122,10 @@ class Tester:
         if os.path.exists(self.option_file):
             self.option = torch.load(self.option_file)
             from src.opt import opt
-            opt.se_ratio = self.option.se_ratio
+            try:
+                opt.se_ratio = self.option.se_ratio
+            except:
+                opt.se_ratio = 1
             self.height = self.option.inputResH
             self.width = self.option.inputResW
             self.backbone = self.option.backbone
