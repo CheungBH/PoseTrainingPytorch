@@ -43,6 +43,20 @@ def obtain_prune_idx2(model):
     return all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx
 
 
+def obtain_prune_idx_layer(model):
+    all_bn_id, other_idx, shortcut_idx, downsample_idx = [], [], [], []
+    for i, layer in enumerate(list(model.named_modules())):
+        if isinstance(layer[1], nn.BatchNorm2d):
+            all_bn_id.append(i)
+            if "bn3" in layer[0]:
+                if ".0." in layer[0]:
+                    downsample_idx.append(i)
+                else:
+                    shortcut_idx.append(i)
+            else:
+                other_idx.append(i)
+    return all_bn_id, other_idx, shortcut_idx, downsample_idx
+
 def sort_bn(model, prune_idx):
     size_list = [m.weight.data.shape[0] for idx, m in enumerate(model.modules()) if idx in prune_idx]
     # bn_layer = [m for m in model.modules() if isinstance(m, nn.BatchNorm2d)]
