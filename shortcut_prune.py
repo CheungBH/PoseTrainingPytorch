@@ -347,7 +347,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
 if __name__ == '__main__':
     opt.backbone = "seresnet101"
-    opt.se_ratio = 16
+    opt.se_ratio = 1
     opt.kps = 17
-    pruning("exp/seresnet101/default/default_best_auc.pkl", "buffer/pruned_shortcut_{}.pth".format(opt.backbone),
+    pruning("exp/seresnet101/sparse/sparse_40.pkl", "buffer/pruned_shortcut_{}.pth".format(opt.backbone),
             "buffer/cfg_shortcut_{}.txt".format(opt.backbone))
