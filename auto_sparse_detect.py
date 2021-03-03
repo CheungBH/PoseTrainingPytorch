@@ -41,12 +41,13 @@ class AutoSparseDetector:
                 csv_writer.writerow([model_name] + sparse_info)
 
     def run(self):
+        self.load_models()
         for method in self.methods:
+            print("---------------------Detecting {} pruning-------------------".format(method))
             self.excel_path = os.path.join(self.folder, "sparse_{}_result.csv".format(method))
-            self.load_models()
             model_num = len(self.models)
             for idx, model in enumerate(self.models):
-                print("---------------------[{}/{}] Begin processing model {}--------------".format(idx+1, model_num, model))
+                print("[{}/{}] Begin processing model {}".format(idx+1, model_num, model))
                 sd = SparseDetector(model, print_info=False, method=method)
                 sd.detect()
                 self.sparse_results[model] = sd.get_result_ls()
