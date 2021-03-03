@@ -4,14 +4,14 @@ import csv
 
 
 class AutoSparseDetector:
-    def __init__(self, model_folder, model_kw=None, thresh_range=(50, 99), step=1):
+    def __init__(self, model_folder, model_kw=None, thresh_range=(50, 99), step=1, methods=["shortcut"]):
         self.folder = model_folder
         self.models = []
         self.model_kw = model_kw
         self.sparse_results = {}
-        self.excel_path = os.path.join(self.folder, "sparse_result.csv")
         self.range = thresh_range
         self.step = step
+        self.methods = methods
 
     def load_models(self):
         for folder in os.listdir(self.folder):
@@ -41,19 +41,22 @@ class AutoSparseDetector:
                 csv_writer.writerow([model_name] + sparse_info)
 
     def run(self):
-        self.load_models()
-        model_num = len(self.models)
-        for idx, model in enumerate(self.models):
-            print("---------------------[{}/{}] Begin processing model {}--------------".format(idx+1, model_num, model))
-            sd = SparseDetector(model, print_info=False)
-            sd.detect()
-            self.sparse_results[model] = sd.get_result_ls()
-        self.write_xlsx()
+        for method in self.methods:
+            self.excel_path = os.path.join(self.folder, "sparse_{}_result.csv".format(method))
+            self.load_models()
+            model_num = len(self.models)
+            for idx, model in enumerate(self.models):
+                print("---------------------[{}/{}] Begin processing model {}--------------".format(idx+1, model_num, model))
+                sd = SparseDetector(model, print_info=False, method=method)
+                sd.detect()
+                self.sparse_results[model] = sd.get_result_ls()
+            self.write_xlsx()
 
 
 if __name__ == '__main__':
     model_kw = ["acc", "dist", "auc", "pr"]
     model_folder = "exp/auto_test_pckh"
-    asd = AutoSparseDetector(model_folder, model_kw)
+    methods = ["shortcut", "ordinary"]
+    asd = AutoSparseDetector(model_folder, model_kw, methods=methods)
     asd.run()
 
