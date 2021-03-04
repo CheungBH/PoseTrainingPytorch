@@ -44,12 +44,12 @@ class Trainer:
         self.curr_epoch = opt.epoch
         self.build_with_opt(opt)
 
-        os.makedirs(os.path.join(self.expFolder, opt.expID), exist_ok=True)
+        os.makedirs(os.path.join(self.expFolder, "logs"), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
-        self.txt_log = os.path.join(self.expFolder, "{}/log.txt".format(opt.expID))
-        self.bn_log = os.path.join(self.expFolder, "{}/bn.txt".format(opt.expID))
-        self.xlsx_log = os.path.join(self.expFolder, "{}/train_xlsx.csv".format(opt.expID))
-        self.summary_log = os.path.join("exp", opt.expFolder, "train_{}.csv".format(opt.expFolder, computer))
+        self.txt_log = os.path.join(self.expFolder, "logs/log.txt")
+        self.bn_log = os.path.join(self.expFolder, "logs/bn.txt")
+        self.xlsx_log = os.path.join(self.expFolder, "logs/train_xlsx.csv")
+        self.summary_log = os.path.join("exp", opt.expFolder, "train_{}-{}.csv".format(opt.expFolder, computer))
 
         self.freeze = False
         self.stop = False
