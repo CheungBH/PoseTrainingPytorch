@@ -43,7 +43,7 @@ class AutoSparseDetector:
     def run(self):
         self.load_models()
         for method in self.methods:
-            print("---------------------Detecting {} pruning-------------------".format(method))
+            print("\n---------------------Detecting {} pruning---------------------".format(method))
             self.excel_path = os.path.join(self.folder, "sparse_{}_result.csv".format(method))
             model_num = len(self.models)
             for idx, model in enumerate(self.models):
@@ -60,4 +60,3 @@ if __name__ == '__main__':
     methods = ["shortcut", "ordinary"]
     asd = AutoSparseDetector(model_folder, model_kw, methods=methods)
     asd.run()
-

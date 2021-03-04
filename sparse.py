@@ -13,7 +13,8 @@ class SparseDetector:
     opt.se_ratio = 16
     opt.kps = 17
 
-    def __init__(self, model_path, device="cpu", thresh=(50, 99), step=1, method="shortcut", print_info=True):
+    def __init__(self, model_path, device="cpu", thresh=(50, 99), step=1, method="shortcut", print_info=True,
+                 mask_interval=5):
         self.option_file = check_option_file(model_path)
         if os.path.exists(self.option_file):
             self.load_from_option()
@@ -29,9 +30,12 @@ class SparseDetector:
         self.thresh_range = thresh
         self.step = step
         self.print = print_info
+        self.mask_interval = mask_interval
 
         self.sparse_dict = {}
-        self.mask_file = os.path.join(get_superior_path(model_path), "mask_{}.txt".format(method))
+        self.mask_file = os.path.join(get_superior_path(model_path), "sparse_mask", "mask_{}-{}.txt".format(
+            method, model_path.replace("\\", "/").split("/")[-1][:-4]))
+        os.makedirs(os.path.join(get_superior_path(model_path), "sparse_mask"), exist_ok=True)
 
     def load_from_option(self):
         self.option = torch.load(self.option_file)
@@ -64,7 +68,8 @@ class SparseDetector:
         for percent in percent_ls:
             threshold = obtain_bn_threshold(self.model, sorted_bn, percent/100)
             self.sparse_dict[percent] = threshold.tolist()
-            self.write_mask(threshold, percent)
+            if percent % self.mask_interval == 0:
+                self.write_mask(threshold, percent)
             if self.print:
                 print("{}---->{}".format(percent, threshold))
         return self.sparse_dict
