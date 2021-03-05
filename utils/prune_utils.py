@@ -174,9 +174,25 @@ def write_filters_mask(model, prune_idx, thre, file):
     return pruned_filters, pruned_maskers
 
 
+def adjust_mask(CBLidx2mask, CBLidx2filter, model, head_idx):
+    CNN_weight = list(model.named_modules())[head_idx][1].weight.data.abs().clone()
+    CNN_mask = CBLidx2mask[head_idx-1]
+    num = CBLidx2filter[head_idx-1]
+    total_num = len(CNN_weight.tolist())
+    for idx in range(total_num):
+        if CNN_mask[idx] == 1:
+            CNN_weight[idx] = 0
+    remaining_idx = 4 - num % 4
+    _, sorted_idx = CNN_weight.sort(descending=True)
+    padding_idx = sorted_idx[:remaining_idx]
+    CBLidx2filter[head_idx-1] = num + remaining_idx
+    for idx in padding_idx:
+        CBLidx2mask[head_idx-1][idx] = 1
+
+
 def get_residual_channel(channel_ls, backbone):
     if backbone == "seresnet18":
-        if len(channel_ls) < 10:
+        if len(channel_ls) < 12:
             return [64, 128, 256, 512]
         else:
             return [channel_ls[4], channel_ls[9], channel_ls[14], channel_ls[19]]
@@ -194,15 +210,18 @@ def get_residual_channel(channel_ls, backbone):
 
 def get_channel_dict(channel_ls, backbone):
     if backbone == "seresnet18":
-        if len(channel_ls) < 10:
-            return {1: [[64]*2], 2: [[128]*2], 3:[[256]*2], 4: [[512]*2]}
-        else:
+        if len(channel_ls) < 12:
             return {1: [[channel_ls[1]], [channel_ls[2]]],
                     2: [[channel_ls[3]], [channel_ls[4]]],
                     3: [[channel_ls[5]], [channel_ls[6]]],
                     4: [[channel_ls[7]], [channel_ls[8]]]}
+        else:
+            return {1: [[channel_ls[1]], [channel_ls[3]]],
+                    2: [[channel_ls[5]], [channel_ls[8]]],
+                    3: [[channel_ls[10]], [channel_ls[13]]],
+                    4: [[channel_ls[15]], [channel_ls[18]]]}
     elif backbone == "seresnet50":
-        cl = channel_ls[:1]
+        cl = channel_ls[1:]
         if len(channel_ls) < 40:
             return {1: [[cl[2*i], cl[2*i+1]] for i in range(3)],
                     2: [[cl[6+2*i], cl[6+2*i+1]] for i in range(4)],
@@ -229,4 +248,4 @@ def get_channel_dict(channel_ls, backbone):
                     2: [[cl[11], cl[12]], [cl[15], cl[16]], [cl[18], cl[19]], [cl[21], cl[22]]],
                     3: [[cl[lay3_idx[2*i]], cl[lay3_idx[2*i+1]]] for i in range(int(len(lay3_idx)/2))],
                     4: [[cl[94], cl[95]], [cl[98], cl[99]], [cl[101], cl[102]]]
-            }
+                    }
