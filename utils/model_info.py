@@ -1,138 +1,69 @@
+import json
 import numpy as np
-import time
-import torch
-import torchvision
-from torch.autograd import Variable
-from config.config import device
 
 
-def print_model_param_nums(model, multiply_adds=True):
-    total = sum([param.nelement() for param in model.parameters()])
-    return total
+# res = {'1':{'backbone':'seresnet18','keyponits':17,'se_ratio':16,'residual':[100,200,300,400],'channels':{1: [[61], [62]],2: [[13], [15]],3: [[9], [44]],4: [[16], [122]]},"head":[248,124]},
+#        '2':{'backbone':'seresnet50','keyponits':17,'se_ratio':16,'residual':[100,200,300,400],'channels':{1: [[61], [62]],2: [[13], [15]],3: [[9], [44]],4: [[16], [122]]},"head":[248,124]}}
+# jsObj = json.dumps(res)
+#
+# fileObject = open('jsonFile.json', 'w')
+# fileObject.write(jsObj)
+# fileObject.close()
+# #
+# backbone = "seresnet18"
+# keypoint = 17
+# se_ratio = 16
+# residual = [100, 200, 300, 400]
+# channels = {1: [[61], [62]],
+# 2: [[13], [15]],
+# 3: [[9], [44]],
+# 4: [[16], [122]]
+# }
+# head = [248, 124]
+#
+#
+# backbone = "seresnet50"
+# keypoint = 13
+# se_ratio = -1
+# residual = [100, 200, 300, 400]
+# channels = {1: [[61, 12], [62, 71], [55, 52]],
+# 2: [[13, 12], [15, 87], [44, 87], [99, 6]],
+# 3: [[61, 12], [62, 71], [55, 52], [61, 12], [62, 71], [55, 52]],
+# 4: [[62, 71], [55, 52], [44, 87]]
+# }
+# head = [168, 124, 88]
+def write_cfg(res):
+    jsObj = json.dumps(res)
+    fileObject = open('jsonFile.json', 'w')
+    fileObject.write(jsObj)
+    fileObject.close()
 
+def read_cfg(imgdir):
+    res = {}
+    with open(imgdir, "r") as load_f:
+        load_dict = json.load(load_f)
+        residual = {}
+        head = {}
+        se_ratio = {}
+        backbone = {}
+        channels = {}
+    for i in load_dict.keys():
+        residual[i] = load_dict[i]["residual"]
+        head[i] = load_dict[i]["head"]
+        se_ratio[i] = load_dict[i]['se_ratio']
+        backbone[i] = load_dict[i]["backbone"]
+        channels[i] = load_dict[i]["channels"]
+    # for index in backbone.keys():
+    #     if index in residual.keys() and index in head.keys() and index in se_ratio.keys() and index in channels.keys():
+    #         res['residual'] = {
+    #             'residual' :load_dict[i]["residual"],
+    #                'head': load_dict[i]["head"],
+    #                'se_ratio': load_dict[i]["se_ratio"],
+    #                'backbone': load_dict[i]["backbone"],
+    #                'keyponits': load_dict[i]["keyponits"]
+    #         }
+    return res
 
-def print_model_param_flops(model=None, input_height=224, input_width=224, multiply_adds=True):
-    prods = {}
-
-    def save_hook(name):
-        def hook_per(self, input, output):
-            prods[name] = np.prod(input[0].shape)
-
-        return hook_per
-
-    list_1 = []
-
-    def simple_hook(self, input, output):
-        list_1.append(np.prod(input[0].shape))
-
-    list_2 = {}
-
-    def simple_hook2(self, input, output):
-        list_2['names'] = np.prod(input[0].shape)
-
-    list_conv = []
-
-    def conv_hook(self, input, output):
-        batch_size, input_channels, input_height, input_width = input[0].size()
-        output_channels, output_height, output_width = output[0].size()
-
-        kernel_ops = self.kernel_size[0] * self.kernel_size[1] * (self.in_channels / self.groups)
-        bias_ops = 1 if self.bias is not None else 0
-
-        params = output_channels * (kernel_ops + bias_ops)
-        flops = (kernel_ops * (
-            2 if multiply_adds else 1) + bias_ops) * output_channels * output_height * output_width * batch_size
-
-        list_conv.append(flops)
-
-    list_linear = []
-
-    def linear_hook(self, input, output):
-        batch_size = input[0].size(0) if input[0].dim() == 2 else 1
-
-        weight_ops = self.weight.nelement() * (2 if multiply_adds else 1)
-        bias_ops = self.bias.nelement()
-
-        flops = batch_size * (weight_ops + bias_ops)
-        list_linear.append(flops)
-
-    list_bn = []
-
-    def bn_hook(self, input, output):
-        list_bn.append(input[0].nelement() * 2)
-
-    list_relu = []
-
-    def relu_hook(self, input, output):
-        list_relu.append(input[0].nelement())
-
-    list_pooling = []
-
-    def pooling_hook(self, input, output):
-        batch_size, input_channels, input_height, input_width = input[0].size()
-        output_channels, output_height, output_width = output[0].size()
-
-        kernel_ops = self.kernel_size * self.kernel_size
-        bias_ops = 0
-        params = 0
-        flops = (kernel_ops + bias_ops) * output_channels * output_height * output_width * batch_size
-
-        list_pooling.append(flops)
-
-    list_upsample = []
-
-    # For bilinear upsample
-    def upsample_hook(self, input, output):
-        batch_size, input_channels, input_height, input_width = input[0].size()
-        output_channels, output_height, output_width = output[0].size()
-
-        flops = output_height * output_width * output_channels * batch_size * 12
-        list_upsample.append(flops)
-
-    def foo(net):
-        childrens = list(net.children())
-        if not childrens:
-            if isinstance(net, torch.nn.Conv2d):
-                net.register_forward_hook(conv_hook)
-            if isinstance(net, torch.nn.Linear):
-                net.register_forward_hook(linear_hook)
-            if isinstance(net, torch.nn.BatchNorm2d):
-                net.register_forward_hook(bn_hook)
-            if isinstance(net, torch.nn.ReLU):
-                net.register_forward_hook(relu_hook)
-            if isinstance(net, torch.nn.MaxPool2d) or isinstance(net, torch.nn.AvgPool2d):
-                net.register_forward_hook(pooling_hook)
-            if isinstance(net, torch.nn.Upsample):
-                net.register_forward_hook(upsample_hook)
-            return
-        for c in childrens:
-            foo(c)
-
-    if model == None:
-        model = torchvision.models.alexnet()
-    foo(model)
-    if device != "cpu":
-        input = Variable(torch.rand(3, 3, input_width, input_height).cuda(), requires_grad=True)
-    else:
-        input = Variable(torch.rand(3, 3, input_width, input_height), requires_grad=True)
-    out = model(input)
-
-    total_flops = (sum(list_conv) + sum(list_linear) + sum(list_bn) + sum(list_relu) + sum(list_pooling) + sum(
-        list_upsample))
-    # print('  + Number of FLOPs: %.5fG' % (total_flops / 3 / 1e9))
-
-    return total_flops / 3
-
-
-def get_inference_time(model, repeat=190, height=416, width=416):
-    model.eval()
-    start = time.time()
-    with torch.no_grad():
-        inp = torch.randn(1, 3, height, width)
-        if device != "cpu":
-            inp = inp.cuda()
-        for i in range(repeat):
-            output = model(inp)
-    avg_infer_time = (time.time() - start) / repeat
-
-    return round(avg_infer_time, 4)
+if __name__ == '__main__':
+    img_dir = "/media/hkuit155/8221f964-4062-4f55-a2f3-78a6632f7418/Autoannotation_Pose/Img2json/jsonFile.json"
+    read_cfg(img_dir)
