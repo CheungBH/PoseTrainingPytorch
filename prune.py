@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 # from config.config import device
-from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50
+from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50, get_residual_channel, get_channel_dict, adjust_mask
 from src.opt import opt
-
+from models.utils.utils import write_cfg
 
 def sort_bn(model, prune_idx):
     size_list = [m.weight.data.shape[0] for idx, m in enumerate(model.modules()) if idx in prune_idx]
@@ -201,9 +201,24 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     CBLidx2mask = {idx-1: mask.astype('float32') for idx, mask in zip(all_bn_id, pruned_maskers)}
     CBLidx2filter = {idx-1: filter_num for idx, filter_num in zip(all_bn_id, pruned_filters)}
 
+    for head in head_idx:
+        adjust_mask(CBLidx2mask, CBLidx2filter, model, head)
+
     valid_filter = {k: v for k, v in CBLidx2filter.items() if k+1 in prune_idx}
     channel_str = ",".join(map(lambda x: str(x), valid_filter.values()))
     print(channel_str, file=open(compact_model_cfg, "w"))
+    m_cfg = {
+        'backbone': opt.backbone,
+        'keyponits': opt.kps,
+        'se_ratio': opt.se_ratio,
+        "first_conv": CBLidx2filter[all_bn_id[0] - 1],
+        'residual': get_residual_channel([filt for _, filt in valid_filter.items()], opt.backbone),
+        'channels': get_channel_dict([filt for _, filt in valid_filter.items()], opt.backbone),
+        "head_type": "pixel_shuffle",
+        "head_channel": [CBLidx2filter[i-1] for i in head_idx]
+    }
+    write_cfg(m_cfg, "buffer/cfg_{}.json".format(opt.backbone))
+
     compact_model = createModel(cfg=compact_model_cfg).cpu()
     print(compact_model, file=open("buffer/pruned.txt", 'w'))
 
@@ -215,8 +230,8 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
 
 if __name__ == '__main__':
-    opt.backbone = "seresnet101"
+    opt.backbone = "seresnet50"
     opt.se_ratio = 16
     opt.kps = 17
-    pruning("exp/seresnet101/default/default_best_auc.pkl", "buffer/pruned_{}.pth".format(opt.backbone),
+    pruning("exp/seresnet50/origin/200.pkl", "buffer/pruned_{}.pth".format(opt.backbone),
             "buffer/cfg_{}.txt".format(opt.backbone))

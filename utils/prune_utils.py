@@ -172,3 +172,80 @@ def write_filters_mask(model, prune_idx, thre, file):
     print(f'Prune channels: {pruned}\tPrune ratio: {prune_ratio:.3f}', file=file)
 
     return pruned_filters, pruned_maskers
+
+
+def adjust_mask(CBLidx2mask, CBLidx2filter, model, head_idx):
+    CNN_weight = list(model.named_modules())[head_idx][1].weight.data.abs().clone()
+    CNN_mask = CBLidx2mask[head_idx-1]
+    num = CBLidx2filter[head_idx-1]
+    total_num = len(CNN_weight.tolist())
+    for idx in range(total_num):
+        if CNN_mask[idx] == 1:
+            CNN_weight[idx] = 0
+    remaining_idx = 4 - num % 4
+    _, sorted_idx = CNN_weight.sort(descending=True)
+    padding_idx = sorted_idx[:remaining_idx]
+    CBLidx2filter[head_idx-1] = num + remaining_idx
+    for idx in padding_idx:
+        CBLidx2mask[head_idx-1][idx] = 1
+
+
+def get_residual_channel(channel_ls, backbone):
+    if backbone == "seresnet18":
+        if len(channel_ls) < 12:
+            return [64, 128, 256, 512]
+        else:
+            return [channel_ls[4], channel_ls[9], channel_ls[14], channel_ls[19]]
+    elif backbone == "seresnet50":
+        if len(channel_ls) < 40:
+            return [256, 512, 1024, 2048]
+        else:
+            return [channel_ls[3], channel_ls[13], channel_ls[26], channel_ls[45]]
+    elif backbone == "seresnet101":
+        if len(channel_ls) < 100:
+            return [256, 512, 1024, 2048]
+        else:
+            return [channel_ls[3], channel_ls[13], channel_ls[26], channel_ls[103]]
+
+
+def get_channel_dict(channel_ls, backbone):
+    if backbone == "seresnet18":
+        if len(channel_ls) < 12:
+            return {1: [[channel_ls[1]], [channel_ls[2]]],
+                    2: [[channel_ls[3]], [channel_ls[4]]],
+                    3: [[channel_ls[5]], [channel_ls[6]]],
+                    4: [[channel_ls[7]], [channel_ls[8]]]}
+        else:
+            return {1: [[channel_ls[1]], [channel_ls[3]]],
+                    2: [[channel_ls[5]], [channel_ls[8]]],
+                    3: [[channel_ls[10]], [channel_ls[13]]],
+                    4: [[channel_ls[15]], [channel_ls[18]]]}
+    elif backbone == "seresnet50":
+        cl = channel_ls[1:]
+        if len(channel_ls) < 40:
+            return {1: [[cl[2*i], cl[2*i+1]] for i in range(3)],
+                    2: [[cl[6+2*i], cl[6+2*i+1]] for i in range(4)],
+                    3: [[cl[14+2*i], cl[14+2*i+1]] for i in range(6)],
+                    4: [[cl[26+2*i], cl[26+2*i+1]] for i in range(3)]}
+        else:
+            cl = channel_ls
+            return {1: [[cl[1], cl[2]], [cl[5], cl[6]],[cl[8], cl[9]]],
+                    2: [[cl[11], cl[12]], [cl[15], cl[16]], [cl[18], cl[19]], [cl[21], cl[22]]],
+                    3: [[cl[24], cl[25]], [cl[28], cl[29]], [cl[31], cl[32]], [cl[34], cl[35]], [cl[37], cl[38]], [cl[40], cl[41]]],
+                    4: [[cl[43], cl[44]], [cl[47], cl[48]], [cl[50], cl[51]]]
+            }
+    elif backbone == "seresnet101":
+        if len(channel_ls) < 100:
+            cl = channel_ls[1:]
+            return {1: [[cl[2*i], cl[2*i+1]] for i in range(3)],
+                    2: [[cl[6+2*i], cl[6+2*i+1]] for i in range(4)],
+                    3: [[cl[14+2*i], cl[14+2*i+1]] for i in range(23)],
+                    4: [[cl[60+2*i], cl[60+2*i+1]] for i in range(3)]}
+        else:
+            cl = channel_ls
+            lay3_idx = [24, 25] + [idx for idx in range(106)[28:93] if idx % 3 != 0]
+            return {1: [[cl[1], cl[2]], [cl[5], cl[6]],[cl[8], cl[9]]],
+                    2: [[cl[11], cl[12]], [cl[15], cl[16]], [cl[18], cl[19]], [cl[21], cl[22]]],
+                    3: [[cl[lay3_idx[2*i]], cl[lay3_idx[2*i+1]]] for i in range(int(len(lay3_idx)/2))],
+                    4: [[cl[94], cl[95]], [cl[98], cl[99]], [cl[101], cl[102]]]
+                    }
