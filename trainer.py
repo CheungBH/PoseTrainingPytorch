@@ -427,7 +427,7 @@ class Trainer:
         return ep_line
 
     def draw_graph(self):
-        log_dir = os.path.join(self.expFolder, self.opt.expID)
+        log_dir = os.path.join(self.expFolder, "logs")
         draw_graph(self.epoch_ls, self.train_loss_ls, self.val_loss_ls, "loss", log_dir)
         draw_graph(self.epoch_ls, self.train_acc_ls, self.val_acc_ls, "acc", log_dir)
         draw_graph(self.epoch_ls, self.train_auc_ls, self.val_auc_ls, "AUC", log_dir)
