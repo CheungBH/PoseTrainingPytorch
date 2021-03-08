@@ -1,0 +1,4 @@
+cfg = {
+    "backbone": "seresnet18",
+
+}

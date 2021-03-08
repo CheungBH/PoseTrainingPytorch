@@ -27,3 +27,8 @@ def parse_cfg(imgdir):
 def parse_DUC(cfg):
     return cfg["head_channel"], cfg["keyponits"]
 
+
+def parse_backbone_head(cfg):
+    return cfg[""]
+
+
