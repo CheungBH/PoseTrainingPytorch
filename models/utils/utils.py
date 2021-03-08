@@ -22,3 +22,8 @@ def parse_cfg(imgdir):
         "head_channel": load_dict["head_channel"]
     }
     return result
+
+
+def parse_DUC(cfg):
+    return cfg["head_channel"], cfg["keyponits"]
+

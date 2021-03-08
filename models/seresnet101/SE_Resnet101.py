@@ -126,6 +126,7 @@ class SeResnet(nn.Module):
 
 
 def SEResnet(cfg=None): # with maxpooling
+
     return SeResnet(SeBottleneck, [3, 4, 23, 3], cfg)
 
 
