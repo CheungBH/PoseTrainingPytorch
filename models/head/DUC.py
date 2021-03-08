@@ -1,5 +1,6 @@
 import torch.nn as nn
-from ..utils.utils import parse_DUC
+from models.utils.utils import parse_DUC, parse_cfg
+import torch
 
 
 class DUC(nn.Module):
@@ -24,7 +25,7 @@ class DUC(nn.Module):
 
 
 class DUC_head(nn.Module):
-    def __init__(self, cfg, head_inp=2048, upscale_factor=2):
+    def __init__(self, cfg, head_inp, upscale_factor=2):
         super(DUC_head, self).__init__()
         self.shuffle = nn.PixelShuffle(upscale_factor)
         self.conv_size, self.kps = parse_DUC(cfg)
@@ -46,5 +47,21 @@ class DUC_head(nn.Module):
         return x
 
 
+def create(cfg_file):
+    cfg = parse_cfg(cfg_file)
+    backbone = cfg["backbone"]
+    if backbone == "seresnet18" or backbone == "mobilenet":
+        return DUC_head(cfg, 512)
+    elif backbone == "seresnet101" or backbone == "seresnet50":
+        return DUC_head(cfg, 2048)
 
 
+def test():
+    net = create(cfg_file="../cfg/pruned/cfg_shortcut_seresnet101.json")
+    y = net(torch.randn(1, 2048, 2, 2))
+    print(net, file=open("DUC.txt","w"))
+    print(y.size())
+
+
+if __name__ == '__main__':
+    test()
