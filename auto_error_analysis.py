@@ -61,7 +61,7 @@ class AutoErrorAnalyser:
 
 
 if __name__ == '__main__':
-    model_folder = "onnx/choose_folder"
+    model_folder = "exp/test_selected"
     analyse_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
     AEA = AutoErrorAnalyser(model_folder, analyse_data)
     AEA.analyse()

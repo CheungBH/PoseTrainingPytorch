@@ -88,11 +88,9 @@ def obtain_bn_mask(bn_module, thre, device="cpu"):
 
 def obtain_filters_mask(model, prune_idx, thre):
     pruned = 0
-    bn_count = 0
     total = 0
     num_filters = []
     pruned_filters = []
-    filters_mask = []
     pruned_maskers = []
 
     for idx, module in enumerate(model.modules()):
@@ -108,23 +106,18 @@ def obtain_filters_mask(model, prune_idx, thre):
                     mask = obtain_bn_mask(module, max_value).cpu().numpy()
                     remain = int(mask.sum())
                     # pruned = pruned + mask.shape[0] - remain
-                    bn_count += 1
                 print(f'layer index: {idx:>3d} \t total channel: {mask.shape[0]:>4d} \t '
                       f'remaining channel: {remain:>4d}')
 
                 pruned = pruned + mask.shape[0] - remain
                 total += mask.shape[0]
-                num_filters.append(remain)
-                pruned_filters.append(remain)
-                pruned_maskers.append(mask.copy())
-                filters_mask.append(mask.copy())
 
             else:
                 mask = np.ones(module.weight.data.shape)
                 remain = mask.shape[0]
-                pruned_filters.append(remain)
-                pruned_maskers.append(mask.copy())
 
+            pruned_filters.append(remain)
+            pruned_maskers.append(mask.copy())
 
     prune_ratio = pruned / total
     print(f'Prune channels: {pruned}\tPrune ratio: {prune_ratio:.3f}')
