@@ -5,6 +5,9 @@ import os
 
 
 class Converter:
+    height = 320
+    width = 256
+
     def __init__(self, model_path, cfg=None, onnx_path="buffer/model.onnx", libtorch_path="buffer/model.pt", onnx_sim_path="buffer/model_sim.onnx", device="cpu"):
         self.src_model_path = model_path
         self.onnx_path = onnx_path
@@ -51,9 +54,9 @@ class Converter:
 
 
 if __name__ == '__main__':
-    pytorch_model = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
-    cfg = "exp/test_structure/seres18_17kps/cfg.json"
-    convert = Converter(pytorch_model, cfg=cfg)
+    model_path = "buffer/shortcut_seresnet18.pth"
+    model_cfg = "buffer/cfg_shortcut_seresnet18.json"
+    convert = Converter(model_path, cfg=model_cfg)
     convert.convert()
 
 '''

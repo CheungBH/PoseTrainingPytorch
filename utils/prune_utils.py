@@ -8,7 +8,7 @@ def obtain_prune_idx_50(model):
     for i, layer in enumerate(list(model.named_modules())):
         if isinstance(layer[1], nn.BatchNorm2d):
             all_bn_id.append(i)
-            if "seresnet50" in layer[0] or "preact" in layer[0]:
+            if "backbone" in layer[0]:
                 if "downsample" in layer[0]:
                     downsample_idx.append(i)
                 elif "bn1" in layer[0] or "bn2" in layer[0] and i > 5:
@@ -184,6 +184,31 @@ def adjust_mask(CBLidx2mask, CBLidx2filter, model, head_idx):
     CBLidx2filter[head_idx-1] = num + remaining_idx
     for idx in padding_idx:
         CBLidx2mask[head_idx-1][idx] = 1
+
+
+def adjust_final_mask(CBLidx2mask, CBLidx2filter, model, backbone):
+    if backbone == "seresnet18":
+        final_layer_group, final_conv_idx = [77, 87, 93], 93
+    elif backbone == "seresnet50":
+        final_layer_group, final_conv_idx = [136, 146, 153, 160], 160
+    elif backbone == "seresnet101":
+        final_layer_group, final_conv_idx = [255, 265, 272, 279], 279
+
+    final_CNN_weight = list(model.named_modules())[final_conv_idx+1][1].weight.data.abs().clone()
+    final_CNN_mask = CBLidx2mask[final_conv_idx]
+    num = CBLidx2filter[final_conv_idx]
+    total_num = len(final_CNN_weight.tolist())
+    for idx in range(total_num):
+        if final_CNN_mask[idx] == 1:
+            final_CNN_weight[idx] = 0
+
+    remaining_idx = 4 - num % 4
+    _, sorted_idx = final_CNN_weight.sort(descending=True)
+    padding_idx = sorted_idx[:remaining_idx]
+    for layer in final_layer_group:
+        CBLidx2filter[layer] = num + remaining_idx
+        for idx in padding_idx:
+            CBLidx2mask[layer][idx] = 1
 
 
 def get_residual_channel(channel_ls, backbone):
