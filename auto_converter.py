@@ -63,6 +63,6 @@ class AutoConverter:
 
 
 if __name__ == '__main__':
-    model_folder = "onnx/models_bh_0226"
+    model_folder = "onnx/choose_folder"
     convert = AutoConverter(model_folder)
     convert.run()

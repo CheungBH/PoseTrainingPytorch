@@ -8,10 +8,6 @@ from utils.utils import get_superior_path
 
 
 class SparseDetector:
-    backbone = "seresnet101"
-    cfg = None
-    opt.se_ratio = 16
-    opt.kps = 17
 
     def __init__(self, model_path, model_cfg=None, device="cpu", thresh=(50, 99), step=1, method="shortcut", print_info=True,
                  mask_interval=5):
@@ -21,6 +17,7 @@ class SparseDetector:
         posenet.build(model_cfg)
         self.model = posenet.model
         posenet.load(model_path)
+        self.backbone = posenet.MB.backbone
         if device != "cpu":
             self.model.cuda()
 

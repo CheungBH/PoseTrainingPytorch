@@ -86,7 +86,7 @@ class ErrorAnalyser:
             self.max_val_dict[img_info[3][0]] = maxval
 
             test_loader_desc.set_description(
-                'Test | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f}'.format(
+                'Analysis | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f}'.format(
                     loss=lossLogger.avg,
                     acc=accLogger.avg * 100,
                     pckh=pckhLogger.avg * 100,

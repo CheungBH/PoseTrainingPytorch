@@ -7,6 +7,7 @@ class AutoSparseDetector:
     def __init__(self, model_folder, model_kw=None, thresh_range=(50, 99), step=1, methods=["shortcut"]):
         self.folder = model_folder
         self.models = []
+        self.cfg = []
         self.model_kw = model_kw
         self.sparse_results = {}
         self.range = thresh_range
@@ -15,17 +16,24 @@ class AutoSparseDetector:
 
     def load_models(self):
         for folder in os.listdir(self.folder):
+            model_cnt = 0
             if not os.path.isdir(os.path.join(self.folder, folder)):
                 continue
             for file in os.listdir(os.path.join(self.folder, folder)):
                 file_path = os.path.join(self.folder, folder, file)
+                if "cfg" in file_path or "json" in file_path:
+                    cfg_name = file_path
                 if "option" not in file and "cfg" not in file and "pkl" in file:
                     if self.model_kw:
                         for kw in self.model_kw:
                             if kw in file:
+                                model_cnt += 1
                                 self.models.append(file_path)
                     else:
                         self.models.append(file_path)
+
+            for _ in range(model_cnt):
+                self.cfg.append(cfg_name)
 
     def xlsx_title(self):
         tmp = ["model name"]
@@ -46,9 +54,9 @@ class AutoSparseDetector:
             print("\n---------------------Detecting {} pruning---------------------".format(method))
             self.excel_path = os.path.join(self.folder, "sparse_{}_result.csv".format(method))
             model_num = len(self.models)
-            for idx, model in enumerate(self.models):
+            for idx, (cfg, model) in enumerate(zip(self.cfg, self.models)):
                 print("[{}/{}] Begin processing model {}".format(idx+1, model_num, model))
-                sd = SparseDetector(model, print_info=False, method=method)
+                sd = SparseDetector(model, model_cfg=cfg, print_info=False, method=method)
                 sd.detect()
                 self.sparse_results[model] = sd.get_result_ls()
             self.write_xlsx()
@@ -56,7 +64,7 @@ class AutoSparseDetector:
 
 if __name__ == '__main__':
     model_kw = ["acc", "dist", "auc", "pr"]
-    model_folder = "exp/auto_test_pckh"
+    model_folder = "exp/test_structure"
     methods = ["shortcut", "ordinary"]
     asd = AutoSparseDetector(model_folder, model_kw, methods=methods)
     asd.run()

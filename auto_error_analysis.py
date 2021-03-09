@@ -5,20 +5,20 @@ from collections import defaultdict
 
 
 class AutoErrorAnalyser:
-    def __init__(self, img_folder, data_info, num_worker=1):
-        self.img_folder = img_folder
+    def __init__(self, model_folder, data_info, num_worker=1):
+        self.model_folder = model_folder
         self.cfg_ls = []
         self.model_ls = []
         self.test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
         self.performance = defaultdict(list)
-        self.result_file = os.path.join(img_folder, "analyse_result.csv")
+        self.result_file = os.path.join(model_folder, "analyse_result.csv")
 
     def load_model(self):
-        for folder in os.listdir(self.img_folder):
-            if not os.path.isdir(os.path.join(self.img_folder, folder)):
+        for folder in os.listdir(self.model_folder):
+            if not os.path.isdir(os.path.join(self.model_folder, folder)):
                 continue
 
-            sub_folder = os.path.join(self.img_folder, folder)
+            sub_folder = os.path.join(self.model_folder, folder)
             cfg = None
             for file in os.listdir(sub_folder):
                 if "cfg" in file:
@@ -51,7 +51,7 @@ class AutoErrorAnalyser:
     def analyse(self):
         self.load_model()
         for idx, (cfg, model) in enumerate(zip(self.cfg_ls, self.model_ls)):
-            analyser = ErrorAnalyser(self.test_loader, model)
+            analyser = ErrorAnalyser(self.test_loader, model, model_cfg=cfg)
             analyser.build_with_opt()
             analyser.analyse()
             performance = analyser.summarize()
@@ -61,7 +61,7 @@ class AutoErrorAnalyser:
 
 
 if __name__ == '__main__':
-    img_folder = "exp/selected"
+    model_folder = "onnx/choose_folder"
     analyse_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    AEA = AutoErrorAnalyser(img_folder, analyse_data)
+    AEA = AutoErrorAnalyser(model_folder, analyse_data)
     AEA.analyse()

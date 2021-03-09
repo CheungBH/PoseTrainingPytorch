@@ -12,7 +12,7 @@ class AutoTester:
         self.keyword = ["acc", "auc", "pr", "dist", "pckh"]
         self.shared_option = shared_option
         self.test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
-        self.model_ls = []
+        self.model_ls, self.cfg_ls = [], []
         self.test_csv = os.path.join(self.model_folder, "test_{}.csv".format(computer))
         self.tested = os.path.exists(self.test_csv)
 
@@ -21,10 +21,20 @@ class AutoTester:
             if "csv" in folder:
                 continue
 
+            model_cnt = 0
             for file in os.listdir(os.path.join(self.model_folder, folder)):
+                file_name = os.path.join(self.model_folder, folder, file)
+                if "cfg" in file or "json" in file:
+                    cfg_name = file_name
+                    continue
+
                 for kw in self.keyword:
                     if kw in file:
-                        self.model_ls.append(os.path.join(self.model_folder, folder, file))
+                        model_cnt += 1
+                        self.model_ls.append(file_name)
+
+            for _ in range(model_cnt):
+                self.cfg_ls.append(cfg_name)
 
     def load_model_option_1by1(self):
         for folder in os.listdir(self.model_folder):
@@ -32,12 +42,16 @@ class AutoTester:
                 continue
 
             for file in os.listdir(os.path.join(self.model_folder, folder)):
+                file_name = os.path.join(self.model_folder, folder, file)
                 if "option" not in file and ".pkl" in file or ".pth" in file:
-                    model = os.path.join(self.model_folder, folder, file)
+                    model = file_name
+                elif "json" in file or "cfg" in file:
+                    cfg = file_name
                 else:
                     continue
             try:
                 self.model_ls.append(model)
+                self.cfg_ls.append(cfg)
             except:
                 raise FileNotFoundError("Target model doesn't exist!")
 
@@ -65,9 +79,9 @@ class AutoTester:
             self.load_model_and_option()
 
         model_nums = len(self.model_ls)
-        for idx, self.model in enumerate(self.model_ls):
+        for idx, (cfg, self.model) in enumerate(zip(self.cfg_ls, self.model_ls)):
             print("[{}/{}] Processing model: {}".format(idx+1, model_nums, self.model))
-            test = Tester(self.test_loader, self.model, print_info=False)
+            test = Tester(self.test_loader, self.model, model_cfg=cfg, print_info=False)
             test.build_with_opt()
             test.test()
             test.get_benchmark()
@@ -79,7 +93,7 @@ class AutoTester:
 
 
 if __name__ == '__main__':
-    model_folder = "exp/auto_test_pckh"
+    model_folder = "exp/test_structure"
     data_info = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
     shared_option = True
     auto_tester = AutoTester(model_folder, data_info, shared_option=shared_option)
