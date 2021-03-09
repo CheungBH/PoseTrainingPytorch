@@ -5,15 +5,17 @@ from models.utils.default import *
 
 class ModelBuilder:
     def __init__(self, cfg_file):
+        self.cfg_file = cfg_file
         self.cfg = parse_cfg(cfg_file)
         self.backbone = self.cfg["backbone"]
         self.head = self.cfg["head_type"]
         self.model = self.build_model()
 
     def build_model(self):
-        backbone = self.build_backbone()
-        head = self.build_head()
-        return nn.Sequential([backbone, head])
+        layers = []
+        layers.append(self.build_backbone())
+        layers.append(self.build_head())
+        return nn.Sequential(*layers)
 
     def build(self):
         return self.model
@@ -38,10 +40,10 @@ class ModelBuilder:
             self.feature_layer_num, self.feature_layer_name = 75, "seresnet50"
         else:
             raise ValueError("Your model name is wrong")
-        return create(self.cfg)
+        return create(self.cfg_file)
 
     def build_head(self):
         if self.head == "pixel_shuffle":
             from models.head.DUC import create
-        return create(self.cfg)
+        return create(self.cfg_file)
 

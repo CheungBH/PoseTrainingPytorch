@@ -1,6 +1,5 @@
 import torch
 from models.utils.benchmark import print_model_param_flops, print_model_param_nums, get_inference_time
-from models.build import ModelBuilder
 
 
 class PoseModel:
@@ -8,10 +7,39 @@ class PoseModel:
         self.is_freeze = False
         self.device = device
 
-    def build(self, cfg):
-        MB = ModelBuilder(cfg_file=cfg)
-        self.model = MB.build()
-        self.feature_layer_num, self.feature_layer_name = MB.feature_layer_num, MB.feature_layer_name
+    def build(self, backbone, cfg):
+        self.backbone = backbone
+        if backbone == "mobilenet":
+            from models.mobilenet.MobilePose import createModel
+            from config.model_cfg import mobile_opt as model_ls
+            self.feature_layer_num, self.feature_layer_name = 155, "features"
+        elif backbone == "seresnet101":
+            from models.seresnet101.FastPose import createModel
+            from config.model_cfg import seresnet_cfg as model_ls
+            self.feature_layer_num, self.feature_layer_name = 327, "seresnet101"
+        elif backbone == "efficientnet":
+            from models.efficientnet.EfficientPose import createModel
+            from config.model_cfg import efficientnet_cfg as model_ls
+        elif backbone == "shufflenet":
+            from models.shufflenet.ShufflePose import createModel
+            from config.model_cfg import shufflenet_cfg as model_ls
+            self.feature_layer_num, self.feature_layer_name = 167, "shuffle"
+        elif backbone == "seresnet18":
+            from models.seresnet18.FastPose import createModel
+            from config.model_cfg import seresnet18_cfg as model_ls
+            self.feature_layer_num, self.feature_layer_name = 75, "seresnet18"
+        elif backbone == "seresnet50":
+            from models.seresnet50.FastPose import createModel
+            from config.model_cfg import seresnet50_cfg as model_ls
+            self.feature_layer_num, self.feature_layer_name = 75, "seresnet50"
+        else:
+            raise ValueError("Your model name is wrong")
+
+        # self.model_cfg = cfg
+        try:
+            self.model = createModel(cfg)
+        except:
+            self.model = createModel(model_ls[cfg])
         if self.device != "cpu":
             self.model.cuda()
 
@@ -37,7 +65,7 @@ class PoseModel:
                 p.requires_grad = False
 
     def init_with_opt(self, opt):
-        self.build(opt.cfg)
+        self.build(opt.backbone, opt.struct)
         if opt.freeze_bn:
             self.freeze_bn()
         self.freeze(opt.freeze)
@@ -68,12 +96,3 @@ class PoseModel:
             self.model = torch.nn.DataParallel(self.model).cuda()
         else:
             self.model = torch.nn.DataParallel(self.model)
-
-
-if __name__ == '__main__':
-    PM = PoseModel(device="cpu")
-    cfg = "./cfg/default/cfg_seresnet50.json"
-    PM.build(cfg)
-    net = PM.model
-    y = net(torch.randn(1, 3, 320, 256))
-    print(y.size())
