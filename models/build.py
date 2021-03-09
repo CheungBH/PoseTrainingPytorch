@@ -48,3 +48,5 @@ class ModelBuilder:
             from models.head.DUC import create
         return create(self.cfg_file)
 
+    def obtain_kps(self):
+        return self.kps

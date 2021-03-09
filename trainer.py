@@ -67,7 +67,6 @@ class Trainer:
     def build_with_opt(self, opt):
         self.opt = opt
         self.total_epochs = opt.nEpochs
-        self.kps = opt.kps
         self.lr = opt.LR
         self.trainIter, self.valIter = opt.trainIters, opt.valIters
 
@@ -85,6 +84,7 @@ class Trainer:
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
         posenet.model_transfer(device)
         self.model = posenet.model
+        self.kps = posenet.MB.obtain_kps()
 
         if opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler

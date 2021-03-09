@@ -24,6 +24,8 @@ class ErrorAnalyser:
         self.max_val_dict = defaultdict(list)
         self.write_threshold = write_threshold
         self.cfg = model_cfg
+        if not model_cfg:
+            self.kps = posenet.MB.obtain_kps()
 
     def build(self, kps, cfg, crit, model_height=256, model_width=256):
         posenet.build(cfg)
