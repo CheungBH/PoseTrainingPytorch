@@ -13,6 +13,7 @@ from utils.draw import draw_kps, draw_hms
 from dataset.loader import TrainDataset
 from utils.utils import draw_graph
 import csv
+import shutil
 
 try:
     from apex import amp
@@ -230,7 +231,7 @@ class Trainer:
                         else:
                             self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch),
                                              cv2.imread(
-                                                 os.path.join(self.expFolder, "assets/img.jpg"))[:,:,::-1], dataformats='HWC')
+                                                 os.path.join(self.expFolder, "logs/img.jpg"))[:,:,::-1], dataformats='HWC')
                             hm = draw_hms(out[0])
                             self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm)
                     except:
@@ -478,6 +479,7 @@ class Trainer:
                 ))
 
     def process(self):
+        shutil.copy(opt.cfg, os.path.join(self.expFolder, "cfg.json"))
         begin_time = time.time()
         error_string = ""
         try:

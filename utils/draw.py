@@ -51,7 +51,7 @@ def draw_kps(hms, info):
     # for r in range(row):
     #     row_img = [img_ls[r*4+c] for c in range(column)]
     #     predictions = np.concatenate((row_img[0], row_img[1], row_img[2], row_img[3]), axis=0)
-    cv2.imwrite(os.path.join("exp", opt.expFolder, opt.expID, opt.expID, "img.jpg"), predictions)
+    cv2.imwrite(os.path.join("exp", opt.expFolder, opt.expID, "logs", "img.jpg"), predictions)
 
     return predictions, drawn
 
