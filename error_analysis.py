@@ -30,7 +30,7 @@ class ErrorAnalyser:
         self.model = posenet.model
         self.crit = crit
         self.build_criterion(self.crit)
-        self.kps = posenet.MB.kps
+        self.kps = posenet.kps
         self.height = model_height
         self.width = model_width
         self.default_threshold = [self.thresh] * self.kps
@@ -39,7 +39,7 @@ class ErrorAnalyser:
         self.load_from_option()
         posenet.build(self.cfg)
         self.model = posenet.model
-        self.kps = posenet.MB.kps
+        self.kps = posenet.kps
         self.build_criterion(self.crit)
         self.default_threshold = [self.thresh] * self.kps
         posenet.load(self.model_path)

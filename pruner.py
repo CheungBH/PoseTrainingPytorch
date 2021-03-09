@@ -83,9 +83,9 @@ class Pruner:
         posenet.build(model_cfg)
         self.model = posenet.model
         posenet.load(model_path)
-        self.backbone = posenet.MB.backbone
-        self.kps = posenet.MB.kps
-        self.se_ratio = posenet.MB.se_ratio
+        self.backbone = posenet.backbone
+        self.kps = posenet.kps
+        self.se_ratio = posenet.se_ratio
 
         if not compact_model_path or not compact_model_cfg:
             self.compact_model_path = "buffer/pruned_{}.pth".format(self.backbone)

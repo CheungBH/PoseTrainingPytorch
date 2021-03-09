@@ -1,6 +1,7 @@
 import torch
 from models.utils.benchmark import print_model_param_flops, print_model_param_nums, get_inference_time
-from models.build import ModelBuilder
+from models.build import PoseNet
+from .utils.utils import parse_cfg
 
 
 class PoseModel:
@@ -9,8 +10,13 @@ class PoseModel:
         self.device = device
 
     def build(self, cfg):
-        MB = ModelBuilder(cfg_file=cfg)
-        self.model = MB.build()
+        self.cfg = parse_cfg(cfg)
+        self.backbone = self.cfg["backbone"]
+        self.head = self.cfg["head_type"]
+        self.kps = self.cfg["keypoints"]
+        self.se_ratio = self.cfg["se_ratio"]
+
+        self.model = PoseNet(cfg, self.backbone, self.head)
         self.feature_layer_num, self.feature_layer_name = self.model.feature_layer_num, self.model.feature_layer_name
         if self.device != "cpu":
             self.model.cuda()

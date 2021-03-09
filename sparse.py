@@ -17,7 +17,7 @@ class SparseDetector:
         posenet.build(model_cfg)
         self.model = posenet.model
         posenet.load(model_path)
-        self.backbone = posenet.MB.backbone
+        self.backbone = posenet.backbone
         if device != "cpu":
             self.model.cuda()
 

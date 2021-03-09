@@ -1,20 +1,4 @@
-from .utils.utils import parse_cfg
 from torch import nn
-from models.utils.default import *
-
-
-class ModelBuilder:
-    def __init__(self, cfg_file):
-        self.cfg_file = cfg_file
-        self.cfg = parse_cfg(cfg_file)
-        self.backbone = self.cfg["backbone"]
-        self.head = self.cfg["head_type"]
-        self.kps = self.cfg["keypoints"]
-        self.se_ratio = self.cfg["se_ratio"]
-        self.model = PoseNet(cfg_file, self.backbone, self.head)
-
-    def build(self):
-        return self.model
 
 
 class PoseNet(nn.Module):
