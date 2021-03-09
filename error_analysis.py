@@ -110,7 +110,6 @@ class ErrorAnalyser:
             self.option = torch.load(self.option_file)
             self.height = self.option.inputResH
             self.width = self.option.inputResW
-            self.kps = self.option.kps
             self.crit = self.option.crit
         else:
             raise FileNotFoundError("The option.pkl doesn't exist! ")

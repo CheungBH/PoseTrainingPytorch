@@ -123,7 +123,6 @@ class Tester:
             self.height = self.option.inputResH
             self.width = self.option.inputResW
             self.crit = self.option.crit
-            self.kps = self.option.kps
         else:
             raise FileNotFoundError("The option.pkl doesn't exist! ")
 
@@ -148,7 +147,7 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
     if use_option:
         tester.build_with_opt()
     else:
-        tester.build(kps, cfg, criteria, height, width)
+        tester.build(cfg, criteria, height, width)
     tester.test()
     tester.get_benchmark()
     benchmark, performance, parts, thresh = tester.summarize()
