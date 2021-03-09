@@ -24,8 +24,6 @@ class ErrorAnalyser:
         self.max_val_dict = defaultdict(list)
         self.write_threshold = write_threshold
         self.cfg = model_cfg
-        if not model_cfg:
-            self.kps = posenet.MB.obtain_kps()
 
     def build(self, cfg, crit, model_height=256, model_width=256):
         posenet.build(cfg)
@@ -41,6 +39,7 @@ class ErrorAnalyser:
         self.load_from_option()
         posenet.build(self.cfg)
         self.model = posenet.model
+        self.kps = posenet.MB.obtain_kps()
         self.build_criterion(self.crit)
         self.default_threshold = [self.thresh] * self.kps
         posenet.load(self.model_path)
@@ -135,8 +134,7 @@ class ErrorAnalyser:
         return self.performance
 
 
-def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=None, criteria="MSE", height=256,
-                   width=256):
+def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=None, criteria="MSE", height=256, width=256):
     from dataset.loader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
     analyser = ErrorAnalyser(test_loader, model_path)

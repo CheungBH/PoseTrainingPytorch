@@ -20,13 +20,11 @@ class Tester:
         self.option_file = check_option_file(model_path)
         self.print = print_info
         self.cfg = model_cfg
-        if not self.cfg:
-            self.kps = posenet.MB.obtain_kps()
 
     def build(self, cfg, crit, model_height=256, model_width=256):
         posenet.build(cfg)
-        self.kps = posenet.MB.obtain_kps()
         self.model = posenet.model
+        self.kps = posenet.MB.obtain_kps()
         self.crit = crit
         self.build_criterion(self.crit)
         self.height = model_height
@@ -37,6 +35,7 @@ class Tester:
         self.load_from_option()
         posenet.build(self.cfg)
         self.model = posenet.model
+        self.kps = posenet.MB.obtain_kps()
         self.build_criterion(self.crit)
         posenet.load(self.model_path)
 
