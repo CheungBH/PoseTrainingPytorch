@@ -73,8 +73,8 @@ class SparseDetector:
 
 
 if __name__ == '__main__':
-    model_path = "exp/seresnet101/sparse/sparse_40.pkl"
-    model_cfg = ""
-    sd = SparseDetector(model_path)
+    model_path = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
+    model_cfg = "exp/test_structure/seres18_17kps/cfg.json"
+    sd = SparseDetector(model_path, model_cfg)
     res = sd.detect()
     print(res)

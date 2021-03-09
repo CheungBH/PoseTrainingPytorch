@@ -51,8 +51,8 @@ class Converter:
 
 
 if __name__ == '__main__':
-    pytorch_model = "buffer/pruned_seresnet101.pth"
-    cfg = "buffer/cfg_seresnet101.txt"
+    pytorch_model = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
+    cfg = "exp/test_structure/seres18_17kps/cfg.json"
     convert = Converter(pytorch_model, cfg=cfg)
     convert.convert()
 

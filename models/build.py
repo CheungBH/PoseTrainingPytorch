@@ -11,6 +11,7 @@ class ModelBuilder:
         self.head = self.cfg["head_type"]
         self.model = self.build_model()
         self.kps = self.cfg["keypoints"]
+        self.se_ratio = self.cfg["se_ratio"]
 
     def build_model(self):
         layers = []

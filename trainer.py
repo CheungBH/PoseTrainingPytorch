@@ -26,7 +26,6 @@ device = config.device
 lr_warm_up_dict = config.warm_up
 lr_decay_dict = config.lr_decay_dict
 stop_dicts = config.bad_epochs
-loss_weight = config.loss_weight
 sparse_decay_dict = config.sparse_decay_dict
 dataset_info = config.train_info
 computer = config.computer
@@ -86,12 +85,13 @@ class Trainer:
         self.model = posenet.model
         self.kps = posenet.MB.obtain_kps()
 
+        all_kps = [-item for item in list(range(self.kps + 1))[1:]]
+        self.loss_weight = {1: all_kps}
         if opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler
         else:
             raise ValueError("Scheduler not supported")
         self.lr_scheduler = scheduler(self.total_epochs, lr_warm_up_dict, lr_decay_dict, self.lr)
-        self.loss_weight = loss_weight
         self.save_interval = opt.save_interval
         self.build_sparse_scheduler(opt.sparse_s)
         

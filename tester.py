@@ -155,6 +155,6 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
 
 if __name__ == '__main__':
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    model_path = "exp/test_nw/1/1_best_acc.pkl"
-    model_cfg = "models/cfg/default/cfg_seresnet18.json"
+    model_path = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
+    model_cfg = "exp/test_structure/seres18_17kps/cfg.json"
     test_model(model_path, test_data, cfg=model_cfg)
