@@ -134,12 +134,12 @@ class Pruner:
 
         posenet.build(self.compact_model_cfg)
         compact_model = posenet.model
-        self.init_weight(compact_model, self.model_path, CBLidx2mask, valid_filter, downsample_idx, head_idx)
+        self.init_weight(compact_model, self.model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
         torch.save(compact_model.state_dict(), self.compact_model_path)
 
 
 if __name__ == '__main__':
-    model_path = ""
-    model_cfg = ""
+    model_path = "exp/test_structure/seres18_17kps_se1/seres18_17kps_se1_best_acc.pkl"
+    model_cfg = "exp/test_structure/seres18_17kps_se1/cfg.json"
     pruner = Pruner(model_path, model_cfg)
     pruner.run(80)

@@ -24,7 +24,7 @@ class Tester:
     def build(self, cfg, crit, model_height=256, model_width=256):
         posenet.build(cfg)
         self.model = posenet.model
-        self.kps = posenet.MB.obtain_kps()
+        self.kps = posenet.MB.kps
         self.crit = crit
         self.build_criterion(self.crit)
         self.height = model_height
@@ -35,7 +35,7 @@ class Tester:
         self.load_from_option()
         posenet.build(self.cfg)
         self.model = posenet.model
-        self.kps = posenet.MB.obtain_kps()
+        self.kps = posenet.MB.kps
         self.build_criterion(self.crit)
         posenet.load(self.model_path)
 

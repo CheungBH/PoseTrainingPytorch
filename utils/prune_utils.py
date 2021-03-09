@@ -100,7 +100,6 @@ def obtain_filters_mask(model, prune_idx, thre):
             if idx in prune_idx:
                 mask = obtain_bn_mask(module, thre).cpu().numpy()
                 remain = int(mask.sum())
-                pruned = pruned + mask.shape[0] - remain
 
                 if remain == 0:  # 保证至少有一个channel
                     # print("Channels would be all pruned!")
@@ -108,20 +107,24 @@ def obtain_filters_mask(model, prune_idx, thre):
                     max_value = module.weight.data.abs().max()
                     mask = obtain_bn_mask(module, max_value).cpu().numpy()
                     remain = int(mask.sum())
-                    pruned = pruned + mask.shape[0] - remain
+                    # pruned = pruned + mask.shape[0] - remain
                     bn_count += 1
                 print(f'layer index: {idx:>3d} \t total channel: {mask.shape[0]:>4d} \t '
                       f'remaining channel: {remain:>4d}')
 
+                pruned = pruned + mask.shape[0] - remain
+                total += mask.shape[0]
+                num_filters.append(remain)
                 pruned_filters.append(remain)
                 pruned_maskers.append(mask.copy())
+                filters_mask.append(mask.copy())
+
             else:
                 mask = np.ones(module.weight.data.shape)
                 remain = mask.shape[0]
+                pruned_filters.append(remain)
+                pruned_maskers.append(mask.copy())
 
-            total += mask.shape[0]
-            num_filters.append(remain)
-            filters_mask.append(mask.copy())
 
     prune_ratio = pruned / total
     print(f'Prune channels: {pruned}\tPrune ratio: {prune_ratio:.3f}')

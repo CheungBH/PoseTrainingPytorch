@@ -9,9 +9,9 @@ class PoseModel:
         self.device = device
 
     def build(self, cfg):
-        self.MB = ModelBuilder(cfg_file=cfg)
-        self.model = self.MB.build()
-        self.feature_layer_num, self.feature_layer_name = self.MB.feature_layer_num, self.MB.feature_layer_name
+        MB = ModelBuilder(cfg_file=cfg)
+        self.model = MB.build()
+        self.feature_layer_num, self.feature_layer_name = self.model.feature_layer_num, self.model.feature_layer_name
         if self.device != "cpu":
             self.model.cuda()
 

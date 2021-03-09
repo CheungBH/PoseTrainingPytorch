@@ -83,7 +83,7 @@ class Trainer:
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
         posenet.model_transfer(device)
         self.model = posenet.model
-        self.kps = posenet.MB.obtain_kps()
+        self.kps = posenet.MB.kps
 
         all_kps = [-item for item in list(range(self.kps + 1))[1:]]
         self.loss_weight = {1: all_kps}
