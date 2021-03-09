@@ -137,7 +137,7 @@ class ErrorAnalyser:
 def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=None, criteria="MSE", height=256, width=256):
     from dataset.loader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
-    analyser = ErrorAnalyser(test_loader, model_path)
+    analyser = ErrorAnalyser(test_loader, model_path, model_cfg=cfg)
     if use_option:
         analyser.build_with_opt()
     else:
@@ -152,5 +152,7 @@ def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=Non
 
 if __name__ == '__main__':
     analyse_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    error = error_analysis("exp/test/default/default_best_acc.pkl", analyse_data)
+    model_path = "exp/test_nw/1/1_best_acc.pkl"
+    model_cfg = "models/cfg/default/cfg_seresnet18.json"
+    error = error_analysis(model_path, analyse_data, cfg=model_cfg)
     print(error)

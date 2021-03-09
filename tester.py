@@ -142,7 +142,7 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
                width=256):
     from dataset.loader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker, shuffle=False)
-    tester = Tester(test_loader, model_path)
+    tester = Tester(test_loader, model_path, model_cfg=cfg)
     if use_option:
         tester.build_with_opt()
     else:
@@ -155,6 +155,6 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
 
 if __name__ == '__main__':
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    model_path = "exp/test/default/default_best_acc.pkl"
-    model_cfg = ""
+    model_path = "exp/test_nw/1/1_best_acc.pkl"
+    model_cfg = "models/cfg/default/cfg_seresnet18.json"
     test_model(model_path, test_data, cfg=model_cfg)

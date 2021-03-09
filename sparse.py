@@ -13,14 +13,12 @@ class SparseDetector:
     opt.se_ratio = 16
     opt.kps = 17
 
-    def __init__(self, model_path, device="cpu", thresh=(50, 99), step=1, method="shortcut", print_info=True,
+    def __init__(self, model_path, model_cfg=None, device="cpu", thresh=(50, 99), step=1, method="shortcut", print_info=True,
                  mask_interval=5):
         self.option_file = check_option_file(model_path)
-        if os.path.exists(self.option_file):
-            self.load_from_option()
 
         posenet = PoseModel()
-        posenet.build(self.backbone, self.cfg)
+        posenet.build(model_cfg)
         self.model = posenet.model
         posenet.load(model_path)
         if device != "cpu":
@@ -36,17 +34,6 @@ class SparseDetector:
         self.mask_file = os.path.join(get_superior_path(model_path), "sparse_mask", "mask_{}-{}.txt".format(
             method, model_path.replace("\\", "/").split("/")[-1][:-4]))
         os.makedirs(os.path.join(get_superior_path(model_path), "sparse_mask"), exist_ok=True)
-
-    def load_from_option(self):
-        self.option = torch.load(self.option_file)
-        opt.kps = self.option.kps
-        try:
-            opt.se_ratio = self.option.se_ratio
-        except:
-            opt.se_ratio = 1
-        self.backbone = self.option.backbone
-        self.cfg = self.option.struct
-        self.DUC = self.option.DUC
 
     def detect(self):
         if self.backbone == "seresnet18":
@@ -87,6 +74,7 @@ class SparseDetector:
 
 if __name__ == '__main__':
     model_path = "exp/seresnet101/sparse/sparse_40.pkl"
+    model_cfg = ""
     sd = SparseDetector(model_path)
     res = sd.detect()
     print(res)

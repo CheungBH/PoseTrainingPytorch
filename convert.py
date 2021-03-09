@@ -2,17 +2,9 @@ from models.pose_model import PoseModel
 from utils.utils import get_option_path
 import torch
 import os
-from src.opt import opt
 
 
 class Converter:
-    '''Must be assigned if option.pkl is not exist'''
-    # backbone = "seresnet101"
-    # height = 320
-    # width = 256
-    # opt.kps = 17
-    # opt.se_ratio = 16
-
     def __init__(self, model_path, cfg=None, onnx_path="buffer/model.onnx", libtorch_path="buffer/model.pt", onnx_sim_path="buffer/model_sim.onnx", device="cpu"):
         self.src_model_path = model_path
         self.onnx_path = onnx_path
@@ -49,14 +41,8 @@ class Converter:
         option_path = get_option_path(self.src_model_path)
         if os.path.exists(option_path):
             option = torch.load(option_path)
-            # self.backbone = option.backbone
             self.height = option.inputResH
             self.width = option.inputResW
-            # opt.kps = option.kps
-            # try:
-            #     opt.se_ratio = option.se_ratio
-            # except:
-            #     opt.se_ratio = 1
 
     def convert(self):
         with torch.no_grad():
