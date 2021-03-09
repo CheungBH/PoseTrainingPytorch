@@ -27,12 +27,12 @@ class ErrorAnalyser:
         if not model_cfg:
             self.kps = posenet.MB.obtain_kps()
 
-    def build(self, kps, cfg, crit, model_height=256, model_width=256):
+    def build(self, cfg, crit, model_height=256, model_width=256):
         posenet.build(cfg)
         self.model = posenet.model
         self.crit = crit
         self.build_criterion(self.crit)
-        self.kps = kps
+        self.kps = posenet.MB.obtain_kps()
         self.height = model_height
         self.width = model_width
         self.default_threshold = [self.thresh] * self.kps
@@ -136,7 +136,7 @@ class ErrorAnalyser:
         return self.performance
 
 
-def error_analysis(model_path, data_info, num_worker=1, use_option=True, kps=17, cfg=None, criteria="MSE", height=256,
+def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=None, criteria="MSE", height=256,
                    width=256):
     from dataset.loader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
@@ -144,7 +144,7 @@ def error_analysis(model_path, data_info, num_worker=1, use_option=True, kps=17,
     if use_option:
         analyser.build_with_opt()
     else:
-        analyser.build(kps, cfg, criteria, height, width)
+        analyser.build(cfg, criteria, height, width)
     analyser.analyse()
     performance = analyser.summarize()
     return performance

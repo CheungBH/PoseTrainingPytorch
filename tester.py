@@ -23,9 +23,9 @@ class Tester:
         if not self.cfg:
             self.kps = posenet.MB.obtain_kps()
 
-    def build(self, kps, cfg, crit, model_height=256, model_width=256):
+    def build(self, cfg, crit, model_height=256, model_width=256):
         posenet.build(cfg)
-        self.kps = kps
+        self.kps = posenet.MB.obtain_kps()
         self.model = posenet.model
         self.crit = crit
         self.build_criterion(self.crit)
