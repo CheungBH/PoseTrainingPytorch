@@ -119,7 +119,7 @@ class Pruner:
 
         valid_filter = {k: v for k, v in CBLidx2filter.items() if k + 1 in prune_idx}
         channel_str = ",".join(map(lambda x: str(x), valid_filter.values()))
-        print(channel_str, file=open("buffer/cfg_{}".format(self.backbone), "w"))
+        print(channel_str, file=open("buffer/cfg_{}.txt".format(self.backbone), "w"))
         m_cfg = {
             'backbone': self.backbone,
             'keypoints': self.kps,
@@ -139,7 +139,7 @@ class Pruner:
 
 
 if __name__ == '__main__':
-    model_path = "exp/test_structure/seres18_17kps_se1/seres18_17kps_se1_best_acc.pkl"
-    model_cfg = "exp/test_structure/seres18_17kps_se1/cfg.json"
+    model_path = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
+    model_cfg = "exp/test_structure/seres18_17kps/cfg.json"
     pruner = Pruner(model_path, model_cfg)
     pruner.run(80)

@@ -36,3 +36,6 @@ class ShortcutPruner:
         else:
             raise ValueError("{} is not supported for pruning! ".format(self.backbone))
         self.obtain_prune_idx = obtain_prune
+
+    def run(self, threshold):
+

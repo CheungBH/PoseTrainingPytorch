@@ -27,7 +27,7 @@ def obtain_prune_idx2(model):
     for i, layer in enumerate(list(model.named_modules())):
         if isinstance(layer[1], nn.BatchNorm2d):
             all_bn_id.append(i)
-            if "seresnet18" in layer[0]:
+            if "backbone" in layer[0]:
                 if i < 5:
                     shortcut_idx.append(i)
                 elif "downsample" in layer[0]:
