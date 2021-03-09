@@ -1,84 +1,11 @@
-import os
-import torch
-import torch.nn as nn
-import numpy as np
-# from config.config import device
-from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50, get_residual_channel, get_channel_dict, adjust_mask
-from src.opt import opt
+from models.pose_model import PoseModel
+from utils.prune_utils import sort_bn, obtain_bn_threshold, obtain_filters_mask, adjust_mask, get_residual_channel, \
+    get_channel_dict
 from models.utils.utils import write_cfg
+import numpy as np
+import torch
 
-def sort_bn(model, prune_idx):
-    size_list = [m.weight.data.shape[0] for idx, m in enumerate(model.modules()) if idx in prune_idx]
-    # bn_layer = [m for m in model.modules() if isinstance(m, nn.BatchNorm2d)]
-    bn_prune_layers = [m for idx, m in enumerate(model.modules()) if idx in prune_idx]
-    bn_weights = torch.zeros(sum(size_list))
-
-    index = 0
-    for module, size in zip(bn_prune_layers, size_list):
-        bn_weights[index:(index + size)] = module.weight.data.abs().clone()
-        index += size
-    sorted_bn = torch.sort(bn_weights)[0]
-
-    return sorted_bn
-
-
-def obtain_bn_threshold(model, sorted_bn, percentage):
-    thre_index = int(len(sorted_bn) * percentage)
-    thre = sorted_bn[thre_index]
-    return thre
-
-
-def obtain_bn_mask(bn_module, thre, device="cpu"):
-    if device != "cpu":
-        thre = thre.cuda()
-    mask = bn_module.weight.data.abs().ge(thre).float()
-
-    return mask
-
-
-def obtain_filters_mask(model, prune_idx, thre):
-    pruned = 0
-    bn_count = 0
-    total = 0
-    num_filters = []
-    pruned_filters = []
-    filters_mask = []
-    pruned_maskers = []
-
-    for idx, module in enumerate(model.modules()):
-        if isinstance(module, nn.BatchNorm2d):
-            if idx in prune_idx:
-                mask = obtain_bn_mask(module, thre).cpu().numpy()
-                remain = int(mask.sum())
-
-                if remain == 0:  # 保证至少有一个channel
-                    # print("Channels would be all pruned!")
-                    # raise Exception
-                    max_value = module.weight.data.abs().max()
-                    mask = obtain_bn_mask(module, max_value).cpu().numpy()
-                    remain = int(mask.sum())
-                    # pruned = pruned + mask.shape[0] - remain
-                    bn_count += 1
-                print(f'layer index: {idx:>3d} \t total channel: {mask.shape[0]:>4d} \t '
-                      f'remaining channel: {remain:>4d}')
-
-                pruned = pruned + mask.shape[0] - remain
-                pruned_filters.append(remain)
-                pruned_maskers.append(mask.copy())
-                total += mask.shape[0]
-                num_filters.append(remain)
-                filters_mask.append(mask.copy())
-            else:
-
-                mask = np.ones(module.weight.data.shape)
-                remain = mask.shape[0]
-                pruned_filters.append(remain)
-                pruned_maskers.append(mask.copy())
-
-    prune_ratio = pruned / total
-    print(f'Prune channels: {pruned}\tPrune ratio: {prune_ratio:.3f}')
-
-    return pruned_filters, pruned_maskers
+posenet = PoseModel(device="cpu")
 
 
 def init_weights_from_loose_model(compact_model, loose_model, CBLidx2mask, valid_filter, downsample_idx, head_idx):
@@ -148,90 +75,71 @@ def init_weights_from_loose_model50(compact_model, loose_model, CBLidx2mask, val
         compact_conv.weight.data = tmp[out_channel_idx, :, :, :].clone()
 
 
-def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, device="cpu"):
-    if opt.backbone == "mobilenet":
-        from models.mobilenet.MobilePose import createModel
-        from config.model_cfg import mobile_opt as model_ls
-    elif opt.backbone == "seresnet101":
-        from models.seresnet101.FastPose import createModel
-        from config.model_cfg import seresnet_cfg as model_ls
-    elif opt.backbone == "seresnet18":
-        from models.seresnet18.FastPose import createModel
-        from config.model_cfg import seresnet_cfg as model_ls
-    elif opt.backbone == "efficientnet":
-        from models.efficientnet.EfficientPose import createModel
-        from config.model_cfg import efficientnet_cfg as model_ls
-    elif opt.backbone == "shufflenet":
-        from models.shufflenet.ShufflePose import createModel
-        from config.model_cfg import shufflenet_cfg as model_ls
-    elif opt.backbone == "seresnet50":
-        from models.seresnet50.FastPose import createModel
-        from config.model_cfg import seresnet50_cfg as model_ls
-    else:
-        raise ValueError("Your model name is wrong")
+class Pruner:
+    def __init__(self, model_path, model_cfg, compact_model_path="", compact_model_cfg=""):
+        self.model_path = model_path
+        self.model_cfg = model_cfg
 
-    try:
-        model_cfg = model_ls[opt.struct]
-        # opt.loadModel = weight
+        posenet.build(model_cfg)
+        self.model = posenet.model
+        posenet.load(model_path)
+        self.backbone = posenet.backbone
+        self.kps = posenet.kps
+        self.se_ratio = posenet.se_ratio
 
-        model = createModel(cfg=model_cfg)
-    except:
-        model = createModel(cfg=opt.struct)
+        if not compact_model_path or not compact_model_cfg:
+            self.compact_model_path = "buffer/pruned_{}.pth".format(self.backbone)
+            self.compact_model_cfg = "buffer/cfg_pruned_{}.json".format(self.backbone)
+        else:
+            self.compact_model_path = compact_model_path
+            self.compact_model_cfg = compact_model_cfg
 
-    model.load_state_dict(torch.load(weight))
-    if device == "cpu":
-        model.cpu()
-    else:
-        model.cuda()
-    # torch_out = torch.onnx.export(model, torch.rand(1, 3, 224, 224), "onnx_pose.onnx", verbose=False,)
+        if self.backbone == "seresnet18":
+            from utils.prune_utils import obtain_prune_idx2 as obtain_prune
+            self.init_weight = init_weights_from_loose_model
+        elif self.backbone == "seresnet50" or self.backbone == "seresnet101":
+            from utils.prune_utils import obtain_prune_idx_50 as obtain_prune
+            self.init_weight = init_weights_from_loose_model50
+        else:
+            raise ValueError("{} is not supported for pruning! ".format(self.backbone))
+        self.obtain_prune_idx = obtain_prune
 
-    tmp = "./buffer/model.txt"
-    print(model, file=open(tmp, 'w'))
-    if opt.backbone == "seresnet18":
-        all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx2(model)
-    elif opt.backbone == "seresnet50" or opt.backbone == "seresnet101":
-        all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = obtain_prune_idx_50(model)
-    else:
-        raise ValueError("Not a correct name")
-    prune_idx = normal_idx + head_idx
-    sorted_bn = sort_bn(model, prune_idx)
+    def run(self, threshold):
+        all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = self.obtain_prune_idx(self.model)
+        prune_idx = normal_idx + head_idx
+        sorted_bn = sort_bn(self.model, prune_idx)
+        threshold = obtain_bn_threshold(self.model, sorted_bn, threshold/100)
+        pruned_filters, pruned_maskers = obtain_filters_mask(self.model, prune_idx, threshold)
 
-    threshold = obtain_bn_threshold(model, sorted_bn, thresh/100)
-    pruned_filters, pruned_maskers = obtain_filters_mask(model, prune_idx, threshold)
-    CBLidx2mask = {idx-1: mask.astype('float32') for idx, mask in zip(all_bn_id, pruned_maskers)}
-    CBLidx2filter = {idx-1: filter_num for idx, filter_num in zip(all_bn_id, pruned_filters)}
+        CBLidx2mask = {idx - 1: mask.astype('float32') for idx, mask in zip(all_bn_id, pruned_maskers)}
+        CBLidx2filter = {idx - 1: filter_num for idx, filter_num in zip(all_bn_id, pruned_filters)}
 
-    for head in head_idx:
-        adjust_mask(CBLidx2mask, CBLidx2filter, model, head)
+        for head in head_idx:
+            adjust_mask(CBLidx2mask, CBLidx2filter, self.model, head)
 
-    valid_filter = {k: v for k, v in CBLidx2filter.items() if k+1 in prune_idx}
-    channel_str = ",".join(map(lambda x: str(x), valid_filter.values()))
-    print(channel_str, file=open(compact_model_cfg, "w"))
-    m_cfg = {
-        'backbone': opt.backbone,
-        'keypoints': opt.kps,
-        'se_ratio': opt.se_ratio,
-        "first_conv": CBLidx2filter[all_bn_id[0] - 1],
-        'residual': get_residual_channel([filt for _, filt in valid_filter.items()], opt.backbone),
-        'channels': get_channel_dict([filt for _, filt in valid_filter.items()], opt.backbone),
-        "head_type": "pixel_shuffle",
-        "head_channel": [CBLidx2filter[i-1] for i in head_idx]
-    }
-    write_cfg(m_cfg, "buffer/cfg_{}.json".format(opt.backbone))
+        valid_filter = {k: v for k, v in CBLidx2filter.items() if k + 1 in prune_idx}
+        channel_str = ",".join(map(lambda x: str(x), valid_filter.values()))
+        print(channel_str, file=open("buffer/cfg_{}".format(self.backbone), "w"))
+        m_cfg = {
+            'backbone': self.backbone,
+            'keypoints': self.kps,
+            'se_ratio': self.se_ratio,
+            "first_conv": CBLidx2filter[all_bn_id[0] - 1],
+            'residual': get_residual_channel([filt for _, filt in valid_filter.items()], self.backbone),
+            'channels': get_channel_dict([filt for _, filt in valid_filter.items()], self.backbone),
+            "head_type": "pixel_shuffle",
+            "head_channel": [CBLidx2filter[i - 1] for i in head_idx]
+        }
+        write_cfg(m_cfg, self.compact_model_cfg)
 
-    compact_model = createModel(cfg=compact_model_cfg).cpu()
-    print(compact_model, file=open("buffer/pruned.txt", 'w'))
-
-    if opt.backbone == "seresnet18":
-        init_weights_from_loose_model(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
-    elif opt.backbone == "seresnet50" or opt.backbone == "seresnet101":
-        init_weights_from_loose_model50(compact_model, model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
-    torch.save(compact_model.state_dict(), compact_model_path)
+        posenet.build(self.compact_model_cfg)
+        compact_model = posenet.model
+        self.init_weight(compact_model, self.model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
+        torch.save(compact_model.state_dict(), self.compact_model_path)
 
 
 if __name__ == '__main__':
-    opt.backbone = "seresnet50"
-    opt.se_ratio = 16
-    opt.kps = 17
-    pruning("exp/seresnet50/origin/200.pkl", "buffer/pruned_{}.pth".format(opt.backbone),
-            "buffer/cfg_{}.txt".format(opt.backbone))
+    model_path = "exp/test_structure/seres18_17kps_se1/seres18_17kps_se1_best_acc.pkl"
+    model_cfg = "exp/test_structure/seres18_17kps_se1/cfg.json"
+    pruner = Pruner(model_path, model_cfg)
+    pruner.run(80)
