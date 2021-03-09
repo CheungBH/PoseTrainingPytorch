@@ -339,7 +339,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     print(channel_str, file=open(compact_model_cfg, "w"))
     m_cfg = {
         'backbone': opt.backbone,
-        'keyponits': opt.kps,
+        'keypoints': opt.kps,
         'se_ratio': opt.se_ratio,
         "first_conv": valid_filter[all_bn_id[0]-1],
         'residual': get_residual_channel([filt for _, filt in valid_filter.items()], opt.backbone),
@@ -359,8 +359,8 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
 
 
 if __name__ == '__main__':
-    opt.backbone = "seresnet18"
+    opt.backbone = "seresnet101"
     opt.se_ratio = 1
     opt.kps = 17
-    pruning("exp/seresnet18/sparse/sparse_best_acc.pkl", "buffer/pruned_shortcut_{}.pth".format(opt.backbone),
+    pruning("exp/seresnet101/sparse/sparse_40.pkl", "buffer/pruned_shortcut_{}.pth".format(opt.backbone),
             "buffer/cfg_shortcut_{}.txt".format(opt.backbone))

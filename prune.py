@@ -209,7 +209,7 @@ def pruning(weight, compact_model_path, compact_model_cfg="cfg.txt", thresh=80, 
     print(channel_str, file=open(compact_model_cfg, "w"))
     m_cfg = {
         'backbone': opt.backbone,
-        'keyponits': opt.kps,
+        'keypoints': opt.kps,
         'se_ratio': opt.se_ratio,
         "first_conv": CBLidx2filter[all_bn_id[0] - 1],
         'residual': get_residual_channel([filt for _, filt in valid_filter.items()], opt.backbone),

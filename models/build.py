@@ -10,6 +10,7 @@ class ModelBuilder:
         self.backbone = self.cfg["backbone"]
         self.head = self.cfg["head_type"]
         self.model = self.build_model()
+        self.kps = self.cfg["keypoints"]
 
     def build_model(self):
         layers = []

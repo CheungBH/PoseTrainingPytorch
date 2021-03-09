@@ -16,7 +16,7 @@ def parse_cfg(imgdir):
         "backbone": load_dict["backbone"],
         "residual": load_dict["residual"],
         "channels": load_dict["channels"],
-        "keyponits": load_dict["keyponits"],
+        "keypoints": load_dict["keypoints"],
         "se_ratio": load_dict["se_ratio"],
         "head_type": load_dict["head_type"],
         "head_channel": load_dict["head_channel"],
@@ -26,7 +26,7 @@ def parse_cfg(imgdir):
 
 
 def parse_DUC(cfg):
-    return cfg["head_channel"], cfg["keyponits"]
+    return cfg["head_channel"], cfg["keypoints"]
 
 
 def parse_se(cfg):

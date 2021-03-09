@@ -1,10 +1,10 @@
 import json
 import os
-res = {'backbone':'seresnet18','keyponits':17,'se_ratio':16,'residual':[100,200,300,400],'channels':{1: [[61], [62]],2: [[13], [15]],3: [[9], [44]],4: [[16], [122]]},"head_type": "pixelshuffle","head_channel":[248,124]}
+res = {'backbone':'seresnet18','keypoints':17,'se_ratio':16,'residual':[100,200,300,400],'channels':{1: [[61], [62]],2: [[13], [15]],3: [[9], [44]],4: [[16], [122]]},"head_type": "pixelshuffle","head_channel":[248,124]}
 
 
-# res = {"1":{'backbone':'seresnet18','keyponits':17,'se_ratio':16,'residual':[100,200,300,400],'channels':{1: [[61], [62]],2: [[13], [15]],3: [[9], [44]],4: [[16], [122]]},"head":[248,124]},
-#        '2':{'backbone':'seresnet50','keyponits':17,'se_ratio':16,'residual':[100,200,300,400],'channels':{1: [[61], [62]],2: [[13], [15]],3: [[9], [44]],4: [[16], [122]]},"head":[248,124]}}
+# res = {"1":{'backbone':'seresnet18','keypoints':17,'se_ratio':16,'residual':[100,200,300,400],'channels':{1: [[61], [62]],2: [[13], [15]],3: [[9], [44]],4: [[16], [122]]},"head":[248,124]},
+#        '2':{'backbone':'seresnet50','keypoints':17,'se_ratio':16,'residual':[100,200,300,400],'channels':{1: [[61], [62]],2: [[13], [15]],3: [[9], [44]],4: [[16], [122]]},"head":[248,124]}}
 
 def write_cfg(res):
     Obj = json.dumps(res)
@@ -22,7 +22,7 @@ def parse_cfg(imgdir):
         "backbone": load_dict["backbone"],
         "residual": load_dict["residual"],
         "channels": load_dict["channels"],
-        "keyponits": load_dict["keyponits"],
+        "keypoints": load_dict["keypoints"],
         "se_ratio": load_dict["se_ratio"],
         "head_type": load_dict["head_type"],
         "head_channel": load_dict["head_channel"]

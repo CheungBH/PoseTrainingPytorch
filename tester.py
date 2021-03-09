@@ -20,23 +20,22 @@ class Tester:
         self.option_file = check_option_file(model_path)
         self.print = print_info
         self.cfg = model_cfg
+        if not self.cfg:
+            self.kps = posenet
 
-    def build(self, backbone, kps, cfg, DUC, crit, se_ratio=16, model_height=256, model_width=256):
-        from src.opt import opt
-        opt.se_ratio = se_ratio
-        posenet.build(backbone, cfg)
+    def build(self, kps, cfg, crit, model_height=256, model_width=256):
+        posenet.build(cfg)
+        self.kps = kps
         self.model = posenet.model
         self.crit = crit
         self.build_criterion(self.crit)
-        self.backbone = backbone
-        self.kps = kps
         self.height = model_height
         self.width = model_width
         posenet.load(self.model_path)
 
     def build_with_opt(self):
         self.load_from_option()
-        posenet.build(self.backbone, self.cfg)
+        posenet.build(self.cfg)
         self.model = posenet.model
         self.build_criterion(self.crit)
         posenet.load(self.model_path)
@@ -121,18 +120,10 @@ class Tester:
     def load_from_option(self):
         if os.path.exists(self.option_file):
             self.option = torch.load(self.option_file)
-            from src.opt import opt
-            try:
-                opt.se_ratio = self.option.se_ratio
-            except:
-                opt.se_ratio = 1
             self.height = self.option.inputResH
             self.width = self.option.inputResW
-            self.backbone = self.option.backbone
-            self.cfg = self.option.struct
-            self.kps = self.option.kps
-            self.DUC = self.option.DUC
             self.crit = self.option.crit
+            self.kps = self.option.kps
         else:
             raise FileNotFoundError("The option.pkl doesn't exist! ")
 
@@ -149,15 +140,15 @@ class Tester:
         return benchmark, performance, parts_performance, self.body_part_thresh
 
 
-def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True, DUC=0, kps=17,
-               backbone="seresnet101", cfg="0", criteria="MSE", se=16, height=256, width=256):
+def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True, kps=17, cfg=None, criteria="MSE",
+               height=256, width=256):
     from dataset.loader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker, shuffle=False)
     tester = Tester(test_loader, model_path)
     if use_option:
         tester.build_with_opt()
     else:
-        tester.build(backbone, kps, cfg, DUC, criteria, se, height, width)
+        tester.build(kps, cfg, criteria, height, width)
     tester.test()
     tester.get_benchmark()
     benchmark, performance, parts, thresh = tester.summarize()
@@ -166,4 +157,6 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
 
 if __name__ == '__main__':
     test_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    test_model("exp/test/default/default_best_acc.pkl", test_data)
+    model_path = "exp/test/default/default_best_acc.pkl"
+    model_cfg = ""
+    test_model(model_path, test_data, cfg=model_cfg)

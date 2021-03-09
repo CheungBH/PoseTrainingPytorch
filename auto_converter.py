@@ -19,7 +19,7 @@ class AutoConverter:
                 file_path = os.path.join(self.model_folder, folder, file)
                 if "option" not in file and ".pkl" in file or ".pth" in file:
                     model = file_path
-                elif "cfg" in file or "config" in file:
+                elif "cfg" in file or "json" in file:
                     cfg = file_path
                 else:
                     continue
