@@ -106,7 +106,7 @@ class Pruner:
 
     def run(self, threshold):
         all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = self.obtain_prune_idx(self.model)
-        prune_idx = normal_idx + head_idx
+        prune_idx = normal_idx  # + head_idx
         sorted_bn = sort_bn(self.model, prune_idx)
         threshold = obtain_bn_threshold(self.model, sorted_bn, threshold/100)
         pruned_filters, pruned_maskers = obtain_filters_mask(self.model, prune_idx, threshold)
@@ -114,8 +114,8 @@ class Pruner:
         CBLidx2mask = {idx - 1: mask.astype('float32') for idx, mask in zip(all_bn_id, pruned_maskers)}
         CBLidx2filter = {idx - 1: filter_num for idx, filter_num in zip(all_bn_id, pruned_filters)}
 
-        for head in head_idx:
-            adjust_mask(CBLidx2mask, CBLidx2filter, self.model, head)
+        # for head in head_idx:
+        #     adjust_mask(CBLidx2mask, CBLidx2filter, self.model, head)
 
         valid_filter = {k: v for k, v in CBLidx2filter.items() if k + 1 in prune_idx}
         channel_str = ",".join(map(lambda x: str(x), valid_filter.values()))
@@ -139,7 +139,7 @@ class Pruner:
 
 
 if __name__ == '__main__':
-    model_path = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
-    model_cfg = "exp/test_structure/seres18_17kps/cfg.json"
+    model_path = "exp/test_structure/res101_17kps_/res101_17kps__best_acc.pkl"
+    model_cfg = "exp/test_structure/res101_17kps_/cfg.json"
     pruner = Pruner(model_path, model_cfg)
     pruner.run(80)

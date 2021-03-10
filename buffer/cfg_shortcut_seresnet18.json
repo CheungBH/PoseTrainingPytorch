@@ -1,0 +1,1 @@
+{"backbone": "seresnet18", "keypoints": 17, "se_ratio": 16, "first_conv": 35, "residual": [35, 75, 139, 200], "channels": {"1": [[13], [14]], "2": [[23], [27]], "3": [[53], [69]], "4": [[94], [96]]}, "head_type": "pixel_shuffle", "head_channel": [188, 4]}

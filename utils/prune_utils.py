@@ -232,10 +232,10 @@ def get_residual_channel(channel_ls, backbone):
 def get_channel_dict(channel_ls, backbone):
     if backbone == "seresnet18":
         if len(channel_ls) < 12:
-            return {1: [[channel_ls[1]], [channel_ls[2]]],
-                    2: [[channel_ls[3]], [channel_ls[4]]],
-                    3: [[channel_ls[5]], [channel_ls[6]]],
-                    4: [[channel_ls[7]], [channel_ls[8]]]}
+            return {1: [[channel_ls[0]], [channel_ls[1]]],
+                    2: [[channel_ls[2]], [channel_ls[3]]],
+                    3: [[channel_ls[4]], [channel_ls[5]]],
+                    4: [[channel_ls[6]], [channel_ls[7]]]}
         else:
             return {1: [[channel_ls[1]], [channel_ls[3]]],
                     2: [[channel_ls[5]], [channel_ls[8]]],

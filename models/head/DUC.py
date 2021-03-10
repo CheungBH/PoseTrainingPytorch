@@ -50,10 +50,11 @@ class DUC_head(nn.Module):
 def create(cfg_file):
     cfg = parse_cfg(cfg_file)
     backbone = cfg["backbone"]
+    head_inp = cfg["residual"][-1]
     if backbone == "seresnet18" or backbone == "mobilenet":
-        return DUC_head(cfg, 512)
+        return DUC_head(cfg, head_inp)
     elif backbone == "seresnet101" or backbone == "seresnet50":
-        return DUC_head(cfg, 2048)
+        return DUC_head(cfg, head_inp)
 
 
 def test():
