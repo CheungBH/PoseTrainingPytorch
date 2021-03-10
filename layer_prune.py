@@ -21,6 +21,12 @@ def obtain_filters_mask(model, all_bn_idx, prune_layers):
     return CBLidx2mask
 
 
+def print_mean(bn_means, shortcut_idx, prune_shortcuts):
+    for idx, (bn_mean, shortcut) in enumerate(zip(bn_means, shortcut_idx)):
+        print(f'shortcut index: {idx:>3d} \t layer num: {shortcut:>4d} \t bn mean: {bn_mean:>4f}')
+    print("{} layers will be pruned: {}".format(len(prune_shortcuts), prune_shortcuts))
+
+
 class LayerPruner:
     def __init__(self, model_path, model_cfg, compact_model_path="", compact_model_cfg=""):
         self.model_path = model_path
@@ -66,8 +72,10 @@ class LayerPruner:
         for i, idx in enumerate(shortcut_idx):
             bn_mean[i] = list(self.model.named_modules())[idx][1].weight.data.abs().mean().clone()
         _, sorted_index_thre = torch.sort(bn_mean)
+
         prune_shortcuts = torch.tensor(shortcut_idx)[[sorted_index_thre[:prune_num]]]
         prune_shortcuts = [int(x) for x in prune_shortcuts]
+        print_mean(bn_mean, shortcut_idx, prune_shortcuts)
 
         # prune_layers = []
         # for prune_shortcut in prune_shortcuts:
@@ -103,4 +111,4 @@ if __name__ == '__main__':
     model_path = "exp/test_structure/seres101/seres101_best_acc.pkl"
     model_cfg = 'exp/test_structure/seres101/cfg.json'
     LP = LayerPruner(model_path, model_cfg)
-    LP.run(2)
+    LP.run(4)
