@@ -327,3 +327,13 @@ def get_channel_dict(channel_ls, backbone):
                     3: [[cl[lay3_idx[2*i]], cl[lay3_idx[2*i+1]]] for i in range(int(len(lay3_idx)/2))],
                     4: [[cl[94], cl[95]], [cl[98], cl[99]], [cl[101], cl[102]]]
                     }
+
+
+def obtain_channel_with_block_num(block_nums):
+    channels_basic = [64, 128, 256, 512]
+    from collections import defaultdict
+    channel_dict = defaultdict()
+    for idx, (block_num, channel) in enumerate(zip(block_nums, channels_basic)):
+        channel_dict[idx+1] = [[channel, channel] for _ in range(block_num)]
+    return channel_dict
+

@@ -16,6 +16,10 @@ class PoseModel:
         self.kps = self.cfg["keypoints"]
         self.se_ratio = self.cfg["se_ratio"]
         self.block_nums = parse_num_block(self.cfg)
+        self.first_conv = self.cfg["first_conv"]
+        self.block_nums = parse_num_block(self.cfg)
+        self.residual = self.cfg["residual"]
+        self.head_channel = self.cfg["head_channel"]
 
         self.model = PoseNet(cfg, self.backbone, self.head)
         self.feature_layer_num, self.feature_layer_name = self.model.feature_layer_num, self.model.feature_layer_name
