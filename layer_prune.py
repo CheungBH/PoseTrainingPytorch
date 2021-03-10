@@ -1,30 +1,10 @@
 import torch
 from models.pose_model import PoseModel
-from utils.prune_utils import obtain_prune_idx_layer, obtain_channel_with_block_num
-import numpy as np
+from utils.prune_utils import obtain_prune_idx_layer, obtain_channel_with_block_num, \
+    init_weights_from_loose_model_layer, print_mean, obtain_layer_filters_mask
 from models.utils.utils import write_cfg
+
 posenet = PoseModel(device="cpu")
-
-
-def obtain_filters_mask(model, all_bn_idx, prune_layers):
-    filters_mask = []
-    for idx in all_bn_idx:
-        bn_module = list(model.named_modules())[idx][1]
-        mask = np.ones(bn_module.weight.data.shape[0], dtype='float32')
-        filters_mask.append(mask.copy())
-    CBLidx2mask = {idx: mask for idx, mask in zip(all_bn_idx, filters_mask)}
-    for i in prune_layers:
-        # for i in [idx, idx - 1]:
-        bn_module = list(model.named_modules())[i][1]
-        mask = np.zeros(bn_module.weight.data.shape[0], dtype='float32')
-        CBLidx2mask[i] = mask.copy()
-    return CBLidx2mask
-
-
-def print_mean(bn_means, shortcut_idx, prune_shortcuts):
-    for idx, (bn_mean, shortcut) in enumerate(zip(bn_means, shortcut_idx)):
-        print(f'shortcut index: {idx:>3d} \t layer num: {shortcut:>4d} \t bn mean: {bn_mean:>4f}')
-    print("{} layers will be pruned: {}".format(len(prune_shortcuts), prune_shortcuts))
 
 
 class LayerPruner:
@@ -77,14 +57,14 @@ class LayerPruner:
         prune_shortcuts = [int(x) for x in prune_shortcuts]
         print_mean(bn_mean, shortcut_idx, prune_shortcuts)
 
-        # prune_layers = []
-        # for prune_shortcut in prune_shortcuts:
-        #     target_idx = all_bn_id.index(prune_shortcut)
-        #     for i in range(3):
-        #         prune_layers.append(all_bn_id[target_idx-i])
-        #
-        # CBLidx2mask = obtain_filters_mask(self.model, all_bn_id, prune_layers)
-        #
+        prune_layers = []
+        for prune_shortcut in prune_shortcuts:
+            target_idx = all_bn_id.index(prune_shortcut)
+            for i in range(3):
+                prune_layers.append(all_bn_id[target_idx-i])
+
+        CBLidx2mask = obtain_layer_filters_mask(self.model, all_bn_id, prune_layers)
+
         pruned_locations = self.obtain_block_idx(shortcut_idx, prune_shortcuts)
         blocks = self.block_num
         for pruned_location in pruned_locations:
@@ -103,12 +83,16 @@ class LayerPruner:
         write_cfg(m_cfg, self.compact_model_cfg)
         posenet.build(self.compact_model_cfg)
         compact_model = posenet.model
-        # self.init_weight(compact_model, self.model, CBLidx2mask, valid_filter, downsample_idx, head_idx)
+        # compact_all_bn = [idx for idx, mod in enumerate(list(compact_model.named_modules()))
+        #                   if isinstance(mod[1], torch.nn.BatchNorm2d)]
+        compact_all_bn_idx, compact_other_idx, compact_shortcut_idx, compact_downsample_idx = \
+            obtain_prune_idx_layer(compact_model)
+        init_weights_from_loose_model_layer(compact_model, self.model, CBLidx2mask, compact_all_bn_idx)
         torch.save(compact_model.state_dict(), self.compact_model_path)
 
 
 if __name__ == '__main__':
-    model_path = "exp/test_structure/seres101/seres101_best_acc.pkl"
-    model_cfg = 'exp/test_structure/seres101/cfg.json'
+    model_path = "exp/test_structure/seres50_17kps/seres50_17kps_best_acc.pkl"
+    model_cfg = 'exp/test_structure/seres50_17kps/cfg.json'
     LP = LayerPruner(model_path, model_cfg)
     LP.run(4)

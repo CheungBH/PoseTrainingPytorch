@@ -244,6 +244,46 @@ def merge_mask(CBLidx2mask, CBLidx2filter, mask_groups):
     return CBLidx2mask, CBLidx2filter
 
 
+def init_weights_from_loose_model_layer(compact_model, loose_model, CBLidx2mask, compact_all_bn):
+    # layer_masks = [v for v in CBLidx2mask.values() if sum(v) > 0]
+    loose_bn_idx = [k for k, v in CBLidx2mask.items() if sum(v) > 0]
+
+    for i, (compact_idx, loose_idx) in enumerate(zip(compact_all_bn, loose_bn_idx)):
+        out_channel_idx = np.argwhere(CBLidx2mask[loose_idx])[:, 0].tolist()
+        in_channel_idx = list(range(list(compact_model.named_modules())[compact_idx-1][1].in_channels))
+
+        compact_bn, loose_bn = list(compact_model.modules())[compact_idx], list(loose_model.modules())[loose_idx]
+        compact_bn.weight.data = loose_bn.weight.data[out_channel_idx].clone()
+        compact_bn.bias.data = loose_bn.bias.data[out_channel_idx].clone()
+        compact_bn.running_mean.data = loose_bn.running_mean.data[out_channel_idx].clone()
+        compact_bn.running_var.data = loose_bn.running_var.data[out_channel_idx].clone()
+
+        compact_conv, loose_conv = list(compact_model.modules())[compact_idx-1], \
+                                   list(loose_model.modules())[loose_idx-1]
+        tmp = loose_conv.weight.data[:, in_channel_idx, :, :].clone()
+        compact_conv.weight.data = tmp[out_channel_idx, :, :, :].clone()
+
+
+def print_mean(bn_means, shortcut_idx, prune_shortcuts):
+    for idx, (bn_mean, shortcut) in enumerate(zip(bn_means, shortcut_idx)):
+        print(f'shortcut index: {idx:>3d} \t layer num: {shortcut:>4d} \t bn mean: {bn_mean:>4f}')
+    print("{} layers will be pruned: {}".format(len(prune_shortcuts), prune_shortcuts))
+
+
+def obtain_layer_filters_mask(model, all_bn_idx, prune_layers):
+    filters_mask = []
+    for idx in all_bn_idx:
+        bn_module = list(model.named_modules())[idx][1]
+        mask = np.ones(bn_module.weight.data.shape[0], dtype='float32')
+        filters_mask.append(mask.copy())
+    CBLidx2mask = {idx: mask for idx, mask in zip(all_bn_idx, filters_mask)}
+    for i in prune_layers:
+        # for i in [idx, idx - 1]:
+        bn_module = list(model.named_modules())[i][1]
+        mask = np.zeros(bn_module.weight.data.shape[0], dtype='float32')
+        CBLidx2mask[i] = mask.copy()
+    return CBLidx2mask
+
 # def merge_mask(CBLidx2mask, CBLidx2filter, backbone):
 #     if backbone == "seresnet18":
 #         mask_groups = [[2,11,24], [41,31,47],[64,54,70],[77,87,93]]
