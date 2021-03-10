@@ -54,16 +54,10 @@ class LayerPruner:
 
     @staticmethod
     def get_layer_block(idx, candidate_block_num):
-        if idx < candidate_block_num[0]:
-            return 0
-        elif idx < candidate_block_num[1]:
-            return 1
-        elif idx < candidate_block_num[2]:
-            return 2
-        elif idx < candidate_block_num[3]:
-            return 3
-        else:
-            raise IndexError("????????")
+        for i in range(len(candidate_block_num)):
+            if idx < sum(candidate_block_num[:i+1]):
+                return i
+        raise ValueError("Wrong index! ")
 
     def run(self, prune_num):
         all_bn_id, other_idx, shortcut_idx, downsample_idx = obtain_prune_idx_layer(self.model)
@@ -109,4 +103,4 @@ if __name__ == '__main__':
     model_path = "exp/test_structure/seres101/seres101_best_acc.pkl"
     model_cfg = 'exp/test_structure/seres101/cfg.json'
     LP = LayerPruner(model_path, model_cfg)
-    LP.run(4)
+    LP.run(2)
