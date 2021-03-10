@@ -28,9 +28,7 @@ def obtain_prune_idx2(model):
         if isinstance(layer[1], nn.BatchNorm2d):
             all_bn_id.append(i)
             if "backbone" in layer[0]:
-                if i < 5:
-                    shortcut_idx.append(i)
-                elif "downsample" in layer[0]:
+                if i < 5 or "downsample" in layer[0]:
                     downsample_idx.append(i)
                 elif "bn1" in layer[0] and i > 5:
                     normal_idx.append(i)
@@ -186,13 +184,15 @@ def adjust_mask(CBLidx2mask, CBLidx2filter, model, head_idx):
         CBLidx2mask[head_idx-1][idx] = 1
 
 
-def adjust_final_mask(CBLidx2mask, CBLidx2filter, model, backbone):
-    if backbone == "seresnet18":
-        final_layer_group, final_conv_idx = [77, 87, 93], 93
-    elif backbone == "seresnet50":
-        final_layer_group, final_conv_idx = [136, 146, 153, 160], 160
-    elif backbone == "seresnet101":
-        final_layer_group, final_conv_idx = [255, 265, 272, 279], 279
+def adjust_final_mask(CBLidx2mask, CBLidx2filter, model, final_layer_groups):
+    # if backbone == "seresnet18":
+    #     #     final_layer_group, final_conv_idx = [77, 87, 93], 93
+    #     # elif backbone == "seresnet50":
+    #     #     final_layer_group, final_conv_idx = [136, 146, 153, 160], 160
+    #     # elif backbone == "seresnet101":
+    #     #     final_layer_group, final_conv_idx = [255, 265, 272, 279], 279
+
+    final_conv_idx = final_layer_groups[-1]
 
     final_CNN_weight = list(model.named_modules())[final_conv_idx+1][1].weight.data.abs().clone()
     final_CNN_mask = CBLidx2mask[final_conv_idx]
@@ -205,10 +205,67 @@ def adjust_final_mask(CBLidx2mask, CBLidx2filter, model, backbone):
     remaining_idx = 4 - num % 4
     _, sorted_idx = final_CNN_weight.sort(descending=True)
     padding_idx = sorted_idx[:remaining_idx]
-    for layer in final_layer_group:
+    for layer in final_layer_groups:
         CBLidx2filter[layer] = num + remaining_idx
         for idx in padding_idx:
             CBLidx2mask[layer][idx] = 1
+
+
+def merge_mask(CBLidx2mask, CBLidx2filter, mask_groups):
+    # if backbone == "seresnet50":
+    #     mask_groups = [[13, 23, 30, 37],
+    #                    [45, 55, 62, 69, 76],
+    #                    [84, 94, 101, 108, 115, 122, 129],
+    #                    [137, 147, 154, 161]]
+    # elif backbone == "seresnet18":
+    #     mask_groups = [[2,11,24], [41,31,47],[64,54,70],[77,87,93]]
+    # elif backbone == "seresnet101":
+    #     mask_groups = [[13, 23, 30, 37],
+    #                    [45, 55, 62, 69, 76],
+    #                    [84, 94, 101, 108, 115, 122, 129, 136, 143, 150, 157, 164, 171, 178, 185, 192, 199, 206, 213,
+    #                     220, 227, 234, 241, 248],
+    #                    [256, 266, 273, 280]]
+
+    for layers in mask_groups:
+        Merge_masks = []
+        for layer in layers:
+            Merge_masks.append(torch.Tensor(CBLidx2mask[layer-1]).unsqueeze(0))
+
+        Merge_masks = torch.cat(Merge_masks, 0)
+        merge_mask = (torch.sum(Merge_masks, dim=0) > 0).float()
+
+        filter_num = int(torch.sum(merge_mask).item())
+        merge_mask = np.array(merge_mask)
+
+        for layer in layers:
+            CBLidx2mask[layer-1] = merge_mask
+            CBLidx2filter[layer-1] = filter_num
+
+    return CBLidx2mask, CBLidx2filter
+
+
+# def merge_mask(CBLidx2mask, CBLidx2filter, backbone):
+#     if backbone == "seresnet18":
+#         mask_groups = [[2,11,24], [41,31,47],[64,54,70],[77,87,93]]
+#
+#     for layer1, layer2, layer3 in mask_groups:
+#         Merge_masks = []
+#         Merge_masks.append(torch.Tensor(CBLidx2mask[layer1]).unsqueeze(0))
+#         Merge_masks.append(torch.Tensor(CBLidx2mask[layer2]).unsqueeze(0))
+#         Merge_masks.append(torch.Tensor(CBLidx2mask[layer3]).unsqueeze(0))
+#         Merge_masks = torch.cat(Merge_masks, 0)
+#         merge_mask = (torch.sum(Merge_masks, dim=0) > 0).float()
+#
+#         filter_num = int(torch.sum(merge_mask).item())
+#         merge_mask = np.array(merge_mask)
+#         CBLidx2mask[layer1] = merge_mask
+#         CBLidx2mask[layer2] = merge_mask
+#         CBLidx2mask[layer3] = merge_mask
+#
+#         CBLidx2filter[layer1] = filter_num
+#         CBLidx2filter[layer2] = filter_num
+#         CBLidx2filter[layer3] = filter_num
+#     return CBLidx2mask, CBLidx2filter
 
 
 def get_residual_channel(channel_ls, backbone):

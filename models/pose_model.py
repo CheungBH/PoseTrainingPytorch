@@ -1,7 +1,7 @@
 import torch
 from models.utils.benchmark import print_model_param_flops, print_model_param_nums, get_inference_time
 from models.build import PoseNet
-from .utils.utils import parse_cfg
+from .utils.utils import parse_cfg, parse_num_block
 
 
 class PoseModel:
@@ -15,6 +15,7 @@ class PoseModel:
         self.head = self.cfg["head_type"]
         self.kps = self.cfg["keypoints"]
         self.se_ratio = self.cfg["se_ratio"]
+        self.block_nums = parse_num_block(self.cfg)
 
         self.model = PoseNet(cfg, self.backbone, self.head)
         self.feature_layer_num, self.feature_layer_name = self.model.feature_layer_num, self.model.feature_layer_name

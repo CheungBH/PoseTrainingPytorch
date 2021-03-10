@@ -1,6 +1,6 @@
 from models.pose_model import PoseModel
 from utils.prune_utils import sort_bn, obtain_bn_threshold, obtain_filters_mask, adjust_mask, get_residual_channel, \
-    get_channel_dict, adjust_final_mask
+    get_channel_dict, adjust_final_mask, merge_mask
 from models.utils.utils import write_cfg
 import numpy as np
 import torch
@@ -77,63 +77,6 @@ def init_weights_from_loose_model_shortcut50(compact_model, loose_model, CBLidx2
         compact_conv.weight.data = tmp[out_channel_idx, :, :, :].clone()
 
 
-def merge_mask50(CBLidx2mask, CBLidx2filter, backbone):
-    if backbone == "seresnet50":
-        mask_groups = [[13, 23, 30, 37],
-                       [45, 55, 62, 69, 76],
-                       [84, 94, 101, 108, 115, 122, 129],
-                       [137, 147, 154, 161]]
-    elif backbone == "seresnet18":
-        mask_groups = [[2,11,24], [41,31,47],[64,54,70],[77,87,93]]
-    elif backbone == "seresnet101":
-        mask_groups = [[13, 23, 30, 37],
-                       [45, 55, 62, 69, 76],
-                       [84, 94, 101, 108, 115, 122, 129, 136, 143, 150, 157, 164, 171, 178, 185, 192, 199, 206, 213,
-                        220, 227, 234, 241, 248],
-                       [256, 266, 273, 280]]
-
-    for layers in mask_groups:
-        Merge_masks = []
-        for layer in layers:
-            Merge_masks.append(torch.Tensor(CBLidx2mask[layer-1]).unsqueeze(0))
-
-        Merge_masks = torch.cat(Merge_masks, 0)
-        merge_mask = (torch.sum(Merge_masks, dim=0) > 0).float()
-
-        filter_num = int(torch.sum(merge_mask).item())
-        merge_mask = np.array(merge_mask)
-
-        for layer in layers:
-            CBLidx2mask[layer-1] = merge_mask
-            CBLidx2filter[layer-1] = filter_num
-
-    return CBLidx2mask, CBLidx2filter
-
-
-def merge_mask(CBLidx2mask, CBLidx2filter, backbone):
-    if backbone == "seresnet18":
-        mask_groups = [[2,11,24], [41,31,47],[64,54,70],[77,87,93]]
-
-    for layer1, layer2, layer3 in mask_groups:
-        Merge_masks = []
-        Merge_masks.append(torch.Tensor(CBLidx2mask[layer1]).unsqueeze(0))
-        Merge_masks.append(torch.Tensor(CBLidx2mask[layer2]).unsqueeze(0))
-        Merge_masks.append(torch.Tensor(CBLidx2mask[layer3]).unsqueeze(0))
-        Merge_masks = torch.cat(Merge_masks, 0)
-        merge_mask = (torch.sum(Merge_masks, dim=0) > 0).float()
-
-        filter_num = int(torch.sum(merge_mask).item())
-        merge_mask = np.array(merge_mask)
-        CBLidx2mask[layer1] = merge_mask
-        CBLidx2mask[layer2] = merge_mask
-        CBLidx2mask[layer3] = merge_mask
-
-        CBLidx2filter[layer1] = filter_num
-        CBLidx2filter[layer2] = filter_num
-        CBLidx2filter[layer3] = filter_num
-    return CBLidx2mask, CBLidx2filter
-
-
 class ShortcutPruner:
     def __init__(self, model_path, model_cfg, compact_model_path="", compact_model_cfg=""):
         self.model_path = model_path
@@ -145,6 +88,7 @@ class ShortcutPruner:
         self.backbone = posenet.backbone
         self.kps = posenet.kps
         self.se_ratio = posenet.se_ratio
+        self.block_num = posenet.block_nums
 
         if not compact_model_path or not compact_model_cfg:
             self.compact_model_path = "buffer/shortcut_{}.pth".format(self.backbone)
@@ -155,11 +99,9 @@ class ShortcutPruner:
 
         if self.backbone == "seresnet18":
             from utils.prune_utils import obtain_prune_idx2 as obtain_prune
-            self.merge_mask = merge_mask
             self.init_weight = init_weights_from_loose_model_shortcut
         elif self.backbone == "seresnet50" or self.backbone == "seresnet101":
             from utils.prune_utils import obtain_prune_idx_50 as obtain_prune
-            self.merge_mask = merge_mask50
             self.init_weight = init_weights_from_loose_model_shortcut50
         else:
             raise ValueError("{} is not supported for pruning! ".format(self.backbone))
@@ -174,9 +116,18 @@ class ShortcutPruner:
         pruned_filters, pruned_maskers = obtain_filters_mask(self.model, prune_idx, threshold)
         CBLidx2mask = {idx - 1: mask.astype('float32') for idx, mask in zip(all_bn_id, pruned_maskers)}
         CBLidx2filter = {idx - 1: filter_num for idx, filter_num in zip(all_bn_id, pruned_filters)}
-        self.merge_mask(CBLidx2mask, CBLidx2filter, self.backbone)
 
-        adjust_final_mask(CBLidx2mask, CBLidx2filter, self.model, self.backbone)
+        final_layer_groups = [downsample_idx[-1] - 1] + [shortcut_idx[-1] - 1, shortcut_idx[-2] - 1]
+        mask_groups = [
+            [shortcut_idx[sum(self.block_num[:0]) + i] for i in range(self.block_num[0])] + [downsample_idx[0]],
+            [shortcut_idx[sum(self.block_num[:1]) + i] for i in range(self.block_num[1])] + [downsample_idx[1]],
+            [shortcut_idx[sum(self.block_num[:2]) + i] for i in range(self.block_num[2])] + [downsample_idx[2]],
+            [shortcut_idx[sum(self.block_num[:3]) + i] for i in range(self.block_num[3])] + [downsample_idx[3]]]
+        if self.backbone == "seresnet50" or self.backbone == "seresnet101":
+            final_layer_groups.append(shortcut_idx[-3]-1)
+
+        merge_mask(CBLidx2mask, CBLidx2filter, mask_groups)
+        adjust_final_mask(CBLidx2mask, CBLidx2filter, self.model, final_layer_groups)
         for head in head_idx:
             adjust_mask(CBLidx2mask, CBLidx2filter, self.model, head)
 
@@ -201,8 +152,8 @@ class ShortcutPruner:
 
 
 if __name__ == '__main__':
-    model_path = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
-    model_cfg = "exp/test_structure/seres18_17kps/cfg.json"
+    model_path = "exp/test_structure/seres101/seres101_best_acc.pkl"
+    model_cfg = "exp/test_structure/seres101/cfg.json"
     thresh = 80
     SP = ShortcutPruner(model_path, model_cfg)
     SP.run(thresh)

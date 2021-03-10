@@ -1,1 +1,1 @@
-{"backbone": "seresnet18", "keypoints": 17, "se_ratio": 16, "first_conv": 35, "residual": [35, 75, 139, 200], "channels": {"1": [[13], [14]], "2": [[23], [27]], "3": [[53], [69]], "4": [[94], [96]]}, "head_type": "pixel_shuffle", "head_channel": [188, 4]}
+{"backbone": "seresnet18", "keypoints": 17, "se_ratio": 0, "first_conv": 25, "residual": [25, 70, 134, 288], "channels": {"1": [[8], [12]], "2": [[26], [25]], "3": [[45], [43]], "4": [[86], [82]]}, "head_type": "pixel_shuffle", "head_channel": [168, 4]}
