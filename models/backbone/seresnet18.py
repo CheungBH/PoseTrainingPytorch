@@ -108,10 +108,10 @@ class SeResnet(nn.Module):
 
         layers = []
         if downsample is not None:
-            layers.append(block(self.inplanes, planes, cfg[0], stride, downsample, reduction=True))
+            layers.append(block(self.inplanes, planes, cfg[0], stride, downsample, reduction=reduction))
         else:
             if se:
-                layers.append(block(self.inplanes, planes, cfg[0], stride, downsample, reduction=True))
+                layers.append(block(self.inplanes, planes, cfg[0], stride, downsample, reduction=reduction))
             else:
                 layers.append(block(self.inplanes, planes, cfg[0], stride, downsample))
         self.inplanes = planes * block.expansion
