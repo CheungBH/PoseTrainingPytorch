@@ -135,7 +135,7 @@ class ErrorAnalyser:
 
 
 def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=None, criteria="MSE", height=256, width=256):
-    from dataset.loader import TestDataset
+    from dataset.dataloader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
     analyser = ErrorAnalyser(test_loader, model_path, model_cfg=cfg)
     if use_option:

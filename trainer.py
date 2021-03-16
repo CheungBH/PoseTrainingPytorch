@@ -10,7 +10,7 @@ import os
 from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
-from dataset.loader import TrainDataset
+from dataset.dataloader import TrainDataset
 from utils.utils import draw_graph
 import csv
 import shutil
@@ -75,15 +75,17 @@ class Trainer:
         self.model = posenet.model
         self.flops, self.params, self.inf_time = posenet.benchmark(height=self.opt.inputResH, width=self.opt.inputResW)
 
-        self.dataset = TrainDataset(dataset_info, hmGauss=opt.hmGauss, rotate=opt.rotate)
-        self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
-                                                                           opt.train_worker, opt.val_worker)
-
         self.build_criterion(opt.crit)
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
         posenet.model_transfer(device)
         self.model = posenet.model
         self.kps = posenet.kps
+        opt.kps = posenet.kps
+
+        self.dataset = TrainDataset(dataset_info, hmGauss=opt.hmGauss, rotate=opt.rotate)
+        self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
+                                                                           opt.train_worker, opt.val_worker)
+
 
         all_kps = [-item for item in list(range(self.kps + 1))[1:]]
         self.loss_weight = {1: all_kps}

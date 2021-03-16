@@ -5,24 +5,24 @@ import h5py
 from functools import reduce
 import numpy as np
 import torch.utils.data as data
-from src.opt import opt
-import config.config as config
+from config.config import open_source_dataset
 from utils.pose import generateSampleBox, choose_kps
 import random
 from dataset.bbox_visualize import BBoxVisualizer
 from dataset.kps_visualize import KeyPointVisualizer
 from utils.utils import check_hm, check_part
 from src.opt import opt
+from dataset.utils import KeyPointsRegister
 
 
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
-open_source_dataset = config.open_source_dataset
 draw = False
 
 
 class Mscoco(data.Dataset):
     def __init__(self, data_path, train=True, val_img_num=5887, sigma=opt.hmGauss,
                  scale_factor=(0.2, 0.3), rot_factor=40, label_type='Gaussian'):
+        import config.config as config
         self.img_folder = data_path[0]    # root image folders
         self.is_train = train           # training set or test set
         self.inputResH = opt.inputResH
@@ -69,7 +69,7 @@ class Mscoco(data.Dataset):
 
         part = choose_kps(part, self.accIdxs)
 
-        metaData = generateSampleBox(img_path, bndbox, part, len(self.accIdxs), config.train_data, sf, self,
+        metaData = generateSampleBox(img_path, bndbox, part, len(self.accIdxs), "coco", sf, self,
                                      train=self.is_train)
 
         inp, out, setMask, (pt1, pt2) = metaData
@@ -86,6 +86,9 @@ class Mscoco(data.Dataset):
 class MyDataset(data.Dataset):
     def __init__(self, data_info, train=True, sigma=1,
                  scale_factor=(0.2, 0.3), rot_factor=40, label_type='Gaussian'):
+        # import config.config as config
+        self.KP = KeyPointsRegister()
+        self.KP.init_kps(opt.kps)
         self.is_train = train  # training set or test set
         self.inputResH = opt.inputResH
         self.inputResW = opt.inputResW
@@ -96,7 +99,7 @@ class MyDataset(data.Dataset):
         self.rot_factor = rot_factor
         self.label_type = label_type
 
-        self.accIdxs = config.train_body_part
+        self.accIdxs, _ = self.KP.get_kps_name()
         self.flipRef = [item for idx, item in enumerate(origin_flipRef) if (idx + 1) * 2 < len(self.accIdxs)]
 
         self.img_train, self.img_val, self.part_train, self.part_val, self.bbox_train, self.bbox_val = \
@@ -137,7 +140,7 @@ class MyDataset(data.Dataset):
             imgname = self.img_val[index]
         part = choose_kps(part, self.accIdxs)
 
-        inp, out, setMask, pt1, pt2 = generateSampleBox(imgname, bndbox, part, len(self.accIdxs), config.train_data, sf,
+        inp, out, setMask, pt1, pt2 = generateSampleBox(imgname, bndbox, part, len(self.accIdxs), "coco", sf,
                                                         self, train=self.is_train)
 
         kps_info = (pt1, pt2, bndbox[0], imgname, part)

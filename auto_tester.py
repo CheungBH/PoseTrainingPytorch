@@ -1,4 +1,4 @@
-from dataset.loader import TestDataset
+from dataset.dataloader import TestDataset
 import os
 from tester import Tester
 from utils.test_utils import write_test_title
