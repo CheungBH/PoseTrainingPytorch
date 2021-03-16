@@ -80,6 +80,9 @@ class PoseModel:
         else:
             self.model = torch.nn.DataParallel(self.model)
 
+    def write_structure(self, path):
+        print(self.model, file=open(path, "w"))
+
 
 if __name__ == '__main__':
     PM = PoseModel(device="cpu")

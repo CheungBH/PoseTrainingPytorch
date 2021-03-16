@@ -74,6 +74,7 @@ class Trainer:
         self.freeze = posenet.is_freeze
         self.model = posenet.model
         self.flops, self.params, self.inf_time = posenet.benchmark(height=self.opt.inputResH, width=self.opt.inputResW)
+        posenet.write_structure(os.path.join(self.expFolder, "logs/model.txt"))
 
         self.build_criterion(opt.crit)
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
