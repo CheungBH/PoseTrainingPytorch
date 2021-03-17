@@ -1,8 +1,14 @@
 cmds = [
 
-    "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 2 --backbone seresnet18 --addDPG False --nEpoch 100 --se_ratio 16",
-    "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 1 --backbone seresnet18 --addDPG True --nEpoch 100",
-    "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 3 --backbone seresnet18 --LR 0.1 --addDPG True --nEpoch 10",
+    "python auto_trainer.py --dataset ceiling --expFolder kps_test --expID resnet18 --backbone seresnet18 "
+    "--cfg models/cfg/default/cfg_resnet18_13kps.json --nEpochs 100",
+    "python auto_trainer.py --dataset ceiling --expFolder kps_test --expID resnet50 --backbone seresnet50 "
+    "--cfg models/cfg/default/cfg_resnet50_13kps.json --nEpochs 10",
+    "python auto_trainer.py --dataset ceiling --expFolder kps_test --expID seresnet18 --backbone seresnet18 "
+    "--cfg models/cfg/default/cfg_seresnet18_13kps_all_se.json --nEpochs 100",
+    "python auto_trainer.py --dataset ceiling --expFolder kps_test --expID seresnet101 --backbone seresnet101 "
+    "--cfg models/cfg/default/cfg_seresnet101_13kps.json --nEpochs 10",
+
 ]
 
 import os
