@@ -93,8 +93,8 @@ class AutoTester:
 
 
 if __name__ == '__main__':
-    model_folder = "exp/test_structure"
-    data_info = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
+    model_folder = "exp/kps_test"
+    data_info = {"ceiling": ["data/ceiling/0605_new", "data/ceiling/0605_new.h5", 0]}
     shared_option = True
     auto_tester = AutoTester(model_folder, data_info, shared_option=shared_option)
     auto_tester.run()

@@ -64,7 +64,7 @@ class AutoSparseDetector:
 
 if __name__ == '__main__':
     model_kw = ["acc", "dist", "auc", "pr"]
-    model_folder = "exp/test_structure"
+    model_folder = "exp/kps_test"
     methods = ["shortcut", "ordinary"]
     asd = AutoSparseDetector(model_folder, model_kw, methods=methods)
     asd.run()

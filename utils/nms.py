@@ -92,7 +92,7 @@ def pose_nms(bboxes, bbox_scores, pose_preds, pose_scores, pose_classes=17):
         # Merge poses
         merge_id = merge_ids[j]
         merge_pose, merge_score = p_merge_fast(
-            preds_pick[j], ori_pose_preds[merge_id], ori_pose_scores[merge_id], ref_dists[pick[j]])
+            preds_pick[j], ori_pose_preds[merge_id], ori_pose_scores[merge_id], ref_dists[pick[j]], pose_classes)
 
         max_score = torch.max(merge_score[ids])
         if max_score < scoreThreds:
