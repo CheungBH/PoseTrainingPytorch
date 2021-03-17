@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import torch
 import numpy as np
-from config.config import train_body_part, device
 
-pose_classes = len(train_body_part)
+# pose_classes = len(train_body_part)
 delta1 = 1
 mu = 1.7
 delta2 = 2.65
@@ -14,7 +13,7 @@ areaThres = 0#40 * 40.5
 alpha = 0.1
 
 
-def pose_nms(bboxes, bbox_scores, pose_preds, pose_scores):
+def pose_nms(bboxes, bbox_scores, pose_preds, pose_scores, pose_classes=17):
     '''
     Parametric Pose NMS algorithm
     bboxes:         bbox locations list (n, 4)
@@ -58,7 +57,7 @@ def pose_nms(bboxes, bbox_scores, pose_preds, pose_scores):
 
         # Get numbers of match keypoints by calling PCK_match
         ref_dist = ref_dists[human_ids[pick_id]]
-        simi = get_parametric_distance(pick_id, pose_preds, pose_scores, ref_dist)
+        simi = get_parametric_distance(pick_id, pose_preds, pose_scores, ref_dist, pose_classes)
         num_match_keypoints = PCK_match(pose_preds[pick_id], pose_preds, ref_dist)
 
         # Delete humans who have more than matchThreds keypoints overlap and high similarity
@@ -112,7 +111,7 @@ def pose_nms(bboxes, bbox_scores, pose_preds, pose_scores):
     return final_result, final_score
 
 
-def p_merge_fast(ref_pose, cluster_preds, cluster_scores, ref_dist):
+def p_merge_fast(ref_pose, cluster_preds, cluster_scores, ref_dist, pose_classes):
     '''
     Score-weighted pose merging
     INPUT:
@@ -151,7 +150,7 @@ def p_merge_fast(ref_pose, cluster_preds, cluster_scores, ref_dist):
     return final_pose, final_score
 
 
-def get_parametric_distance(i, all_preds, keypoint_scores, ref_dist):
+def get_parametric_distance(i, all_preds, keypoint_scores, ref_dist, pose_classes):
     pick_preds = all_preds[i]
     pred_scores = keypoint_scores[i]
     dist = torch.sqrt(torch.sum(

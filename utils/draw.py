@@ -15,12 +15,12 @@ column = 4
 row = math.floor(img_num/column)
 
 
-def draw_kp(hm, pt1, pt2, boxes, img_path):
+def draw_kp(hm, pt1, pt2, boxes, img_path, pose_classes):
     scores = tensor([[0.999]]*(boxes.shape[0]))
     boxes = boxes.float()
     preds_hm, preds_img, preds_scores = getPrediction(
         hm, pt1, pt2, opt.inputResH, opt.inputResW, opt.outputResH, opt.outputResW)
-    kps, score = pose_nms(boxes, scores, preds_img, preds_scores)
+    kps, score = pose_nms(boxes, scores, preds_img, preds_scores, pose_classes)
     orig_img = cv2.imread(img_path)
     if kps:
         cond = True
@@ -32,14 +32,14 @@ def draw_kp(hm, pt1, pt2, boxes, img_path):
     return img, cond
 
 
-def draw_kps(hms, info):
+def draw_kps(hms, info, pose_classes):
     hms = hms.cpu()
     (_pt1, _pt2, _boxes, _img_path, _gt) = info
     drawn = False
     img_ls = []
     for i in range(img_num):
         pt1, pt2, boxes, img_path, hm = _pt1[i].unsqueeze(dim=0), _pt2[i].unsqueeze(dim=0), _boxes[i].unsqueeze(dim=0), _img_path[i], hms[i].unsqueeze(dim=0)
-        img, if_kps = draw_kp(hm, pt1, pt2, boxes, img_path)
+        img, if_kps = draw_kp(hm, pt1, pt2, boxes, img_path, pose_classes)
         drawn = if_kps or drawn
         img = cv2.resize(img, (720, 540))
         img_ls.append(img)
