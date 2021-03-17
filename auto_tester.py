@@ -11,7 +11,7 @@ class AutoTester:
         self.model_folder = model_folder
         self.keyword = ["acc", "auc", "pr", "dist", "pckh"]
         self.shared_option = shared_option
-        self.test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
+        self.test_info = data_info
         self.model_ls, self.cfg_ls = [], []
         self.test_csv = os.path.join(self.model_folder, "test_{}.csv".format(computer))
         self.tested = os.path.exists(self.test_csv)
@@ -81,7 +81,7 @@ class AutoTester:
         model_nums = len(self.model_ls)
         for idx, (cfg, self.model) in enumerate(zip(self.cfg_ls, self.model_ls)):
             print("[{}/{}] Processing model: {}".format(idx+1, model_nums, self.model))
-            test = Tester(self.test_loader, self.model, model_cfg=cfg, print_info=False)
+            test = Tester(self.test_info, self.model, model_cfg=cfg, print_info=False)
             test.build_with_opt()
             test.test()
             test.get_benchmark()
