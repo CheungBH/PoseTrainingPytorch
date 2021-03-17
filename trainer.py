@@ -29,6 +29,7 @@ stop_dicts = config.bad_epochs
 sparse_decay_dict = config.sparse_decay_dict
 dataset_info = config.train_info
 computer = config.computer
+loss_weight = config.loss_weight
 
 criterion = Criterion()
 optimizer = Optimizer()
@@ -83,13 +84,11 @@ class Trainer:
         self.kps = posenet.kps
         opt.kps = posenet.kps
 
-        self.dataset = TrainDataset(dataset_info, hmGauss=opt.hmGauss, rotate=opt.rotate)
+        self.dataset = TrainDataset(dataset_info, loss_weight, hmGauss=opt.hmGauss, rotate=opt.rotate)
+        self.loss_weight = self.dataset.joint_weights
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
                                                                            opt.train_worker, opt.val_worker)
 
-
-        all_kps = [-item for item in list(range(self.kps + 1))[1:]]
-        self.loss_weight = {1: all_kps}
         if opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler
         else:

@@ -5,12 +5,13 @@ open_source_dataset = ["coco"]
 
 
 class TrainDataset:
-    def __init__(self, data_info, hmGauss=1, rotate=40):
+    def __init__(self, data_info, joint_weight_dict=None, hmGauss=1, rotate=40):
         self.train_dataset = MyDataset(data_info, train=True, sigma=hmGauss, rot_factor=rotate)
         self.val_dataset = MyDataset(data_info, train=False, sigma=hmGauss, rot_factor=rotate)
         if self.is_shuffle(data_info):
             self.val_dataset.img_val, self.val_dataset.bbox_val, self.val_dataset.part_val = \
                 self.train_dataset.img_val, self.train_dataset.bbox_val, self.train_dataset.part_val
+        self.joint_weights = self.train_dataset.KP.unify_weighted(joint_weight_dict)
 
     def is_shuffle(self, info):
         for name, _ in info.items():

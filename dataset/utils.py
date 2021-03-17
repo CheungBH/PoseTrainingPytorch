@@ -23,3 +23,13 @@ class KeyPointsRegister:
     def get_kps_name(self):
         return self.body_part_idx, self.body_part_name
 
+    def unify_weighted(self, loss_weight):
+        all_kps = [-item for item in range(len(self.body_part_idx) + 1)[1:]]
+        if not loss_weight:
+            return {1: all_kps}
+        weighted_kps = []
+        for param, kps_idx in loss_weight.items():
+            weighted_kps += kps_idx
+        remaining_kps = [item for item in all_kps if item not in weighted_kps]
+        loss_weight[1] = remaining_kps
+        return loss_weight

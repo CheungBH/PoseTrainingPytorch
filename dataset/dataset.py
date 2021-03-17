@@ -86,7 +86,6 @@ class Mscoco(data.Dataset):
 class MyDataset(data.Dataset):
     def __init__(self, data_info, train=True, sigma=1,
                  scale_factor=(0.2, 0.3), rot_factor=40, label_type='Gaussian'):
-        # import config.config as config
         self.KP = KeyPointsRegister()
         self.KP.init_kps(opt.kps)
         self.is_train = train  # training set or test set
@@ -154,13 +153,9 @@ class MyDataset(data.Dataset):
 
 
 class TestDataset(MyDataset):
-    def __init__(self, data_info,train=True, sigma=opt.hmGauss, scale_factor=(0.2, 0.3), rot_factor=40,
+    def __init__(self, data_info, train=True, sigma=opt.hmGauss, scale_factor=(0.2, 0.3), rot_factor=40,
                          label_type='Gaussian'):
         super().__init__(data_info)
-        if opt.kps == 17:
-            self.accIdxs = [i + 1 for i in range(17)]
-        elif opt.kps == 13:
-            self.accIdxs = [1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
 
 def extract_customized_data(data_info):
