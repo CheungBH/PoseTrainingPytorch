@@ -2,7 +2,8 @@ from tqdm import tqdm
 import torch
 import os
 from config.config import device
-
+from dataset.dataloader import TestDataset
+from src.opt import opt
 from utils.eval import cal_accuracy
 from utils.logger import DataLogger, CurveLogger
 from utils.train_utils import Criterion
@@ -14,12 +15,14 @@ posenet = PoseModel()
 
 
 class Tester:
-    def __init__(self, test_loader, model_path, model_cfg=None, print_info=True):
-        self.loader = test_loader
+    def __init__(self, test_data, model_path, model_cfg=None, print_info=True, batchsize=8, num_worker=1):
+        self.test_data = test_data
         self.model_path = model_path
         self.option_file = check_option_file(model_path)
         self.print = print_info
         self.cfg = model_cfg
+        self.batch_size = batchsize
+        self.num_worker = num_worker
 
     def build(self, cfg, crit, model_height=256, model_width=256):
         posenet.build(cfg)
@@ -30,6 +33,8 @@ class Tester:
         self.height = model_height
         self.width = model_width
         posenet.load(self.model_path)
+        opt.kps = self.kps
+        self.test_loader = TestDataset(self.test_data).build_dataloader(self.batch_size, self.num_worker, shuffle=False)
 
     def build_with_opt(self):
         self.load_from_option()
@@ -38,6 +43,8 @@ class Tester:
         self.kps = posenet.kps
         self.build_criterion(self.crit)
         posenet.load(self.model_path)
+        opt.kps = self.kps
+        self.loader = TestDataset(self.test_data).build_dataloader(self.batch_size, self.num_worker, shuffle=False)
 
     def test(self):
         accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
@@ -155,6 +162,16 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
 
 if __name__ == '__main__':
     test_data = {"ceiling": ["data/ceiling/0605_new", "data/ceiling/0605_new.h5", 0]}
-    model_path = "exp/kps_test/seresnet101/seresnet101_best_acc.pkl"
-    model_cfg = "exp/kps_test/seresnet101/cfg.json"
-    test_model(model_path, test_data, cfg=model_cfg)
+    model_path = "exp/kps_test/seresnet18/seresnet18_best_acc.pkl"
+    model_cfg = "exp/kps_test/seresnet18/cfg.json"
+    use_option = True
+    tester = Tester(test_data, model_path, model_cfg)
+    if use_option:
+        tester.build_with_opt()
+    else:
+        tester.build(model_cfg, "MSE", 256, 256)
+    tester.test()
+    tester.get_benchmark()
+    benchmark, performance, parts, thresh = tester.summarize()
+
+    #test_model(model_path, test_data, cfg=model_cfg)
