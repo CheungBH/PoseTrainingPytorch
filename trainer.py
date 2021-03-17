@@ -42,7 +42,6 @@ class Trainer:
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
         self.curr_epoch = opt.epoch
-        self.build_with_opt(opt)
 
         os.makedirs(os.path.join(self.expFolder, "logs"), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
@@ -51,6 +50,7 @@ class Trainer:
         self.xlsx_log = os.path.join(self.expFolder, "logs/train_xlsx.csv")
         self.summary_log = os.path.join("exp", opt.expFolder, "train_{}-{}.csv".format(opt.expFolder, computer))
 
+        self.build_with_opt(opt)
         self.freeze = False
         self.stop = False
         self.best_epoch = self.curr_epoch
