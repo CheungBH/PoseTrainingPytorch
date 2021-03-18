@@ -220,24 +220,24 @@ class Trainer:
                 out = self.model(inps)
 
                 if not drawn_kp:
-                    # try:
-                    kps_img, have_kp = draw_kps(out, img_info, self.kps)
-                    drawn_kp = True
-                    if self.vis:
-                        img = cv2.resize(kps_img, (1080, 720))
-                        drawn_kp = False
-                        cv2.imshow("val_pred", img)
-                        cv2.waitKey(0)
-                        # a = 1
-                        # draw_kps(out, img_info)
-                    else:
-                        self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch),
-                                         cv2.imread(
-                                             os.path.join(self.expFolder, "logs/img.jpg"))[:,:,::-1], dataformats='HWC')
-                        hm = draw_hms(out[0])
-                        self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm)
-                    # except:
-                    #     pass
+                    try:
+                        kps_img, have_kp = draw_kps(out, img_info, self.kps)
+                        drawn_kp = True
+                        if self.vis:
+                            img = cv2.resize(kps_img, (1080, 720))
+                            drawn_kp = False
+                            cv2.imshow("val_pred", img)
+                            cv2.waitKey(0)
+                            # a = 1
+                            # draw_kps(out, img_info)
+                        else:
+                            self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch),
+                                             cv2.imread(
+                                                 os.path.join(self.expFolder, "logs/img.jpg"))[:,:,::-1], dataformats='HWC')
+                            hm = draw_hms(out[0])
+                            self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm)
+                    except:
+                        pass
 
                 loss = self.criterion(out.mul(setMask), labels)
 
