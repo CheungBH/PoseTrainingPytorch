@@ -1,0 +1,18 @@
+DUC_head(
+  (shuffle): PixelShuffle(upscale_factor=2)
+  (DUC_layers): Sequential(
+    (0): DUC(
+      (conv): Conv2d(512, 800, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn): BatchNorm2d(800, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU()
+      (pixel_shuffle): PixelShuffle(upscale_factor=2)
+    )
+    (1): DUC(
+      (conv): Conv2d(200, 516, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn): BatchNorm2d(516, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU()
+      (pixel_shuffle): PixelShuffle(upscale_factor=2)
+    )
+  )
+  (head): Conv2d(129, 17, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+)

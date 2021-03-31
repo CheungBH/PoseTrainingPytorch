@@ -2,9 +2,9 @@ import torch
 import cv2
 from PIL import Image
 import numpy as np
-from config.config import train_body_part
+from src.opt import opt
 
-pose_classes = len(train_body_part)
+pose_classes = opt.kps
 RED = (0, 0, 255)
 GREEN = (0, 255, 0)
 BLUE = (255, 0, 0)

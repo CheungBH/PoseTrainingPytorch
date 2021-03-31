@@ -21,6 +21,8 @@ parser.add_argument('--kps', default=17, type=int,
                     help='Number of output channel')
 parser.add_argument('--DUC', default=0, type=int,
                     help='DUC')
+parser.add_argument('--cfg', default=None, type=str,
+                    help='Path of cfg file')
 
 "----------------------------- Hyperparameter options -----------------------------"
 parser.add_argument('--LR', default=1e-3, type=float,

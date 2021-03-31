@@ -15,7 +15,7 @@ posenet = PoseModel()
 
 
 class ErrorAnalyser:
-    def __init__(self, test_loader, model_path, default_threshold=0.05, write_threshold=False):
+    def __init__(self, test_loader, model_path, model_cfg=None, default_threshold=0.05, write_threshold=False):
         self.loader = test_loader
         self.model_path = model_path
         self.option_file = check_option_file(model_path)
@@ -23,23 +23,23 @@ class ErrorAnalyser:
         self.performance = defaultdict(list)
         self.max_val_dict = defaultdict(list)
         self.write_threshold = write_threshold
+        self.cfg = model_cfg
 
-    def build(self, backbone, kps, cfg, DUC, crit, model_height=256, model_width=256):
-        posenet.build(backbone, cfg)
+    def build(self, cfg, crit, model_height=256, model_width=256):
+        posenet.build(cfg)
         self.model = posenet.model
         self.crit = crit
         self.build_criterion(self.crit)
-        self.kps = kps
+        self.kps = posenet.kps
         self.height = model_height
         self.width = model_width
-        self.backbone = backbone
-        self.cfg = cfg
         self.default_threshold = [self.thresh] * self.kps
 
     def build_with_opt(self):
         self.load_from_option()
-        posenet.build(self.backbone, self.cfg)
+        posenet.build(self.cfg)
         self.model = posenet.model
+        self.kps = posenet.kps
         self.build_criterion(self.crit)
         self.default_threshold = [self.thresh] * self.kps
         posenet.load(self.model_path)
@@ -86,7 +86,7 @@ class ErrorAnalyser:
             self.max_val_dict[img_info[3][0]] = maxval
 
             test_loader_desc.set_description(
-                'Test | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f}'.format(
+                'Analysis | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f}'.format(
                     loss=lossLogger.avg,
                     acc=accLogger.avg * 100,
                     pckh=pckhLogger.avg * 100,
@@ -109,10 +109,6 @@ class ErrorAnalyser:
             self.option = torch.load(self.option_file)
             self.height = self.option.inputResH
             self.width = self.option.inputResW
-            self.backbone = self.option.backbone
-            self.cfg = self.option.struct
-            self.kps = self.option.kps
-            self.DUC = self.option.DUC
             self.crit = self.option.crit
         else:
             raise FileNotFoundError("The option.pkl doesn't exist! ")
@@ -138,15 +134,14 @@ class ErrorAnalyser:
         return self.performance
 
 
-def error_analysis(model_path, data_info, batchsize=1, num_worker=1, use_option=True, DUC=0, kps=17,
-               backbone="seresnet101", cfg="0", criteria="MSE", height=256, width=256):
-    from dataset.loader import TestDataset
-    test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker)
-    analyser = ErrorAnalyser(test_loader, model_path)
+def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=None, criteria="MSE", height=256, width=256):
+    from dataset.dataloader import TestDataset
+    test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
+    analyser = ErrorAnalyser(test_loader, model_path, model_cfg=cfg)
     if use_option:
         analyser.build_with_opt()
     else:
-        analyser.build(backbone, kps, cfg, DUC, criteria, height, width)
+        analyser.build(cfg, criteria, height, width)
     analyser.analyse()
     performance = analyser.summarize()
     return performance
@@ -157,5 +152,7 @@ def error_analysis(model_path, data_info, batchsize=1, num_worker=1, use_option=
 
 if __name__ == '__main__':
     analyse_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    error = error_analysis("exp/test/default/default_best_acc.pkl", analyse_data)
+    model_path = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
+    model_cfg = "exp/test_structure/seres18_17kps/cfg.json"
+    error = error_analysis(model_path, analyse_data, cfg=model_cfg)
     print(error)

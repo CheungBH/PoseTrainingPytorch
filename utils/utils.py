@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def get_superior_path(path):
+    return "/".join(path.replace("\\", "/").split("/")[:-1])
+
 def gather_bn_weights(module_list, prune_idx):
 
     size_list = [module_list[idx][1].weight.data.shape[0] for idx in prune_idx]

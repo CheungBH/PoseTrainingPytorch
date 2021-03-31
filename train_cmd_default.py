@@ -1,7 +1,8 @@
 cmds = [
+
     "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 3 --backbone seresnet18 --LR 0.1 --addDPG True --nEpoch 10",
     "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 2 --backbone seresnet18 --addDPG False --nEpoch 100 --se_ratio 16",
-    "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 1 --backbone seresnet18 --addDPG True --nEpoch 100",
+
 
 ]
 

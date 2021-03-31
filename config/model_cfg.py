@@ -1,6 +1,7 @@
 
 mobile_opt = {"0": None,
-              None:None,
+              None: None,
+              "": None,
               "small": [
                 # t, c, n, s
                 [1, 12, 1, 1],
@@ -76,6 +77,11 @@ seresnet_cfg = {"0": None,
                 }
 
 seresnet18_cfg = {"0": None,
+                  None: None,
+                  "cfg": "config/pose_cfg/seresnet18.txt"}
+
+seresnet50_cfg = {"0": None,
+                  None: None,
                   "cfg": "config/pose_cfg/seresnet18.txt"}
 
 efficientnet_cfg = {str(i): "b"+str(i) for i in range(9)}

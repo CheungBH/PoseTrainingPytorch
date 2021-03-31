@@ -8,7 +8,7 @@ import copy
 import csv
 import sys
 import torch.nn as nn
-from dataset.coco_dataset import MyDataset
+from dataset.dataset import MyDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, accuracy, cal_accuracy, CurveLogger
 from utils.img import flip, shuffleLR

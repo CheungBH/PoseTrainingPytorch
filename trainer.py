@@ -10,9 +10,10 @@ import os
 from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
-from dataset.loader import TrainDataset
+from dataset.dataloader import TrainDataset
 from utils.utils import draw_graph
 import csv
+import shutil
 
 try:
     from apex import amp
@@ -25,10 +26,10 @@ device = config.device
 lr_warm_up_dict = config.warm_up
 lr_decay_dict = config.lr_decay_dict
 stop_dicts = config.bad_epochs
-loss_weight = config.loss_weight
 sparse_decay_dict = config.sparse_decay_dict
 dataset_info = config.train_info
 computer = config.computer
+loss_weight = config.loss_weight
 
 criterion = Criterion()
 optimizer = Optimizer()
@@ -37,20 +38,20 @@ posenet = PoseModel(device=device)
 
 class Trainer:
     def __init__(self, opt, vis_in_training=False):
-        print(opt)
+        #print(opt)
         self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
         self.curr_epoch = opt.epoch
-        self.build_with_opt(opt)
 
-        os.makedirs(os.path.join(self.expFolder, opt.expID), exist_ok=True)
+        os.makedirs(os.path.join(self.expFolder, "logs"), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
-        self.txt_log = os.path.join(self.expFolder, "{}/log.txt".format(opt.expID))
-        self.bn_log = os.path.join(self.expFolder, "{}/bn.txt".format(opt.expID))
-        self.xlsx_log = os.path.join(self.expFolder, "{}/train_xlsx.xlsx".format(opt.expID))
-        self.summary_log = os.path.join("exp", opt.expFolder, "train_{}.csv".format(opt.expFolder, computer))
+        self.txt_log = os.path.join(self.expFolder, "logs/log.txt")
+        self.bn_log = os.path.join(self.expFolder, "logs/bn.txt")
+        self.xlsx_log = os.path.join(self.expFolder, "logs/train_xlsx.csv")
+        self.summary_log = os.path.join("exp", opt.expFolder, "train_{}-{}.csv".format(opt.expFolder, computer))
 
+        self.build_with_opt(opt)
         self.freeze = False
         self.stop = False
         self.best_epoch = self.curr_epoch
@@ -66,7 +67,6 @@ class Trainer:
     def build_with_opt(self, opt):
         self.opt = opt
         self.total_epochs = opt.nEpochs
-        self.kps = opt.kps
         self.lr = opt.LR
         self.trainIter, self.valIter = opt.trainIters, opt.valIters
 
@@ -75,22 +75,25 @@ class Trainer:
         self.freeze = posenet.is_freeze
         self.model = posenet.model
         self.flops, self.params, self.inf_time = posenet.benchmark(height=self.opt.inputResH, width=self.opt.inputResW)
-
-        self.dataset = TrainDataset(dataset_info, hmGauss=opt.hmGauss, rotate=opt.rotate)
-        self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
-                                                                           opt.train_worker, opt.val_worker)
+        posenet.write_structure(os.path.join(self.expFolder, "logs/model.txt"))
 
         self.build_criterion(opt.crit)
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
         posenet.model_transfer(device)
         self.model = posenet.model
+        self.kps = posenet.kps
+        opt.kps = posenet.kps
+
+        self.dataset = TrainDataset(dataset_info, loss_weight, hmGauss=opt.hmGauss, rotate=opt.rotate)
+        self.loss_weight = self.dataset.joint_weights
+        self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
+                                                                           opt.train_worker, opt.val_worker)
 
         if opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler
         else:
             raise ValueError("Scheduler not supported")
         self.lr_scheduler = scheduler(self.total_epochs, lr_warm_up_dict, lr_decay_dict, self.lr)
-        self.loss_weight = loss_weight
         self.save_interval = opt.save_interval
         self.build_sparse_scheduler(opt.sparse_s)
         
@@ -218,7 +221,7 @@ class Trainer:
 
                 if not drawn_kp:
                     try:
-                        kps_img, have_kp = draw_kps(out, img_info)
+                        kps_img, have_kp = draw_kps(out, img_info, self.kps)
                         drawn_kp = True
                         if self.vis:
                             img = cv2.resize(kps_img, (1080, 720))
@@ -230,7 +233,7 @@ class Trainer:
                         else:
                             self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch),
                                              cv2.imread(
-                                                 os.path.join(self.expFolder, "assets/img.jpg"))[:,:,::-1], dataformats='HWC')
+                                                 os.path.join(self.expFolder, "logs/img.jpg"))[:,:,::-1], dataformats='HWC')
                             hm = draw_hms(out[0])
                             self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm)
                     except:
@@ -427,7 +430,7 @@ class Trainer:
         return ep_line
 
     def draw_graph(self):
-        log_dir = os.path.join(self.expFolder, self.opt.expID)
+        log_dir = os.path.join(self.expFolder, "logs")
         draw_graph(self.epoch_ls, self.train_loss_ls, self.val_loss_ls, "loss", log_dir)
         draw_graph(self.epoch_ls, self.train_acc_ls, self.val_acc_ls, "acc", log_dir)
         draw_graph(self.epoch_ls, self.train_auc_ls, self.val_auc_ls, "AUC", log_dir)
@@ -468,16 +471,17 @@ class Trainer:
 
         with open(self.txt_log, "a+") as result_file:
             result_file.write('############# Starting Epoch {} #############\n'.format(self.curr_epoch))
-            result_file.write('Train:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
-                    idx=self.curr_epoch, loss=self.train_loss_ls[-1], acc=self.train_acc_ls[-1],
+            result_file.write('Train:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | PCKh:{pckh: .4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
+                    idx=self.curr_epoch, loss=self.train_loss_ls[-1], acc=self.train_acc_ls[-1], pckh=self.train_pckh_ls[-1],
                     dist=self.train_dist_ls[-1], AUC=self.train_auc_ls[-1], PR=self.train_pr_ls[-1],
                 ))
-            result_file.write('Valid:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
-                    idx=self.curr_epoch, loss=self.val_loss_ls[-1], acc=self.val_acc_ls[-1],
+            result_file.write('Valid:{idx:d} epoch | loss:{loss:.8f} | acc:{acc:.4f} | PCKh:{pckh: .4f} | dist:{dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}\n'.format(
+                    idx=self.curr_epoch, loss=self.val_loss_ls[-1], acc=self.val_acc_ls[-1], pckh=self.val_pckh_ls[-1],
                     dist=self.val_dist_ls[-1], AUC=self.val_auc_ls[-1], PR=self.val_pr_ls[-1],
                 ))
 
     def process(self):
+        shutil.copy(self.opt.cfg, os.path.join(self.expFolder, "cfg.json"))
         begin_time = time.time()
         error_string = ""
         try:
