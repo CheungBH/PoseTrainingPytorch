@@ -114,7 +114,7 @@ class ChannelLayerPruner:
             for i in range(3):
                 prune_layers.append(all_bn_id[target_idx - i])
 
-        CBLidx2mask_layer = obtain_layer_filters_mask(self.model, all_bn_id, prune_layers)
+        CBLidx2mask_layer = obtain_layer_filters_mask(compact_channel_model, all_bn_id, prune_layers)
 
         pruned_locations = self.obtain_block_idx(shortcut_idx, prune_shortcuts)
         blocks = self.block_num
@@ -125,11 +125,11 @@ class ChannelLayerPruner:
             'backbone': self.backbone,
             'keypoints': self.kps,
             'se_ratio': self.se_ratio,
-            "first_conv": self.first_conv,
-            'residual': self.residual,
+            "first_conv": m_channel_cfg["first_conv"],
+            'residual': m_channel_cfg["residual"],
             'channels': obtain_all_prune_channels(sorted_index_thre[:layer_num].tolist(), m_channel_cfg["channels"]),
             "head_type": self.head_type,
-            "head_channel": self.head_channel
+            "head_channel": m_channel_cfg["head_channel"],
         }
         write_cfg(m_layer_cfg, self.compact_model_cfg)
         posenet.build(self.compact_model_cfg)
