@@ -149,5 +149,5 @@ if __name__ == '__main__':
     model_cfg = "exp/test_structure/seres50_17kps/cfg.json"
     thresh = 80
     layer_num = 2
-    SP = ChannelLayerPruner(model_path, model_cfg)
-    SP.run(thresh, layer_num)
+    CLP = ChannelLayerPruner(model_path, model_cfg)
+    CLP.run(thresh, layer_num)
