@@ -318,6 +318,7 @@ def getPreds(hm):
     # preds *= pred_mask
     return preds, maxval
 
+
 def calc_dists(preds, target, normalize):
     preds = preds.float().clone()
     target = target.float().clone()

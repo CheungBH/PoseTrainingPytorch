@@ -5,7 +5,7 @@ from config.config import device
 from dataset.dataloader import TestDataset
 from src.opt import opt
 from utils.eval import cal_accuracy
-from utils.logger import DataLogger, CurveLogger
+from eval.logger import DataLogger, CurveLogger
 from utils.train_utils import Criterion
 from models.pose_model import PoseModel
 from utils.test_utils import check_option_file, list_to_str

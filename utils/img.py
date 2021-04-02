@@ -172,7 +172,7 @@ def cropBox(img, ul, br, resH, resW):
 
     dst_img = cv2.warpAffine(torch_to_im(img), trans,
                              (resW, resH), flags=cv2.INTER_LINEAR)
-    cv2.imwrite("a.jpg", dst_img*255+128)
+    # cv2.imwrite("a.jpg", dst_img*255+128)
 
     return im_to_torch(torch.Tensor(dst_img))
 
