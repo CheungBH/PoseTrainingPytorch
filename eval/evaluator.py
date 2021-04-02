@@ -81,12 +81,24 @@ class BatchEvaluator:
 
 
 class EpochEvaluator:
-    def __init__(self):
+    def __init__(self, out_size):
+        self.height, self.width = out_size
+        self.kps, self.gts, self.valids = [], [], []
+
+    def update(self, kp, gt, valid):
+        self.kps += kp
+        self.gts += gt
+        self.valids += valid
+
+    def eval_per_epoch(self):
+        pckh = self.eval_pckh()
+        pck = self.eval_pck()
+        return pckh, pck
+
+    def eval_pck(self):
         pass
 
-
-
-
-
+    def eval_pckh(self):
+        pass
 
 
