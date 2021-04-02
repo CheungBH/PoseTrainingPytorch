@@ -54,6 +54,7 @@ class ChannelLayerPruner:
         raise ValueError("Wrong index! ")
 
     def run(self, threshold, layer_num):
+        print("------------------------- Prune channels first -------------------------------")
         all_bn_id, normal_idx, shortcut_idx, downsample_idx, head_idx = self.obtain_prune_idx(self.model)
         prune_idx = all_bn_id
         sorted_bn = sort_bn(self.model, prune_idx)
@@ -96,7 +97,7 @@ class ChannelLayerPruner:
         self.init_weight_channel(compact_channel_model, self.model, CBLidx2mask_channel, valid_filter, downsample_idx,
                                  head_idx)
 
-
+        print("\n------------------------- Prune layers -------------------------------")
         all_bn_id, other_idx, shortcut_idx, downsample_idx = obtain_prune_idx_layer(self.model)
 
         bn_mean = torch.zeros(len(shortcut_idx))
