@@ -1,6 +1,6 @@
 from eval.logger import DataLogger, CurveLogger
 from eval.utils import *
-from eval.pckh import PCKHCalculator
+# from eval.pckh import PCKHCalculator
 
 
 class BatchEvaluator:
@@ -85,7 +85,7 @@ class EpochEvaluator:
     def __init__(self, out_size):
         self.height, self.width = out_size
         self.kps, self.gts, self.valids = [], [], []
-        self.cal_pckh = PCKHCalculator()
+        # self.cal_pckh = PCKHCalculator()
 
     def update(self, kp, gt, valid):
         self.kps += kp

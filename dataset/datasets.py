@@ -25,19 +25,22 @@ class MyDataset(data.dataset):
 
     def load_json(self, json_file):
         anno = json.load(open(json_file))
-        keypoint, images, bbox, ids = [], [], [], []
+        keypoint = []
+        images = []
+        bbox = []
+        ids = []
         for img_info in anno['annotations']:
             images.append(img_info['image_name'])
             xs = img_info['keypoints'][0::3]
             ys = img_info['keypoints'][1::3]
-            ids = img_info["id"]
-            bbox = img_info['bbox']
+            ids.append(img_info["id"])
+            bbox.append(img_info['bbox'])
             new_kp = []
             for idx, idy in trans:
                 new_kp.append(
                     (xs[idx], ys[idy])
                 )
-            keypoint[img_info['image_name']] = img_info['keypoints']
+            keypoint.append(new_kp)
         return images, keypoint, bbox, ids
 
     def __len__(self):
