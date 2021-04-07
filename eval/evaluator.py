@@ -26,7 +26,7 @@ class BatchEvaluator:
         norm = torch.ones(preds.size(0)) * out_height / 10
         dists = calc_dists(preds, gt, norm)
         acc, sum_dist, exist = torch.zeros(self.kps + 1), torch.zeros(self.kps + 1), torch.zeros(self.kps)
-        pckh = cal_pckh(gt, preds, if_exist.t(), refp=0.5)
+        # pckh = cal_pckh(gt, preds, if_exist.t(), refp=0.5)
 
         for i, kps_dist in enumerate(dists):
             nums = exist_id(if_exist[i])
@@ -39,7 +39,7 @@ class BatchEvaluator:
         sum_dist[0] = cal_ave(exist, sum_dist[1:])
         acc[0] = cal_ave(exist, acc[1:])
 
-        return acc, sum_dist, exist, pckh, (preds_maxval.squeeze(dim=2).t(), if_exist), (preds, gt)
+        return acc, sum_dist, exist, (preds_maxval.squeeze(dim=2).t(), if_exist), (preds, gt)
 
     def update(self, acc, dist, exists, pckh, maxval, gt, loss):
         self.accLogger.update(acc[0].item(), self.batch_size)

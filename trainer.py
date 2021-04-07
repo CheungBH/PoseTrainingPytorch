@@ -114,7 +114,7 @@ class Trainer:
             for cons, idx_ls in self.loss_weight.items():
                 loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
-            acc, dist, exists, pckh, (maxval, valid), (preds, gts) = \
+            acc, dist, exists, (maxval, valid), (preds, gts) = \
                 BatchEval.eval_per_batch(out.data.mul(setMask), labels.data, self.opt.outputResH)
 
             EpochEval.update(preds, gts, valid.t())
@@ -147,7 +147,7 @@ class Trainer:
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr, body_part_pckh = BatchEval.get_kps_result()
         train_loader_desc.close()
-        pck, pckh = EpochEval.eval_per_epoch()
+        pckh = EpochEval.eval_per_epoch()
 
         self.part_train_acc.append(body_part_acc)
         self.part_train_dist.append(body_part_dist)
@@ -199,10 +199,10 @@ class Trainer:
                     loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
 
-            acc, dist, exists, pckh, (maxval, valid), (preds, gts) = \
+            acc, dist, exists, (maxval, valid), (preds, gts) = \
                 BatchEval.eval_per_batch(out.data.mul(setMask), labels.data, self.opt.outputResH)
             BatchEval.update(acc, dist, exists, pckh, maxval, valid, loss)
-            EpochEval.update(preds, gts, valid)
+            EpochEval.update(preds, gts, valid.t())
             self.valIter += 1
 
             loss, acc, pckh, dist, auc, pr = BatchEval.get_batch_result()
@@ -223,7 +223,7 @@ class Trainer:
         self.part_train_pr.append(body_part_pr)
         self.part_train_pckh.append(body_part_pckh)
 
-        pck, pckh = EpochEval.eval_per_epoch()
+        pckh = EpochEval.eval_per_epoch()
         loss, acc, pckh, dist, auc, pr = BatchEval.get_batch_result()
         self.update_indicators(acc, loss, dist, pckh, auc, pr, self.trainIter, "val")
 
