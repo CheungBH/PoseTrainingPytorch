@@ -1,7 +1,5 @@
 from tqdm import tqdm
-from eval.logger import DataLogger, CurveLogger
-from eval.evaluator import BatchEvaluator
-from utils.eval import cal_accuracy
+from eval.evaluator import BatchEvaluator, EpochEvaluator
 from config import config
 import torch
 from utils.train_utils import Criterion, Optimizer, write_csv_title, summary_title
@@ -100,6 +98,7 @@ class Trainer:
 
     def train(self):
         BatchEval = BatchEvaluator(self.kps, "Train", self.opt.trainBatch)
+        EpochEval = EpochEvaluator((self.opt.outputResH, self.opt.outputResW))
         self.model.train()
         train_loader_desc = tqdm(self.train_loader)
         for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
@@ -115,11 +114,13 @@ class Trainer:
             for cons, idx_ls in self.loss_weight.items():
                 loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
-            acc, dist, exists, pckh, (maxval, gt) = \
+            acc, dist, exists, pckh, (maxval, valid), (preds, gts) = \
                 BatchEval.eval_per_batch(out.data.mul(setMask), labels.data, self.opt.outputResH)
 
+            EpochEval.update(preds.tolist(), gts.tolist(), valid.t().tolist())
+
             self.optimizer.zero_grad()
-            BatchEval.update(acc, dist, exists, pckh, maxval, gt, loss)
+            BatchEval.update(acc, dist, exists, pckh, maxval, valid, loss)
 
             if mix_precision:
                 with amp.scale_loss(loss, self.optimizer) as scaled_loss:
@@ -146,6 +147,7 @@ class Trainer:
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr, body_part_pckh = BatchEval.get_kps_result()
         train_loader_desc.close()
+        pck, pckh = EpochEval.eval_per_epoch()
 
         self.part_train_acc.append(body_part_acc)
         self.part_train_dist.append(body_part_dist)
@@ -159,6 +161,7 @@ class Trainer:
     def valid(self):
         drawn_kp, drawn_hm = False, False
         BatchEval = BatchEvaluator(self.kps, "Valid", self.opt.validBatch)
+        EpochEval = EpochEvaluator((self.opt.outputResH, self.opt.outputResW))
         self.model.eval()
         val_loader_desc = tqdm(self.val_loader)
 
@@ -195,9 +198,11 @@ class Trainer:
                 for cons, idx_ls in self.loss_weight.items():
                     loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
-            acc, dist, exists, pckh, (maxval, gt) = \
+
+            acc, dist, exists, pckh, (maxval, valid), (preds, gts) = \
                 BatchEval.eval_per_batch(out.data.mul(setMask), labels.data, self.opt.outputResH)
-            BatchEval.update(acc, dist, exists, pckh, maxval, gt, loss)
+            BatchEval.update(acc, dist, exists, pckh, maxval, valid, loss)
+            EpochEval.update(preds, gts, valid)
             self.valIter += 1
 
             loss, acc, pckh, dist, auc, pr = BatchEval.get_batch_result()
@@ -218,6 +223,7 @@ class Trainer:
         self.part_train_pr.append(body_part_pr)
         self.part_train_pckh.append(body_part_pckh)
 
+        pck, pckh = EpochEval.eval_per_epoch()
         loss, acc, pckh, dist, auc, pr = BatchEval.get_batch_result()
         self.update_indicators(acc, loss, dist, pckh, auc, pr, self.trainIter, "val")
 

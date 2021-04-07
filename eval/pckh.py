@@ -1,22 +1,25 @@
 import numpy as np
 
-class pckh():
+
+class PCKHCalculator:
     def __init__(self):
         self.dist = []
+
     def compute_dis(self,kps,gt,valid):
-        head = gt[0]
-        neck = ((gt[1][0] + gt[2][0]) / 2,
-                (gt[1][1] + gt[2][1]) / 2)
-        for index in range(len(valid)):
-            if valid[index] == 0:
-                self.dist[index] = 0
-            else:
-                pointGT = gt[index]
-                pointPre = kps[index]
-                d = np.linalg.norm(np.subtract(pointGT, pointPre))
-                headSize = self.getHeadSize(head[0], neck[0], head[1], neck[1])
-                dnormal = d / headSize * 0.1
-                self.dist[index] = dnormal
+        for i in range(len(kps)):
+            head = gt[0]
+            neck = ((gt[1][0] + gt[2][0]) / 2,
+                    (gt[1][1] + gt[2][1]) / 2)
+            for index in range(len(valid)):
+                if valid[index] == 0:
+                    self.dist[index] = 0
+                else:
+                    pointGT = gt[index]
+                    pointPre = kps[index]
+                    d = np.linalg.norm(np.subtract(pointGT, pointPre))
+                    headSize = self.getHeadSize(head[0], neck[0], head[1], neck[1])
+                    dnormal = d / headSize * 0.1
+                    self.dist[index] = dnormal
         return self.dist
 
     def getHeadSize(sefl,x1,y1,x2,y2):
@@ -45,5 +48,5 @@ class pckh():
         return pckAll
 
 if __name__ == '__main__':
-    dis = pckh.compute_dis()
-    pckh = pckh.computePCKh(dis, 0.5)
+    dis = PCKHCalculator.compute_dis()
+    pckh = PCKHCalculator.computePCKh(dis, 0.5)

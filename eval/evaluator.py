@@ -1,5 +1,6 @@
 from eval.logger import DataLogger, CurveLogger
 from eval.utils import *
+from eval.pckh import PCKHCalculator
 
 
 class BatchEvaluator:
@@ -38,7 +39,7 @@ class BatchEvaluator:
         sum_dist[0] = cal_ave(exist, sum_dist[1:])
         acc[0] = cal_ave(exist, acc[1:])
 
-        return acc, sum_dist, exist, pckh, (preds_maxval.squeeze(dim=2).t(), if_exist)
+        return acc, sum_dist, exist, pckh, (preds_maxval.squeeze(dim=2).t(), if_exist), (preds, gt)
 
     def update(self, acc, dist, exists, pckh, maxval, gt, loss):
         self.accLogger.update(acc[0].item(), self.batch_size)
@@ -84,6 +85,7 @@ class EpochEvaluator:
     def __init__(self, out_size):
         self.height, self.width = out_size
         self.kps, self.gts, self.valids = [], [], []
+        self.cal_pckh = PCKHCalculator()
 
     def update(self, kp, gt, valid):
         self.kps += kp
@@ -91,14 +93,35 @@ class EpochEvaluator:
         self.valids += valid
 
     def eval_per_epoch(self):
-        pckh = self.eval_pckh()
-        pck = self.eval_pck()
-        return pckh, pck
+        pckh_ls = self.eval_pckh()
+        return pckh_ls
+        # pck = self.eval_pck()
+        # return pckh_ls, pck
 
     def eval_pck(self):
-        pass
+        return 0
 
-    def eval_pckh(self):
-        pass
+    def eval_pckh(self, refp=0.5):
+        parts_valid = sum(self.valids)[-12:].tolist()
+        parts_correct, pckh = [0] * 12, []
+        for i in range(len(self.gts)):
+            central = (self.gts[i][-11] + self.gts[i][-12]) / 2
+            head_size = np.linalg.norm(np.subtract(central, self.gts[i][0]))
+            if not head_size:
+                continue
+            valid = np.array(self.valids[i][-12:])
+            dist = np.linalg.norm(self.gts[i][-12:] - self.gts[i][-12:], axis=1)
+            ratio = dist / head_size
+            scale = ratio * valid
+            correct_num = sum((0 < scale) & (scale <= refp))  # valid_joints(a)
+            pckh.append(correct_num / sum(valid)) if sum(valid) > 0 else pckh.append(0)
 
+            for idx, (s, v) in enumerate(zip(scale, valid)):
+                if v == 1 and s <= refp:
+                    parts_correct[idx] += 1
 
+        parts_pckh = []
+        for correct_pt, valid_pt in zip(parts_correct, parts_valid):
+            parts_pckh.append(correct_pt / valid_pt) if valid_pt > 0 else parts_pckh.append(0)
+
+        return [sum(pckh) / len(pckh)] + parts_pckh
