@@ -3,6 +3,7 @@ import cv2
 import math
 import torch
 import random
+from .sample import SampleGenerator
 
 
 class ImageTransform:
@@ -25,6 +26,8 @@ class ImageTransform:
         self.flip_prob = load_dict["flip_prob"]
         self.scale = load_dict["scale"]
         self.kps = load_dict["kps"]
+        self.SAMPLE = SampleGenerator(self.output_height, self.output_width, self.input_height, self.input_width,
+                                      self.sigma)
 
     def load_img(self, img_path):
         img = cv2.imread(img_path)
@@ -40,14 +43,14 @@ class ImageTransform:
         img = F.normalize(img, mean=self.mean, std=self.std)
         return img
 
-    def scale(self, img, bbox, rate):
+    def scale(self, img, bbox):
         left, top, width, height = bbox[0], bbox[1], bbox[2], bbox[3]
         imgheight = img.shape[1]
         imgwidth = img.shape[2]
-        x = max(0, left - width * rate / 2)
-        y = max(0, top - height * rate / 2)
-        bottomRightx = min(imgwidth - 1, left + width * (1+rate / 2))
-        bottomRighty = min(imgheight - 1, top + height * (1+rate / 2))
+        x = max(0, left - width * self.scale / 2)
+        y = max(0, top - height * self.scale / 2)
+        bottomRightx = min(imgwidth - 1, left + width * (1+self.scale / 2))
+        bottomRighty = min(imgheight - 1, top + height * (1+self.scale / 2))
         return [x, y, bottomRightx, bottomRighty]
 
     def flip(self, img, box, kps):
@@ -90,10 +93,12 @@ class ImageTransform:
         img = F.to_pil_image(ts)
         return img
 
-    def process(self):
-        pass
-
-
+    def process(self, img_path, box, kps):
+        raw_img = self.load_img(img_path)
+        enlarged_box = self.scale(raw_img, box)
+        img, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
+        inputs = self.img2tensor(self.normalize(img))
+        return inputs, labels, enlarged_box
 
 
 
