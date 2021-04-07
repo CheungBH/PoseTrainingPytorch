@@ -110,7 +110,7 @@ class EpochEvaluator:
             if not head_size:
                 continue
             valid = np.array(self.valids[i][-12:])
-            dist = np.linalg.norm(self.gts[i][-12:] - self.gts[i][-12:], axis=1)
+            dist = np.linalg.norm(self.kps[i][-12:] - self.gts[i][-12:], axis=1)
             ratio = dist / head_size
             scale = ratio * valid
             correct_num = sum((0 < scale) & (scale <= refp))  # valid_joints(a)

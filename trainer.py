@@ -117,7 +117,7 @@ class Trainer:
             acc, dist, exists, pckh, (maxval, valid), (preds, gts) = \
                 BatchEval.eval_per_batch(out.data.mul(setMask), labels.data, self.opt.outputResH)
 
-            EpochEval.update(preds.tolist(), gts.tolist(), valid.t().tolist())
+            EpochEval.update(preds, gts, valid.t())
 
             self.optimizer.zero_grad()
             BatchEval.update(acc, dist, exists, pckh, maxval, valid, loss)
