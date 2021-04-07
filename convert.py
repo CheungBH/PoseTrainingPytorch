@@ -54,8 +54,8 @@ class Converter:
 
 
 if __name__ == '__main__':
-    model_path = "buffer/shortcut_seresnet18.pth"
-    model_cfg = "buffer/cfg_shortcut_seresnet18.json"
+    model_path = "buffer/all_seresnet50.pth"
+    model_cfg = "buffer/cfg_all_seresnet50.json"
     convert = Converter(model_path, cfg=model_cfg)
     convert.convert()
 
