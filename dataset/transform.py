@@ -1,10 +1,15 @@
 from torchvision.transforms import functional as F
 import cv2
+import math
+import torch
+import random
 
 
 class ImageTransform:
     def __init__(self, color="rgb"):
         self.color = color
+        self.prob = 0.5
+        self.max_rotation = 40
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
 
@@ -35,21 +40,51 @@ class ImageTransform:
         img = F.normalize(img, mean=self.mean, std=self.std)
         return img
 
-    def scale(self, im, bbox, rate):
+    def scale(self, img, bbox, rate):
         left, top, width, height = bbox[0], bbox[1], bbox[2], bbox[3]
-        imght = im.shape[1]
-        imgwidth = im.shape[2]
+        imgheight = img.shape[1]
+        imgwidth = img.shape[2]
         x = max(0, left - width * rate / 2)
         y = max(0, top - height * rate / 2)
         bottomRightx = min(imgwidth - 1, left + width * (1+rate / 2))
-        bottomRighty = min(imght - 1, top + height * (1+rate / 2))
+        bottomRighty = min(imgheight - 1, top + height * (1+rate / 2))
         return [x, y, bottomRightx, bottomRighty]
 
     def flip(self, img, box, kps):
+        prob = random.random()
+        right = [2, 4, 6, 8, 10, 12, 14, 16]
+        left = [1, 3, 5, 7, 9, 11, 13, 15]
+        do_flip = prob <= self.prob
+        if not do_flip:
+            return img, box, kps
+        img = cv2.flip(img)
+        for r, l in zip(right, left):
+            kps[r], kps[l] = kps[l], kps[r]
         return img, box, kps
 
-    def rotate(self, img, kps, rot):
-        return img, kps
+    def rotate(self, img, box, kps):
+        prob = random.random()
+        degree = (prob-0.5) * 2 * self.max_rotation  #degrree between -40 and 40
+        radian = degree/180.0 * math.pi
+        w, h = box[2], box[3]
+        center = (w / 2, h / 2)
+        radian_sin = math.sin(radian)
+        radian_cos = math.cos(radian)
+        kps_new = torch.zeros(kps.shape, dtype=kps.dtype)
+        x = kps[:, 0] - center[0]
+        y = kps[:, 1] - center[1]
+        kps_new[:, 0] = x * radian_cos - y * radian_sin + 0.5 * center[0]
+        kps_new[:, 1] = x * radian_sin + y * radian_cos + 0.5 * center[1]
+
+        R = cv2.getRotationMatrix2D(center, degree, 1)
+        cos, sin = abs(R[0, 0]), abs(R[0, 1])
+        new_w = h * sin + w * cos
+        new_h = h * cos + w * sin
+        new_size = (new_w, new_h)
+        R[0, 2] += new_size[0]/2 - center[0]
+        R[1, 2] += new_size[1]/2 - center[1]
+        img_new = cv2.warpAffine(img, R, dsize=new_size, borderMode=cv2.BORDER_CONSTANT, borderValue=None)
+        return img_new, kps_new
 
     def tensor2img(self, ts):
         img = F.to_pil_image(ts)
