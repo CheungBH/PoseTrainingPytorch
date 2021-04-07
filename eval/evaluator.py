@@ -8,12 +8,11 @@ class BatchEvaluator:
         self.phase = phase
         self.kps = kps
         self.batch_size = bs
-        self.accLogger, self.distLogger, self.lossLogger, self.pckhLogger, self.curveLogger = \
-            DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
+        self.accLogger, self.distLogger, self.lossLogger, self.curveLogger = DataLogger(), DataLogger(), DataLogger(), \
+                                                                             CurveLogger()
         self.pts_acc_Loggers = {i: DataLogger() for i in range(kps)}
         self.pts_dist_Loggers = {i: DataLogger() for i in range(kps)}
         self.pts_curve_Loggers = {i: CurveLogger() for i in range(kps)}
-        self.pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
 
     def eval_per_batch(self, output, label, out_height):
         label, output = label.cpu().data, output.cpu().data
@@ -41,11 +40,10 @@ class BatchEvaluator:
 
         return acc, sum_dist, exist, (preds_maxval.squeeze(dim=2).t(), if_exist), (preds, gt)
 
-    def update(self, acc, dist, exists, pckh, maxval, gt, loss):
+    def update(self, acc, dist, exists, maxval, gt, loss):
         self.accLogger.update(acc[0].item(), self.batch_size)
         self.lossLogger.update(loss.item(), self.batch_size)
         self.distLogger.update(dist[0].item(), self.batch_size)
-        self.pckhLogger.update(pckh[0], self.batch_size)
         self.curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
 
         exists = exists.tolist()
@@ -54,21 +52,16 @@ class BatchEvaluator:
             if exists[k] > 0:
                 self.pts_acc_Loggers[k].update(acc.tolist()[k + 1], exists[k])
                 self.pts_dist_Loggers[k].update(dist.tolist()[k + 1], exists[k])
-        pckh_exist = exists[-12:]
-        for k, v in self.pts_pckh_Loggers.items():
-            if exists[k] > 0:
-                self.pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
 
     def get_batch_result(self):
-        self.loss, self.acc, self.pckh, self.dist, self.auc, self.pr = self.lossLogger.avg, self.accLogger.avg * 100, \
-                self.pckhLogger.avg * 100, self.distLogger.avg, self.curveLogger.cal_AUC(), self.curveLogger.cal_PR()
-        return self.loss, self.acc, self.pckh, self.dist, self.auc, self.pr
+        self.loss, self.acc, self.dist, self.auc, self.pr = self.lossLogger.avg, self.accLogger.avg * 100, \
+                 self.distLogger.avg, self.curveLogger.cal_AUC(), self.curveLogger.cal_PR()
+        return self.loss, self.acc, self.dist, self.auc, self.pr
 
     def update_tb(self, tb, iter):
         tb.add_scalar('{}/Loss'.format(self.phase), self.loss, iter)
         tb.add_scalar('{}/Acc'.format(self.phase), self.acc, iter)
         tb.add_scalar('{}/Dist'.format(self.phase), self.dist, iter)
-        tb.add_scalar('{}/pckh'.format(self.phase), self.pckh, iter)
         tb.add_scalar('{}/AUC'.format(self.phase), self.auc, iter)
         tb.add_scalar('{}/PR'.format(self.phase), self.pr, iter)
 
@@ -77,8 +70,7 @@ class BatchEvaluator:
         body_part_dist = [Logger.avg for k, Logger in self.pts_dist_Loggers.items()]
         body_part_auc = [Logger.cal_AUC() for k, Logger in self.pts_curve_Loggers.items()]
         body_part_pr = [Logger.cal_PR() for k, Logger in self.pts_curve_Loggers.items()]
-        body_part_pckh = [Logger.avg for k, Logger in self.pts_pckh_Loggers.items()]
-        return body_part_acc, body_part_dist, body_part_auc, body_part_pr, body_part_pckh
+        return body_part_acc, body_part_dist, body_part_auc, body_part_pr
 
 
 class EpochEvaluator:

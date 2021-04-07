@@ -120,7 +120,7 @@ class Trainer:
             EpochEval.update(preds, gts, valid.t())
 
             self.optimizer.zero_grad()
-            BatchEval.update(acc, dist, exists, pckh, maxval, valid, loss)
+            BatchEval.update(acc, dist, exists, maxval, valid, loss)
 
             if mix_precision:
                 with amp.scale_loss(loss, self.optimizer) as scaled_loss:
@@ -136,27 +136,26 @@ class Trainer:
             self.optimizer.step()
             self.trainIter += 1
 
-            loss, acc, pckh, dist, auc, pr = BatchEval.get_batch_result()
+            loss, acc, dist, auc, pr = BatchEval.get_batch_result()
             BatchEval.update_tb(self.tb_writer, self.trainIter)
             train_loader_desc.set_description(
-                'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | '
-                'AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
-                    epoch=self.curr_epoch, loss=loss, acc=acc, pckh=pckh, dist=dist, AUC=auc, PR=pr
-                )
+                'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                    format(epoch=self.curr_epoch, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
             )
 
-        body_part_acc, body_part_dist, body_part_auc, body_part_pr, body_part_pckh = BatchEval.get_kps_result()
+        body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         train_loader_desc.close()
         pckh = EpochEval.eval_per_epoch()
+        print(pckh)
 
         self.part_train_acc.append(body_part_acc)
         self.part_train_dist.append(body_part_dist)
         self.part_train_auc.append(body_part_auc)
         self.part_train_pr.append(body_part_pr)
-        self.part_train_pckh.append(body_part_pckh)
+        self.part_train_pckh.append(pckh[1:])
 
-        loss, acc, pckh, dist, auc, pr = BatchEval.get_batch_result()
-        self.update_indicators(acc, loss, dist, pckh, auc, pr, self.trainIter, "train")
+        loss, acc, dist, auc, pr = BatchEval.get_batch_result()
+        self.update_indicators(acc, loss, dist, pckh[0], auc, pr, self.trainIter, "train")
 
     def valid(self):
         drawn_kp, drawn_hm = False, False
@@ -198,34 +197,32 @@ class Trainer:
                 for cons, idx_ls in self.loss_weight.items():
                     loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
-
             acc, dist, exists, (maxval, valid), (preds, gts) = \
                 BatchEval.eval_per_batch(out.data.mul(setMask), labels.data, self.opt.outputResH)
-            BatchEval.update(acc, dist, exists, pckh, maxval, valid, loss)
+            BatchEval.update(acc, dist, exists, maxval, valid, loss)
             EpochEval.update(preds, gts, valid.t())
             self.valIter += 1
 
-            loss, acc, pckh, dist, auc, pr = BatchEval.get_batch_result()
+            loss, acc, dist, auc, pr = BatchEval.get_batch_result()
             BatchEval.update_tb(self.tb_writer, self.valIter)
             val_loader_desc.set_description(
-                'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | '
-                'AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
-                    epoch=self.curr_epoch, loss=loss, acc=acc, pckh=pckh, dist=dist, AUC=auc, PR=pr
-                )
+                'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                    format(epoch=self.curr_epoch, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
             )
 
-        body_part_acc, body_part_dist, body_part_auc, body_part_pr, body_part_pckh = BatchEval.get_kps_result()
+        body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         val_loader_desc.close()
+        pckh = EpochEval.eval_per_epoch()
+        print(pckh)
 
         self.part_train_acc.append(body_part_acc)
         self.part_train_dist.append(body_part_dist)
         self.part_train_auc.append(body_part_auc)
         self.part_train_pr.append(body_part_pr)
-        self.part_train_pckh.append(body_part_pckh)
+        self.part_train_pckh.append(pckh[1:])
 
-        pckh = EpochEval.eval_per_epoch()
-        loss, acc, pckh, dist, auc, pr = BatchEval.get_batch_result()
-        self.update_indicators(acc, loss, dist, pckh, auc, pr, self.trainIter, "val")
+        loss, acc, dist, auc, pr = BatchEval.get_batch_result()
+        self.update_indicators(acc, loss, dist, pckh[0], auc, pr, self.trainIter, "val")
 
     # def train1(self):
     #     accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
