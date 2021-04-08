@@ -187,6 +187,8 @@ def cal_pckh2(y_pred, y_true, if_exist, refp=0.5):
     for i in range(len(y_true)):
         central = (y_true[i][-11] + y_true[i][-12]) / 2
         head_size = np.linalg.norm(np.subtract(central, y_true[i][0]))
+        if not head_size:
+            continue
         valid = np.array(if_exist[i][-12:])
         dist = np.linalg.norm(y_true[i][-12:] - y_pred[i][-12:], axis=1)
         ratio = dist/ head_size
@@ -317,6 +319,7 @@ def getPreds(hm):
     # pred_mask = maxval.gt(0).repeat(1, 1, 2).float()
     # preds *= pred_mask
     return preds, maxval
+
 
 def calc_dists(preds, target, normalize):
     preds = preds.float().clone()
