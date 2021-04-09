@@ -3,7 +3,8 @@ import cv2
 import math
 import torch
 import random
-from .sample import SampleGenerator
+from dataset.sample import SampleGenerator
+import json
 
 
 class ImageTransform:
@@ -16,7 +17,7 @@ class ImageTransform:
 
     def init_with_cfg(self, data_cfg):
         with open(data_cfg, "r") as load_f:
-            load_dict = data_cfg.load(load_f)
+            load_dict = json.load(load_f)
         self.input_height = load_dict["input_height"]
         self.input_width = load_dict["input_width"]
         self.output_height = load_dict["output_height"]
@@ -101,6 +102,10 @@ class ImageTransform:
         return inputs, labels, enlarged_box
 
 
+if __name__ == '__main__':
+    img = ""
+    boxes = []
+    kps = [[]]
 
 
 

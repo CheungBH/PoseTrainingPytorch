@@ -36,20 +36,5 @@ class KeyPointsRegister:
         return loss_weight
 
 
-def parse_data_cfg(cfg):
-    with open(cfg, "r") as load_f:
-        load_dict = json.load(load_f)
-    result = {
-        "input_height": load_dict["input_height"],
-        "input_width": load_dict["input_width"],
-        "output_height": load_dict["output_height"],
-        "output_width": load_dict["output_width"],
-        "sigma": load_dict["sigma"],
-        "rotate": load_dict["rotate"],
-        "flip_prob": load_dict["flip_prob"],
-        "scale": load_dict["scale"],
-        "kps": load_dict["kps"]
-    }
-    return result
 
 

@@ -1,4 +1,4 @@
-from .dataset import MyDataset
+from .datasets import MyDataset
 import torch
 
 open_source_dataset = ["coco"]
