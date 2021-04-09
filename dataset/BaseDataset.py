@@ -48,8 +48,8 @@ class MyDataset(data.Dataset):
 
     def __getitem__(self, idx):
         path, kps, box, i = self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx]
-        inp, out, enlarged_box = self.transform.process(path, box, kps)
-        img_meta = {"name": path, "kps": kps, "box": box, "id": i, "enlarged_box": enlarged_box}
+        inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
+        img_meta = {"name": path, "kps": kps, "box": box, "id": i, "enlarged_box": enlarged_box, "padded_size": pad_size}
         return inp, out, img_meta
 
 

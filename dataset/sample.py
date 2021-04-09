@@ -66,15 +66,16 @@ class SampleGenerator:
         img_w, img_h = img.shape[1], img.shape[0]
         new_w = int(img_w * min(self.inp_width / img_w, self.inp_height / img_h))
         new_h = int(img_h * min(self.inp_width / img_w, self.inp_height / img_h))
+        pad_size = (self.inp_height - new_h, self.inp_width - new_w)
         resized_image = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
         canvas = np.full((self.inp_height, self.inp_width, 3), 128, dtype="uint8")
         canvas[(self.inp_height - new_h) // 2:(self.inp_height - new_h) // 2 + new_h,
             (self.inp_width - new_w) // 2:(self.inp_width - new_w) // 2 + new_w, :] = resized_image
-        return canvas
+        return canvas, pad_size
 
     def process(self, img, enlarged_box, kps):
         cropped_im = self.crop(enlarged_box, img)
-        padded_im = self.padding(cropped_im)
+        padded_im, padded_size = self.padding(cropped_im)
         out = torch.zeros(len(kps), self.out_height, self.out_width)
         for i in range(len(kps)):
             up_left, bottom_right = enlarged_box[:2], enlarged_box[2:]
@@ -82,7 +83,7 @@ class SampleGenerator:
                     enlarged_box[2] and kps[i][1] < enlarged_box[3]:
                 hm_part = self.locate_position(up_left, bottom_right, kps[i])
                 out[i] = self.draw_gaussian(hm_part)
-        return padded_im, out
+        return padded_im, padded_size, out
 
 
 if __name__ == '__main__':
@@ -92,7 +93,7 @@ if __name__ == '__main__':
     hm = SG.draw_gaussian(loc)
     im_path = "../trash/675px-Poster-sized_portrait_of_Barack_Obama.jpg"
     im = cv2.imread(im_path)
-    padded_img = SG.padding(im)
+    padded_img, pad_size = SG.padding(im)
     test_box = [100, 200, 300, 400]
     cropped_img = SG.crop(test_box, im)
     cv2.imshow("padded", padded_img)

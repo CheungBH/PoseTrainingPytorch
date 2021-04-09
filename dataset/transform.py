@@ -97,9 +97,9 @@ class ImageTransform:
     def process(self, img_path, box, kps):
         raw_img = self.load_img(img_path)
         enlarged_box = self.scale(raw_img, box)
-        img, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
+        img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
         inputs = self.img2tensor(self.normalize(img))
-        return inputs, labels, enlarged_box
+        return inputs, labels, enlarged_box, pad_size
 
 
 if __name__ == '__main__':
