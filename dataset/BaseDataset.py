@@ -69,6 +69,10 @@ class MyDataset(data.Dataset):
 
 if __name__ == '__main__':
     dataset = MyDataset([["/media/hkuit155/Elements/coco/annotations/person_keypoints_train2017.json",
-                          "/media/hkuit155/Elements/coco/train2017"]],"cfg.json", save="tmp")
-    result = dataset[3]
-    a = 1
+                          "/media/hkuit155/Elements/coco/train2017"]],"cfg.json")
+    for i in range(len(dataset)):
+        try:
+            result = dataset[i]
+        except:
+            print(i)
+

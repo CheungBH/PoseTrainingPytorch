@@ -30,8 +30,10 @@ class SampleGenerator:
         # Image range
         img_x = max(0, ul[0]), min(br[0], self.out_width)
         img_y = max(0, ul[1]), min(br[1], self.out_height)
-
-        hm_img[img_y[0]:img_y[1], img_x[0]:img_x[1]] = g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+        try:
+            hm_img[img_y[0]:img_y[1], img_x[0]:img_x[1]] = g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+        except:
+            a = 1
         return torch.from_numpy(hm_img)
 
     def locate_kp(self, ul, br, pt):
@@ -76,7 +78,7 @@ class SampleGenerator:
     @staticmethod
     def get_padded_location(padded_size, box):
         x_pad, y_pad = padded_size[1], padded_size[0]
-        x_min, x_max, y_min, y_max = box[0] - x_pad//2, box[2] + x_pad//2,  box[1] - y_pad//2, box[2] + y_pad//2
+        x_min, x_max, y_min, y_max = box[0] - x_pad//2, box[2] + x_pad//2,  box[1] - y_pad//2, box[3] + y_pad//2
         return [x_min, y_min, x_max, y_max]
 
     def process(self, img, enlarged_box, kps):

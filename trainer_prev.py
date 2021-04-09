@@ -9,7 +9,7 @@ import os
 from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
-from dataset.BaseDataloader import Loader
+from dataset.dataloader import TrainDataset
 from utils.utils import draw_graph
 import csv
 import shutil
@@ -83,13 +83,8 @@ class Trainer:
         self.kps = posenet.kps
         opt.kps = posenet.kps
 
-        dataset_info = {"train": [["/media/hkuit155/Elements/coco/annotations/person_keypoints_train2017.json",
-                                   "/media/hkuit155/Elements/coco/train2017"]],
-                        "valid": [["/media/hkuit155/Elements/coco/annotations/person_keypoints_val2017.json",
-                                   "/media/hkuit155/Elements/coco/val2017"]],}
-        data_cfg = "dataset/cfg.json"
-        self.dataset = Loader(dataset_info, data_cfg, loss_weight)
-        self.loss_weight = {1: [-item for item in range(self.kps + 1)[1:]]}
+        self.dataset = TrainDataset(dataset_info, loss_weight, hmGauss=opt.hmGauss, rotate=opt.rotate)
+        self.loss_weight = self.dataset.joint_weights
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
                                                                            opt.train_worker, opt.val_worker)
 
@@ -106,10 +101,11 @@ class Trainer:
         EpochEval = EpochEvaluator((self.opt.outputResH, self.opt.outputResW))
         self.model.train()
         train_loader_desc = tqdm(self.train_loader)
-        for i, (inps, labels, meta) in enumerate(train_loader_desc):
+        for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
             if device != "cpu":
                 inps = inps.cuda().requires_grad_()
                 labels = labels.cuda()
+                setMask = setMask.cuda()
             else:
                 inps = inps.requires_grad_()
             out = self.model(inps)
@@ -119,7 +115,7 @@ class Trainer:
                 loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data, labels.data, self.opt.outputResH)
+                BatchEval.eval_per_batch(out.data.mul(setMask), labels.data, self.opt.outputResH)
 
             EpochEval.update(preds, gts, valid.t())
 
