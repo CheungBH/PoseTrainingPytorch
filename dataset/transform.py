@@ -5,12 +5,15 @@ import torch
 import random
 from dataset.sample import SampleGenerator
 import json
+from dataset.visualize import KeyPointVisulizer, BBoxVisualizer
+import numpy as np
 
 
 class ImageTransform:
-    def __init__(self, color="rgb"):
+    def __init__(self, color="rgb", save=False):
         self.color = color
         self.prob = 0.5
+        self.save = save
         self.max_rotation = 40
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
@@ -25,10 +28,13 @@ class ImageTransform:
         self.sigma = load_dict["sigma"]
         self.rotate = load_dict["rotate"]
         self.flip_prob = load_dict["flip_prob"]
-        self.scale = load_dict["scale"]
+        self.scale_factor = load_dict["scale"]
         self.kps = load_dict["kps"]
         self.SAMPLE = SampleGenerator(self.output_height, self.output_width, self.input_height, self.input_width,
                                       self.sigma)
+        if self.save:
+            self.KPV = KeyPointVisulizer(self.kps, "coco")
+            self.BBV = BBoxVisualizer()
 
     def load_img(self, img_path):
         img = cv2.imread(img_path)
@@ -45,14 +51,15 @@ class ImageTransform:
         return img
 
     def scale(self, img, bbox):
-        left, top, width, height = bbox[0], bbox[1], bbox[2], bbox[3]
-        imgheight = img.shape[1]
-        imgwidth = img.shape[2]
-        x = max(0, left - width * self.scale / 2)
-        y = max(0, top - height * self.scale / 2)
-        bottomRightx = min(imgwidth - 1, left + width * (1+self.scale / 2))
-        bottomRighty = min(imgheight - 1, top + height * (1+self.scale / 2))
-        return [x, y, bottomRightx, bottomRighty]
+        x_min, y_min, x_max, y_max = bbox[0], bbox[1], bbox[2], bbox[3]
+        width, height = x_max - x_min, y_max - y_min
+        imgheight = img.shape[0]
+        imgwidth = img.shape[1]
+        x_enlarged_min = max(0, x_min - width * self.scale_factor / 2)
+        y_enlarged_min = max(0, y_min - height * self.scale_factor / 2)
+        x_enlarged_max = min(imgwidth - 1, x_max + width * self.scale_factor / 2)
+        y_enlarged_max = min(imgheight - 1, y_max + height * self.scale_factor / 2)
+        return [x_enlarged_min, y_enlarged_min, x_enlarged_max, y_enlarged_max]
 
     def flip(self, img, box, kps):
         prob = random.random()
@@ -98,14 +105,25 @@ class ImageTransform:
         raw_img = self.load_img(img_path)
         enlarged_box = self.scale(raw_img, box)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
-        inputs = self.img2tensor(self.normalize(img))
+        inputs = self.normalize(self.img2tensor(img))
+        if self.save:
+            import os
+            import copy
+            os.makedirs("tmp", exist_ok=True)
+            cv2.imwrite("tmp/raw.jpg", raw_img)
+            cv2.imwrite("tmp/cropped_padding.jpg", img)
+            cv2.imwrite("tmp/box.jpg", self.BBV.visualize([box], copy.deepcopy(raw_img)))
+            cv2.imwrite("tmp/kps.jpg", self.KPV.visualize(copy.deepcopy(raw_img), [kps]))
+            for idx in range(self.kps):
+                hm = self.SAMPLE.save_hm(img, labels[idx])
+                cv2.imwrite("tmp/kps_{}.jpg".format(idx), cv2.resize(hm, (640, 640)))
         return inputs, labels, enlarged_box, pad_size
 
 
 if __name__ == '__main__':
-    img = ""
-    boxes = []
-    kps = [[]]
-
+    # img = ""
+    # boxes = []
+    # kps = [[]]
+    pass
 
 

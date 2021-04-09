@@ -85,6 +85,13 @@ class SampleGenerator:
                 out[i] = self.draw_gaussian(hm_part)
         return padded_im, padded_size, out
 
+    def save_hm(self, img, hm):
+        save_img = cv2.resize(img, (self.out_height, self.out_width))
+        hm_single = np.expand_dims(np.array(hm * 255, dtype="uint8"), axis=0)
+        save_hm = np.transpose(np.concatenate((hm_single, hm_single, hm_single), axis=0), (2, 1, 0))
+        dst = cv2.addWeighted(save_img, 0.1, save_hm, 0.9, 0)
+        return dst
+
 
 if __name__ == '__main__':
     SG = SampleGenerator(80, 64, 320, 256, 1)
