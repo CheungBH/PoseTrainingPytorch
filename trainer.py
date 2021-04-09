@@ -168,11 +168,10 @@ class Trainer:
         self.model.eval()
         val_loader_desc = tqdm(self.val_loader)
 
-        for i, (inps, labels, setMask, img_info) in enumerate(val_loader_desc):
+        for i, (inps, labels, meta) in enumerate(val_loader_desc):
             if device != "cpu":
                 inps = inps.cuda()
                 labels = labels.cuda()
-                setMask = setMask.cuda()
 
             with torch.no_grad():
                 out = self.model(inps)
@@ -202,7 +201,7 @@ class Trainer:
                     loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data.mul(setMask), labels.data, self.opt.outputResH)
+                BatchEval.eval_per_batch(out.data, labels.data, self.opt.outputResH)
             BatchEval.update(acc, dist, exists, maxval, valid, loss)
             EpochEval.update(preds, gts, valid.t())
             self.valIter += 1
