@@ -34,7 +34,7 @@ class SampleGenerator:
         hm_img[img_y[0]:img_y[1], img_x[0]:img_x[1]] = g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
         return torch.from_numpy(hm_img)
 
-    def locate_position(self, ul, br, pt):
+    def locate_kp(self, ul, br, pt):
         center = torch.zeros(2)
         center[0] = (br[0] - 1 - ul[0]) / 2
         center[1] = (br[1] - 1 - ul[1]) / 2
@@ -73,29 +73,36 @@ class SampleGenerator:
             (self.inp_width - new_w) // 2:(self.inp_width - new_w) // 2 + new_w, :] = resized_image
         return canvas, pad_size
 
+    @staticmethod
+    def get_padded_location(padded_size, box):
+        x_pad, y_pad = padded_size[1], padded_size[0]
+        x_min, x_max, y_min, y_max = box[0] - x_pad//2, box[2] + x_pad//2,  box[1] - y_pad//2, box[2] + y_pad//2
+        return [x_min, y_min, x_max, y_max]
+
     def process(self, img, enlarged_box, kps):
         cropped_im = self.crop(enlarged_box, img)
         padded_im, padded_size = self.padding(cropped_im)
         out = torch.zeros(len(kps), self.out_height, self.out_width)
         for i in range(len(kps)):
-            up_left, bottom_right = enlarged_box[:2], enlarged_box[2:]
+            padded_box = self.get_padded_location(padded_size, enlarged_box)
+            up_left, bottom_right = padded_box[:2], padded_box[2:]
             if kps[i][0] > 0 and kps[i][0] > enlarged_box[0] and kps[i][1] > enlarged_box[1] and kps[i][0] < \
                     enlarged_box[2] and kps[i][1] < enlarged_box[3]:
-                hm_part = self.locate_position(up_left, bottom_right, kps[i])
+                hm_part = self.locate_kp(up_left, bottom_right, kps[i])
                 out[i] = self.draw_gaussian(hm_part)
         return padded_im, padded_size, out
 
     def save_hm(self, img, hm):
         save_img = cv2.resize(img, (self.out_height, self.out_width))
-        hm_single = np.expand_dims(np.array(hm * 255, dtype="uint8"), axis=0)
-        save_hm = np.transpose(np.concatenate((hm_single, hm_single, hm_single), axis=0), (2, 1, 0))
+        hm_single = np.expand_dims(np.array(hm * 255, dtype="uint8"), axis=2)
+        save_hm = np.concatenate((hm_single, hm_single, hm_single), axis=2)
         dst = cv2.addWeighted(save_img, 0.1, save_hm, 0.9, 0)
         return dst
 
 
 if __name__ == '__main__':
     SG = SampleGenerator(80, 64, 320, 256, 1)
-    loc = SG.locate_position((100, 200), (300, 500), (150, 250))
+    loc = SG.locate_kp((100, 200), (300, 500), (150, 250))
     print(loc)
     hm = SG.draw_gaussian(loc)
     im_path = "../trash/675px-Poster-sized_portrait_of_Barack_Obama.jpg"

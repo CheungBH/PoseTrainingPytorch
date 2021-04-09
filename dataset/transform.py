@@ -5,7 +5,7 @@ import torch
 import random
 from dataset.sample import SampleGenerator
 import json
-from dataset.visualize import KeyPointVisulizer, BBoxVisualizer
+from dataset.visualize import KeyPointVisualizer, BBoxVisualizer
 import numpy as np
 
 
@@ -33,7 +33,7 @@ class ImageTransform:
         self.SAMPLE = SampleGenerator(self.output_height, self.output_width, self.input_height, self.input_width,
                                       self.sigma)
         if self.save:
-            self.KPV = KeyPointVisulizer(self.kps, "coco")
+            self.KPV = KeyPointVisualizer(self.kps, "coco")
             self.BBV = BBoxVisualizer()
 
     def load_img(self, img_path):
@@ -98,7 +98,7 @@ class ImageTransform:
         return img_new, kps_new
 
     def tensor2img(self, ts):
-        img = F.to_pil_image(ts)
+        img = np.asarray(F.to_pil_image(ts))
         return img
 
     def process(self, img_path, box, kps):
@@ -113,6 +113,7 @@ class ImageTransform:
             cv2.imwrite("tmp/raw.jpg", raw_img)
             cv2.imwrite("tmp/cropped_padding.jpg", img)
             cv2.imwrite("tmp/box.jpg", self.BBV.visualize([box], copy.deepcopy(raw_img)))
+            cv2.imwrite("tmp/enlarge_box.jpg", self.BBV.visualize([enlarged_box], copy.deepcopy(raw_img)))
             cv2.imwrite("tmp/kps.jpg", self.KPV.visualize(copy.deepcopy(raw_img), [kps]))
             for idx in range(self.kps):
                 hm = self.SAMPLE.save_hm(img, labels[idx])

@@ -27,7 +27,7 @@ mpii_p_color = [PURPLE, BLUE, BLUE, RED, RED, BLUE, BLUE, RED, RED, PURPLE, PURP
 mpii_line_color = [PURPLE, BLUE, BLUE, RED, RED, BLUE, BLUE, RED, RED, PURPLE, PURPLE, RED, RED, BLUE, BLUE]
 
 
-class KeyPointVisulizer:
+class KeyPointVisualizer:
     def __init__(self, kps, format):
         self.kps = kps
         if kps == 13:
