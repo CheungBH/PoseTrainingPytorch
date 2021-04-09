@@ -10,7 +10,7 @@ trans = list(zip(
     ))
 
 
-class MyDataset(data.Dataset):
+class BaseDataset(data.Dataset):
     def __init__(self, data_info, data_cfg, save=False):
         self.transform = ImageTransform(save=save)
         self.transform.init_with_cfg(data_cfg)
@@ -68,7 +68,7 @@ class MyDataset(data.Dataset):
 
 
 if __name__ == '__main__':
-    dataset = MyDataset([["/media/hkuit155/Elements/coco/annotations/person_keypoints_train2017.json",
+    dataset = BaseDataset([["/media/hkuit155/Elements/coco/annotations/person_keypoints_train2017.json",
                           "/media/hkuit155/Elements/coco/train2017"]],"cfg.json")
     for i in range(len(dataset)):
         try:
