@@ -10,7 +10,7 @@ import numpy as np
 
 
 class ImageTransform:
-    def __init__(self, color="rgb", save=False):
+    def __init__(self, color="rgb", save=""):
         self.color = color
         self.prob = 0.5
         self.save = save
@@ -109,15 +109,15 @@ class ImageTransform:
         if self.save:
             import os
             import copy
-            os.makedirs("tmp", exist_ok=True)
-            cv2.imwrite("tmp/raw.jpg", raw_img)
-            cv2.imwrite("tmp/cropped_padding.jpg", img)
-            cv2.imwrite("tmp/box.jpg", self.BBV.visualize([box], copy.deepcopy(raw_img)))
-            cv2.imwrite("tmp/enlarge_box.jpg", self.BBV.visualize([enlarged_box], copy.deepcopy(raw_img)))
-            cv2.imwrite("tmp/kps.jpg", self.KPV.visualize(copy.deepcopy(raw_img), [kps]))
+            os.makedirs("{}".format(self.save), exist_ok=True)
+            cv2.imwrite("{}/raw.jpg".format(self.save), raw_img)
+            cv2.imwrite("{}/cropped_padding.jpg".format(self.save), img)
+            cv2.imwrite("{}/box.jpg".format(self.save), self.BBV.visualize([box], copy.deepcopy(raw_img)))
+            cv2.imwrite("{}/enlarge_box.jpg".format(self.save), self.BBV.visualize([enlarged_box], copy.deepcopy(raw_img)))
+            cv2.imwrite("{}/kps.jpg".format(self.save), self.KPV.visualize(copy.deepcopy(raw_img), [kps]))
             for idx in range(self.kps):
                 hm = self.SAMPLE.save_hm(img, labels[idx])
-                cv2.imwrite("tmp/kps_{}.jpg".format(idx), cv2.resize(hm, (640, 640)))
+                cv2.imwrite("{}/kps_{}.jpg".format(self.save, idx), cv2.resize(hm, (640, 640)))
         return inputs, labels, enlarged_box, pad_size
 
 

@@ -12,7 +12,7 @@ def kps_reshape(raw_kps):
     kps, kps_valid = [], []
     for i in range(kps_num):
         kps.append([raw_kps[i*3], raw_kps[i*3+1]])
-        kps_valid.append([raw_kps[i*3+2]])
+        kps_valid.append(raw_kps[i*3+2])
     return kps, kps_valid
 
 

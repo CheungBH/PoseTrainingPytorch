@@ -25,6 +25,9 @@ class MyDataset(data.Dataset):
             self.boxes += boxes
             self.ids += ids
             self.kps_valid += valid
+        # invalid_samples = [idx for idx, kp in enumerate(self.kps_valid) if sum(kp) == 0]
+        # invalid_samples.sort(reverse=True)
+        # for sample in invalid_samples
 
     def load_json(self, json_file, folder_name):
         anno = json.load(open(json_file))
@@ -37,11 +40,13 @@ class MyDataset(data.Dataset):
         for i in range(len(anno['images'])):
             images_res.append(anno['images'][i]['file_name'])
         for img_info in anno['annotations']:
+            kp, kp_valid = kps_reshape(img_info["keypoints"])
+            if not sum(kp_valid):
+                continue
             # images.append(img_info['image_id'])
             images.append(os.path.join(folder_name, str(img_info['image_id']).zfill(12) + ".jpg"))
             # kps_tmp = img_info["keypoints"]
             # keypoint.append(img_info["keypoints"])
-            kp, kp_valid = kps_reshape(img_info["keypoints"])
             keypoint.append(kp)
             kps_valid.append(kp_valid)
             # xs = img_info['keypoints'][0::3]
@@ -64,6 +69,6 @@ class MyDataset(data.Dataset):
 
 if __name__ == '__main__':
     dataset = MyDataset([["/media/hkuit155/Elements/coco/annotations/person_keypoints_train2017.json",
-                          "/media/hkuit155/Elements/coco/train2017"]],"cfg.json", save=True)
-    result = dataset[6]
+                          "/media/hkuit155/Elements/coco/train2017"]],"cfg.json", save="tmp")
+    result = dataset[3]
     a = 1
