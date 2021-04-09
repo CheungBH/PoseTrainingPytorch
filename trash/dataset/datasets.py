@@ -8,9 +8,8 @@ import torch.utils.data as data
 from config.config import open_source_dataset
 from utils.pose import generateSampleBox, choose_kps
 import random
-from dataset.bbox_visualize import BBoxVisualizer
-from dataset.kps_visualize import KeyPointVisualizer
-from utils.utils import check_hm, check_part
+from trash.dataset.bbox_visualize import BBoxVisualizer
+from trash.dataset.kps_visualize import KeyPointVisualizer
 from src.opt import opt
 from dataset.keypoint import KeyPointsRegister
 

@@ -1,6 +1,6 @@
 import torch
 import torch.utils.data
-from dataset.datasets import TestDataset
+from trash.dataset.datasets import TestDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, cal_accuracy, CurveLogger
 from src.opt import opt
