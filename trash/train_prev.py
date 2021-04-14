@@ -6,7 +6,7 @@
 import torch
 import torch.utils.data
 import torch.nn as nn
-from dataset.dataset import Mscoco, MyDataset
+from trash.dataset.datasets import MyDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, accuracy
 from utils.img import flip, shuffleLR

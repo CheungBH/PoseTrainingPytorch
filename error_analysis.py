@@ -5,10 +5,10 @@ from config.config import device
 from collections import defaultdict
 
 from utils.eval import cal_accuracy
-from utils.logger import DataLogger, CurveLogger
+from eval.logger import DataLogger, CurveLogger
 from utils.train_utils import Criterion
 from models.pose_model import PoseModel
-from utils.test_utils import check_option_file, list_to_str, parse_thresh
+from utils.test_utils import check_option_file, list_to_str
 
 criterion = Criterion()
 posenet = PoseModel()
@@ -135,7 +135,7 @@ class ErrorAnalyser:
 
 
 def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=None, criteria="MSE", height=256, width=256):
-    from dataset.dataloader import TestDataset
+    from trash.dataset.dataloader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
     analyser = ErrorAnalyser(test_loader, model_path, model_cfg=cfg)
     if use_option:

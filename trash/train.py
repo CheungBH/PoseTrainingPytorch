@@ -7,15 +7,15 @@ import copy
 import csv
 import sys
 import torch.nn as nn
-from dataset.dataset import MyDataset
+from trash.dataset.datasets import MyDataset
 from tqdm import tqdm
-from utils.eval import DataLogger, accuracy, cal_accuracy, CurveLogger
+from utils.eval import DataLogger, cal_accuracy, CurveLogger
 from src.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config
-from utils.utils import generate_cmd, lr_decay, get_sparse_value, warm_up_lr, write_csv_title, write_decay_title, \
-    write_decay_info, draw_graph, check_hm, check_part, adjust_lr
+from utils.utils import generate_cmd, get_sparse_value, warm_up_lr, write_csv_title, write_decay_title, \
+    write_decay_info, draw_graph, adjust_lr
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from utils.draw import draw_kps, draw_hms
 

@@ -46,3 +46,17 @@ def parse_channel(cfg):
     channels = cfg["channels"].values()
     return [i for sub_ls in channels for sub_itm in sub_ls for i in sub_itm]
 
+
+if __name__ == '__main__':
+    data_cfg = "../../dataset/cfg.json"
+    dicc = {"input_height": 256,
+            "input_width": 256,
+            "output_height": 64,
+            "output_width": 64,
+            "sigma": 1,
+            "rotate": 40,
+            "flip_prob": 0.5,
+            "scale": 0.2,
+            "kps": 13
+            }
+    write_cfg(dicc, data_cfg)

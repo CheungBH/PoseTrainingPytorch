@@ -1,9 +1,6 @@
-from tqdm import tqdm
-from utils.logger import DataLogger, CurveLogger
-from utils.eval import cal_accuracy
 from config import config
 import torch
-from utils.train_utils import Criterion, Optimizer, write_csv_title, summary_title
+from utils.train_utils import Criterion, Optimizer
 from models.pose_model import PoseModel
 from utils.pytorchtools import EarlyStopping
 
@@ -516,7 +513,7 @@ if __name__ == '__main__':
     trainer = Trainer(opt)
     trainer.process()
 from tqdm import tqdm
-from utils.logger import DataLogger, CurveLogger
+from eval.logger import DataLogger, CurveLogger
 from utils.eval import cal_accuracy
 from config import config
 import torch
@@ -527,7 +524,7 @@ import os
 from tensorboardX import SummaryWriter
 import time
 from utils.draw import draw_kps, draw_hms
-from dataset.dataloader import TrainDataset
+from trash.dataset.dataloader import TrainDataset
 from utils.utils import draw_graph
 import csv
 

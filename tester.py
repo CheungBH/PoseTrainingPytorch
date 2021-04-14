@@ -2,10 +2,10 @@ from tqdm import tqdm
 import torch
 import os
 from config.config import device
-from dataset.dataloader import TestDataset
+from trash.dataset.dataloader import TestDataset
 from src.opt import opt
 from utils.eval import cal_accuracy
-from utils.logger import DataLogger, CurveLogger
+from eval.logger import DataLogger, CurveLogger
 from utils.train_utils import Criterion
 from models.pose_model import PoseModel
 from utils.test_utils import check_option_file, list_to_str
@@ -147,7 +147,7 @@ class Tester:
 
 def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True, cfg=None, criteria="MSE", height=256,
                width=256):
-    from dataset.dataloader import TestDataset
+    from trash.dataset.dataloader import TestDataset
     test_loader = TestDataset(data_info).build_dataloader(batchsize, num_worker, shuffle=False)
     tester = Tester(test_loader, model_path, model_cfg=cfg)
     if use_option:

@@ -1,13 +1,8 @@
 cmds = [
 
-    "CUDA_VISIBLE_DEVICES=0 python auto_trainer.py --dataset aic --expFolder seresnet --expID seresnet18_3DUC --cfg "
-    "models/cfg/default/cfg_seresnet18_13kps_3DUC.json --nEpochs 120 --outputResH 160 --outputResW 128",
-    "CUDA_VISIBLE_DEVICES=1 python auto_trainer.py --dataset aic --expFolder seresnet --expID seresnet50_3DUC --cfg "
-    "models/cfg/default/cfg_seresnet50_13kps_3DUC.json --nEpochs 120 --outputResH 160 --outputResW 128",
-    "CUDA_VISIBLE_DEVICES=2 python auto_trainer.py --dataset aic --expFolder seresnet --expID seresnet18_2DUC --cfg "
-    "models/cfg/default/cfg_seresnet18_13kps.json --nEpochs 120",
-    "CUDA_VISIBLE_DEVICES=3 python auto_trainer.py --dataset aic --expFolder seresnet --expID seresnet50_2DUC --cfg "
-    "models/cfg/default/cfg_seresnet50_13kps.json --nEpochs 120",
+    "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 3 --backbone seresnet18 --LR 0.1 --addDPG True --nEpoch 10",
+    "python auto_trainer.py --dataset ceiling --expFolder auto_test_pckh --expID 2 --backbone seresnet18 --addDPG False --nEpoch 100 --se_ratio 16",
+
 
 ]
 
