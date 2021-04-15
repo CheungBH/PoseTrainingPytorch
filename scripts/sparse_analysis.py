@@ -20,7 +20,7 @@ def generate_thred(sparse_csv,acc_csv,new_csv):
 
 
 if __name__ == "__main__":
-    sparse_csv = ''
-    acc_csv = ''
-    new_csv = ''
+    sparse_csv = '../exp/sparse_shortcut_result.csv'
+    acc_csv = '../exp/train_seresnet_sparse-laptop win.csv'
+    new_csv = '../exp/new.csv'
     generate_thred(sparse_csv,acc_csv,new_csv)
