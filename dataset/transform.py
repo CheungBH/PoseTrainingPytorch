@@ -18,6 +18,7 @@ class ImageTransform:
         self.max_rotation = 40
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
+        self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12), (13, 14), (15, 16)]
 
     def init_with_cfg(self, data_cfg):
         with open(data_cfg, "r") as load_f:
@@ -33,9 +34,9 @@ class ImageTransform:
         self.kps = load_dict["kps"]
         self.SAMPLE = SampleGenerator(self.output_height, self.output_width, self.input_height, self.input_width,
                                       self.sigma)
-        if self.save:
-            self.KPV = KeyPointVisualizer(self.kps, "coco")
-            self.BBV = BBoxVisualizer()
+        # if self.save:
+        self.KPV = KeyPointVisualizer(self.kps, "coco")
+        self.BBV = BBoxVisualizer()
 
     def load_img(self, img_path):
         img = cv2.imread(img_path)
@@ -62,17 +63,20 @@ class ImageTransform:
         y_enlarged_max = min(imgheight - 1, y_max + height * self.scale_factor / 2)
         return [x_enlarged_min, y_enlarged_min, x_enlarged_max, y_enlarged_max]
 
-    def flip(self, img, box, kps):
-        prob = random.random()
-        right = [2, 4, 6, 8, 10, 12, 14, 16]
-        left = [1, 3, 5, 7, 9, 11, 13, 15]
-        do_flip = prob <= self.prob
-        if not do_flip:
-            return img, box, kps
-        img = cv2.flip(img)
-        for r, l in zip(right, left):
-            kps[r], kps[l] = kps[l], kps[r]
-        return img, box, kps
+    def flip(self, img, box, kps, kps_valid):
+        import copy
+        flipped_kps, flipped_valid = copy.deepcopy(kps), copy.deepcopy(kps_valid)
+        flipped_img = cv2.flip(img, 1)
+        img_width = img.shape[1]
+        # box_w, box_tl, box_br = box[2] - box[0], box[0], box[2]
+        new_box_tl, new_box_br = img_width - box[2] - 1, img_width - box[0] - 1
+        flipped_box = [new_box_br, box[1], new_box_tl, box[3]]
+        for l, r in self.flip_pairs:
+            left_kp, right_kp = kps[l], kps[r]
+            flipped_x_l, flipped_x_r = img_width - kps[r][0] - 1, img_width - kps[l][0] - 1
+            flipped_kps[l], flipped_kps[r] = [flipped_x_l, right_kp[1]], [flipped_x_r, left_kp[1]]
+            flipped_valid[l], flipped_valid[r] = kps_valid[r], kps_valid[l]
+        return flipped_img, flipped_box, flipped_kps, flipped_valid
 
     def rotate(self, img, box, kps):
         prob = random.random()
@@ -123,9 +127,23 @@ class ImageTransform:
 
 
 if __name__ == '__main__':
-    # img = ""
-    # boxes = []
-    # kps = [[]]
-    pass
+    data_cfg = "../config/data_cfg/data_default.json"
+    img_path = '/media/hkuit155/Elements/coco/train2017/000000209468.jpg'
+    box = [166.921, 85.08000000000001, 304.42900000000003, 479]
+    kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
+           [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
+    valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
 
+    IT = ImageTransform()
+    IT.init_with_cfg(data_cfg)
+    img = IT.load_img(img_path)
+    f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
+    IT.BBV.visualize([f_box], f_img)
+    IT.KPV.visualize(f_img, [f_kps])
+    IT.BBV.visualize([box], img)
+    IT.KPV.visualize(img, [kps])
+
+    cv2.imshow("raw", img)
+    cv2.imshow("flipped", f_img)
+    cv2.waitKey(0)

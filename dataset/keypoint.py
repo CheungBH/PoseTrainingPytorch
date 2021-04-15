@@ -4,9 +4,24 @@ import json
 
 class KeyPointsRegister:
     def __init__(self):
-        self.body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right ear", 6: "left shoulder",
-              7: "right shoulder", 8: "left elbow", 9: "right elbow", 10: "left wrist", 11: "right wrist",
-              12: "left hip", 13: "right hip", 14: "left knee", 15: "right knee", 16: "left ankle", 17: "right ankle"}
+        pass
+
+    @staticmethod
+    def get_name(num):
+        if num == 17:
+            return ['nose', 'left eye', 'right eye', 'left ear', 'right ear', 'left shoulder', 'right shoulder',
+                    'left elbow', 'right elbow', 'left wrist', 'right wrist', 'left hip', 'right hip', 'left knee',
+                    'right knee', 'left ankle', 'right ankle']
+        elif num == 13:
+            return ['nose', 'left shoulder', 'right shoulder', 'left elbow', 'right elbow', 'left wrist',
+                    'right wrist', 'left hip', 'right hip', 'left knee', 'right knee', 'left ankle', 'right ankle']
+
+
+class KeyPointsProcessor:
+    def __init__(self):
+        self.body_parts_name = ['nose', 'left eye', 'right eye', 'left ear', 'right ear', 'left shoulder',
+                                'right shoulder', 'left elbow', 'right elbow', 'left wrist', 'right wrist', 'left hip',
+                                'right hip', 'left knee', 'right knee', 'left ankle', 'right ankle']
 
     def init_kps(self, idx):
         if isinstance(idx, int):
@@ -36,5 +51,6 @@ class KeyPointsRegister:
         return loss_weight
 
 
-
-
+if __name__ == '__main__':
+    KPR = KeyPointsProcessor()
+    # print([n for k, n in KPR.body_parts.items()])

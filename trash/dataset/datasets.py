@@ -11,7 +11,7 @@ import random
 from trash.dataset.bbox_visualize import BBoxVisualizer
 from trash.dataset.kps_visualize import KeyPointVisualizer
 from src.opt import opt
-from dataset.keypoint import KeyPointsRegister
+from dataset.keypoint import KeyPointsProcessor
 
 
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))
@@ -85,7 +85,7 @@ class Mscoco(data.Dataset):
 class MyDataset(data.Dataset):
     def __init__(self, data_info, train=True, sigma=1,
                  scale_factor=(0.2, 0.3), rot_factor=40, label_type='Gaussian'):
-        self.KP = KeyPointsRegister()
+        self.KP = KeyPointsProcessor()
         self.KP.init_kps(opt.kps)
         self.is_train = train  # training set or test set
         self.inputResH = opt.inputResH

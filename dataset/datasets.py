@@ -23,9 +23,9 @@ class BaseDataset(data.Dataset):
 
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
-        for d in data_info:
-            annotation_file = os.path.join(d["root"], d[self.annot])
-            imgs, kps, boxes, ids, valid = self.load_json(annotation_file, os.path.join(d["root"], d[self.imgs]))
+        for name, info in data_info.items():
+            annotation_file = os.path.join(info["root"], info[self.annot])
+            imgs, kps, boxes, ids, valid = self.load_json(annotation_file, os.path.join(info["root"], info[self.imgs]))
             self.images += imgs
             self.keypoints += kps
             self.boxes += boxes
@@ -74,11 +74,17 @@ class BaseDataset(data.Dataset):
 
 
 if __name__ == '__main__':
-    dataset = BaseDataset([["/media/hkuit155/Elements/coco/annotations/person_keypoints_train2017.json",
-                          "/media/hkuit155/Elements/coco/train2017"]],"data_default.json")
-    for i in range(len(dataset)):
-        try:
-            result = dataset[i]
-        except:
-            print(i)
+    data_cfg = "../config/data_cfg/data_default.json"
+    data_info = {"coco": {"root": "/media/hkuit155/Elements/coco",
+                          "train_imgs": "train2017",
+                          "valid_imgs": "val2017",
+                          "train_annot": "annotations/person_keypoints_train2017.json",
+                          "valid_annot": "annotations/person_keypoints_val2017.json"}}
+    dataset = BaseDataset(data_info, data_cfg)
+    # for i in range(len(dataset)):
+    #     try:
+    result = dataset[3]
+    print(result)
+        # except:
+        #     print(i)
 
