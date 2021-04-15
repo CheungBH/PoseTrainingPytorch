@@ -7,6 +7,7 @@ from dataset.sample import SampleGenerator
 import json
 from dataset.visualize import KeyPointVisualizer, BBoxVisualizer
 import numpy as np
+import os
 
 
 class ImageTransform:

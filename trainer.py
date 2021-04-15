@@ -8,8 +8,8 @@ import cv2
 import os
 from tensorboardX import SummaryWriter
 import time
-from utils.draw import draw_kps, draw_hms
-from dataset.dataloader import Loader
+# from utils.draw import draw_kps, draw_hms
+from dataset.dataloader import TrainerLoader
 from utils.utils import draw_graph
 import csv
 import shutil
@@ -73,7 +73,6 @@ class Trainer:
         self.params_to_update, _ = posenet.get_updating_param()
         self.freeze = posenet.is_freeze
         self.model = posenet.model
-        self.flops, self.params, self.inf_time = posenet.benchmark(height=self.opt.inputResH, width=self.opt.inputResW)
         posenet.write_structure(os.path.join(self.expFolder, "logs/model.txt"))
 
         self.build_criterion(opt.crit)
@@ -83,15 +82,13 @@ class Trainer:
         self.kps = posenet.kps
         opt.kps = posenet.kps
 
-        dataset_info = {"train": [["/media/hkuit155/Elements/coco/annotations/person_keypoints_train2017.json",
-                                   "/media/hkuit155/Elements/coco/train2017"]],
-                        "valid": [["/media/hkuit155/Elements/coco/annotations/person_keypoints_val2017.json",
-                                   "/media/hkuit155/Elements/coco/val2017"]],}
-        data_cfg = "dataset/cfg.json"
-        self.dataset = Loader(dataset_info, data_cfg, loss_weight)
+        self.dataset = TrainerLoader(dataset_info, opt.data_cfg, loss_weight)
         self.loss_weight = {1: [-item for item in range(self.kps + 1)[1:]]}
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
                                                                            opt.train_worker, opt.val_worker)
+        self.inp_height, self.input_width, self.out_height, self.out_width = \
+            self.dataset.train_dataset.transform.input_height, self.dataset.train_dataset.transform.input_width, \
+            self.dataset.train_dataset.transform.output_height, self.dataset.train_dataset.transform.output_width,
 
         if opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler
@@ -100,10 +97,11 @@ class Trainer:
         self.lr_scheduler = scheduler(self.total_epochs, lr_warm_up_dict, lr_decay_dict, self.lr)
         self.save_interval = opt.save_interval
         self.build_sparse_scheduler(opt.sparse_s)
+        self.flops, self.params, self.inf_time = posenet.benchmark(height=self.inp_height, width=self.input_width)
 
     def train(self):
         BatchEval = BatchEvaluator(self.kps, "Train", self.opt.trainBatch)
-        EpochEval = EpochEvaluator((self.opt.outputResH, self.opt.outputResW))
+        EpochEval = EpochEvaluator((self.out_height, self.out_width))
         self.model.train()
         train_loader_desc = tqdm(self.train_loader)
         for i, (inps, labels, meta) in enumerate(train_loader_desc):
@@ -226,216 +224,6 @@ class Trainer:
 
         loss, acc, dist, auc, pr = BatchEval.get_batch_result()
         self.update_indicators(acc, loss, dist, pckh[0], auc, pr, self.trainIter, "val")
-
-    # def train1(self):
-    #     accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
-    #     pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
-    #     pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
-    #     pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
-    #     pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
-    #
-    #     self.model.train()
-    #     train_loader_desc = tqdm(self.train_loader)
-    #
-    #     for i, (inps, labels, setMask, img_info) in enumerate(train_loader_desc):
-    #         if device != "cpu":
-    #             inps = inps.cuda().requires_grad_()
-    #             labels = labels.cuda()
-    #             setMask = setMask.cuda()
-    #         else:
-    #             inps = inps.requires_grad_()
-    #         out = self.model(inps)
-    #
-    #         # loss = criterion(out.mul(setMask), labels)
-    #         loss = torch.zeros(1).cuda()
-    #         for cons, idx_ls in self.loss_weight.items():
-    #             loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
-    #
-    #         # for idx, logger in pts_loss_Loggers.items():
-    #         #     logger.update(criterion(out.mul(setMask)[:, [idx], :, :], labels[:, [idx], :, :]), inps.size(0))
-    #         acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data,
-    #                                                        self.train_loader.dataset.accIdxs)
-    #         # acc, exists = accuracy(out.data.mul(setMask), labels.data, train_loader.dataset, img_info[-1])
-    #
-    #         self.optimizer.zero_grad()
-    #
-    #         accLogger.update(acc[0].item(), inps.size(0))
-    #         lossLogger.update(loss.item(), inps.size(0))
-    #         distLogger.update(dist[0].item(), inps.size(0))
-    #         pckhLogger.update(pckh[0], inps.size(0))
-    #         curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
-    #         ave_auc = curveLogger.cal_AUC()
-    #         pr_area = curveLogger.cal_PR()
-    #
-    #         exists = exists.tolist()
-    #         for k, v in pts_acc_Loggers.items():
-    #             pts_curve_Loggers[k].update(maxval[k], gt[k])
-    #             if exists[k] > 0:
-    #                 pts_acc_Loggers[k].update(acc.tolist()[k + 1], exists[k])
-    #                 pts_dist_Loggers[k].update(dist.tolist()[k + 1], exists[k])
-    #         pckh_exist = exists[-12:]
-    #         for k, v in pts_pckh_Loggers.items():
-    #             if exists[k] > 0:
-    #                 pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
-    #
-    #         if mix_precision:
-    #             with amp.scale_loss(loss, self.optimizer) as scaled_loss:
-    #                 scaled_loss.backward()
-    #         else:
-    #             loss.backward()
-    #
-    #         if not self.freeze:
-    #             for mod in self.model.modules():
-    #                 if isinstance(mod, torch.nn.BatchNorm2d):
-    #                    mod.weight.grad.data.add_(self.sparse_s * torch.sign(mod.weight.data))
-    #
-    #         self.optimizer.step()
-    #         self.trainIter += 1
-    #         # Tensorboard
-    #         self.tb_writer.add_scalar('Train/Loss', lossLogger.avg, self.trainIter)
-    #         self.tb_writer.add_scalar('Train/Acc', accLogger.avg, self.trainIter)
-    #         self.tb_writer.add_scalar('Train/Dist', distLogger.avg, self.trainIter)
-    #         self.tb_writer.add_scalar('Train/pckh', pckhLogger.avg, self.trainIter)
-    #         self.tb_writer.add_scalar('Train/AUC', ave_auc, self.trainIter)
-    #         self.tb_writer.add_scalar('Train/PR', pr_area, self.trainIter)
-    #
-    #         # TQDM
-    #         train_loader_desc.set_description(
-    #             'Train: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
-    #                 epoch=self.curr_epoch,
-    #                 loss=lossLogger.avg,
-    #                 acc=accLogger.avg * 100,
-    #                 pckh=pckhLogger.avg * 100,
-    #                 dist=distLogger.avg,
-    #                 AUC=ave_auc,
-    #                 PR=pr_area
-    #             )
-    #         )
-    #
-    #     body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
-    #     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
-    #     body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
-    #     body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
-    #     body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
-    #     train_loader_desc.close()
-    #
-    #     self.part_train_acc.append(body_part_acc)
-    #     self.part_train_dist.append(body_part_dist)
-    #     self.part_train_auc.append(body_part_auc)
-    #     self.part_train_pr.append(body_part_pr)
-    #     self.part_train_pckh.append(body_part_pckh)
-    #
-    #     curr_acc, curr_loss, curr_dist, curr_pckh, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
-    #                                                         pckhLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
-    #     self.update_indicators(curr_acc, curr_loss, curr_dist, curr_pckh, curr_auc, curr_pr, self.trainIter, "train")
-    #
-    # def valid1(self):
-    #     drawn_kp, drawn_hm = False, False
-    #     accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
-    #     pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
-    #     pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
-    #     pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
-    #     pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
-    #     self.model.eval()
-    #
-    #     val_loader_desc = tqdm(self.val_loader)
-    #
-    #     for i, (inps, labels, setMask, img_info) in enumerate(val_loader_desc):
-    #         if device != "cpu":
-    #             inps = inps.cuda()
-    #             labels = labels.cuda()
-    #             setMask = setMask.cuda()
-    #
-    #         with torch.no_grad():
-    #             out = self.model(inps)
-    #
-    #             if not drawn_kp:
-    #                 try:
-    #                     kps_img, have_kp = draw_kps(out, img_info, self.kps)
-    #                     drawn_kp = True
-    #                     if self.vis:
-    #                         img = cv2.resize(kps_img, (1080, 720))
-    #                         drawn_kp = False
-    #                         cv2.imshow("val_pred", img)
-    #                         cv2.waitKey(0)
-    #                         # a = 1
-    #                         # draw_kps(out, img_info)
-    #                     else:
-    #                         self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch),
-    #                                          cv2.imread(
-    #                                              os.path.join(self.expFolder, "logs/img.jpg"))[:,:,::-1], dataformats='HWC')
-    #                         hm = draw_hms(out[0])
-    #                         self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm)
-    #                 except:
-    #                     pass
-    #
-    #             loss = self.criterion(out.mul(setMask), labels)
-    #
-    #             # flip_out = m(flip(inps))
-    #             # flip_out = flip(shuffleLR(flip_out, val_loader.dataset))
-    #             #
-    #             # out = (flip_out + out) / 2
-    #
-    #         acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data,
-    #                                                              self.val_loader.dataset.accIdxs)
-    #         # acc, exists = accuracy(out.mul(setMask), labels, val_loader.dataset, img_info[-1])
-    #
-    #         accLogger.update(acc[0].item(), inps.size(0))
-    #         lossLogger.update(loss.item(), inps.size(0))
-    #         distLogger.update(dist[0].item(), inps.size(0))
-    #         pckhLogger.update(pckh[0], inps.size(0))
-    #         curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
-    #         ave_auc = curveLogger.cal_AUC()
-    #         pr_area = curveLogger.cal_PR()
-    #
-    #         exists = exists.tolist()
-    #         for k, v in pts_acc_Loggers.items():
-    #             pts_curve_Loggers[k].update(maxval[k], gt[k])
-    #             if exists[k] > 0:
-    #                 pts_acc_Loggers[k].update(acc.tolist()[k + 1], exists[k])
-    #                 pts_dist_Loggers[k].update(dist.tolist()[k + 1], exists[k])
-    #         pckh_exist = exists[-12:]
-    #         for k, v in pts_pckh_Loggers.items():
-    #             if exists[k] > 0:
-    #                 pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
-    #
-    #         self.valIter += 1
-    #         # Tensorboard
-    #         self.tb_writer.add_scalar('Valid/Loss', lossLogger.avg, self.valIter)
-    #         self.tb_writer.add_scalar('Valid/Acc', accLogger.avg, self.valIter)
-    #         self.tb_writer.add_scalar('Valid/Dist', distLogger.avg, self.valIter)
-    #         self.tb_writer.add_scalar('Valid/AUC', ave_auc, self.valIter)
-    #         self.tb_writer.add_scalar('Valid/PR', pr_area, self.valIter)
-    #         self.tb_writer.add_scalar('Valid/PCKh', pckhLogger.avg, self.valIter)
-    #
-    #         val_loader_desc.set_description(
-    #             'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
-    #                 epoch=self.curr_epoch,
-    #                 loss=lossLogger.avg,
-    #                 pckh=pckhLogger.avg * 100,
-    #                 acc=accLogger.avg * 100,
-    #                 dist=distLogger.avg,
-    #                 AUC=ave_auc,
-    #                 PR=pr_area
-    #             )
-    #         )
-    #
-    #     body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
-    #     body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
-    #     body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
-    #     body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
-    #     body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
-    #     val_loader_desc.close()
-    #
-    #     self.part_val_acc.append(body_part_acc)
-    #     self.part_val_dist.append(body_part_dist)
-    #     self.part_val_auc.append(body_part_auc)
-    #     self.part_val_pr.append(body_part_pr)
-    #     self.part_val_pckh.append(body_part_pckh)
-    #
-    #     curr_acc, curr_loss, curr_pckh, curr_dist, curr_auc, curr_pr = accLogger.avg, lossLogger.avg, distLogger.avg, \
-    #                                                         pckhLogger.avg, curveLogger.cal_AUC(), curveLogger.cal_PR()
-    #     self.update_indicators(curr_acc, curr_loss, curr_dist, curr_pckh, curr_auc, curr_pr, self.valIter, "val")
 
     def build_criterion(self, crit):
         self.criterion = criterion.build(crit)
@@ -611,7 +399,9 @@ class Trainer:
                 ))
 
     def process(self):
-        shutil.copy(self.opt.cfg, os.path.join(self.expFolder, "cfg.json"))
+        shutil.copy(self.opt.model_cfg, os.path.join(self.expFolder, "model_cfg.json"))
+        shutil.copy(self.opt.data_cfg, os.path.join(self.expFolder, "data_cfg.json"))
+
         begin_time = time.time()
         error_string = ""
         try:

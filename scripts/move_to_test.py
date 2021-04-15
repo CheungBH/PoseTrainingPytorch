@@ -22,6 +22,6 @@ for folder in os.listdir(src_folder):
                 shutil.copy(os.path.join(src_folder, "{}/".format(folder), file), os.path.join(target, file))
                 shutil.copy(os.path.join(src_folder, "{}/".format(folder), "option.pkl"),
                             os.path.join(target,"option.pkl"))
-                shutil.copy(os.path.join(src_folder, "{}/".format(folder), "cfg.json"),
-                            os.path.join(target, "cfg.json"))
+                shutil.copy(os.path.join(src_folder, "{}/".format(folder), "data_default.json"),
+                            os.path.join(target, "data_default.json"))
 

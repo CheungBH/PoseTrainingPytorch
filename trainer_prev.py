@@ -608,7 +608,7 @@ class Trainer:
                 ))
 
     def process(self):
-        shutil.copy(self.opt.cfg, os.path.join(self.expFolder, "cfg.json"))
+        shutil.copy(self.opt.cfg, os.path.join(self.expFolder, "data_default.json"))
         begin_time = time.time()
         error_string = ""
         try:

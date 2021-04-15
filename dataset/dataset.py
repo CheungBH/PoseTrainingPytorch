@@ -11,7 +11,12 @@ trans = list(zip(
 
 
 class BaseDataset(data.Dataset):
-    def __init__(self, data_info, data_cfg, save=False):
+    def __init__(self, data_info, data_cfg, save=False, train=True):
+        self.is_train = train
+        if self.is_train:
+            self.annot, self.imgs = "train_annot", "train_imgs"
+        else:
+            self.annot, self.imgs = "valid_annot", "valid_imgs"
         self.transform = ImageTransform(save=save)
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
@@ -19,7 +24,8 @@ class BaseDataset(data.Dataset):
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
         for d in data_info:
-            imgs, kps, boxes, ids, valid = self.load_json(d[0], d[1])
+            annotation_file = os.path.join(d["root"], d[self.annot])
+            imgs, kps, boxes, ids, valid = self.load_json(annotation_file, os.path.join(d["root"], d[self.imgs]))
             self.images += imgs
             self.keypoints += kps
             self.boxes += boxes
@@ -69,7 +75,7 @@ class BaseDataset(data.Dataset):
 
 if __name__ == '__main__':
     dataset = BaseDataset([["/media/hkuit155/Elements/coco/annotations/person_keypoints_train2017.json",
-                          "/media/hkuit155/Elements/coco/train2017"]],"cfg.json")
+                          "/media/hkuit155/Elements/coco/train2017"]],"data_default.json")
     for i in range(len(dataset)):
         try:
             result = dataset[i]

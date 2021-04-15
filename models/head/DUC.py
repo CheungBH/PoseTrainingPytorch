@@ -58,7 +58,7 @@ def create(cfg_file):
 
 
 def test():
-    net = create(cfg_file="../cfg/pruned/cfg_shortcut_seresnet101.json")
+    net = create(cfg_file="../../config/model_cfg/cfg/pruned/cfg_shortcut_seresnet101.json")
     y = net(torch.randn(1, 2048, 2, 2))
     print(net, file=open("DUC.txt","w"))
     print(y.size())

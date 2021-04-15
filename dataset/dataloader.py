@@ -4,10 +4,10 @@ from .dataset import BaseDataset
 import torch
 
 
-class Loader:
+class TrainerLoader:
     def __init__(self, data_info, data_cfg, joint_weight_dict=None):
-        self.train_dataset = BaseDataset(data_info["train"], data_cfg)
-        self.val_dataset = BaseDataset(data_info["valid"], data_cfg)
+        self.train_dataset = BaseDataset(data_info, data_cfg)
+        self.val_dataset = BaseDataset(data_info, data_cfg, train=True)
 
     def build_dataloader(self, train_batch, val_batch, train_worker, val_worker, shuffle=True, pin_memory=True):
         train_loader = torch.utils.data.DataLoader(

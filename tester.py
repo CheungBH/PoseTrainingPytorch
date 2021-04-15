@@ -163,7 +163,7 @@ def test_model(model_path, data_info, batchsize=8, num_worker=1, use_option=True
 if __name__ == '__main__':
     test_data = {"ceiling": ["data/ceiling/0605_new", "data/ceiling/0605_new.h5", 0]}
     model_path = "exp/kps_test/seresnet18/seresnet18_best_acc.pkl"
-    model_cfg = "exp/kps_test/seresnet18/cfg.json"
+    model_cfg = "exp/kps_test/seresnet18/data_default.json"
     use_option = True
     tester = Tester(test_data, model_path, model_cfg)
     if use_option:

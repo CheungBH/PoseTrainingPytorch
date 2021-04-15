@@ -153,6 +153,6 @@ def error_analysis(model_path, data_info, num_worker=1, use_option=True, cfg=Non
 if __name__ == '__main__':
     analyse_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
     model_path = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
-    model_cfg = "exp/test_structure/seres18_17kps/cfg.json"
+    model_cfg = "exp/test_structure/seres18_17kps/data_default.json"
     error = error_analysis(model_path, analyse_data, cfg=model_cfg)
     print(error)

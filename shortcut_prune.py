@@ -153,7 +153,7 @@ class ShortcutPruner:
 
 if __name__ == '__main__':
     model_path = "exp/test_structure/seres50_17kps/seres50_17kps_best_acc.pkl"
-    model_cfg = "exp/test_structure/seres50_17kps/cfg.json"
+    model_cfg = "exp/test_structure/seres50_17kps/data_default.json"
     thresh = 80
     SP = ShortcutPruner(model_path, model_cfg)
     SP.run(thresh)

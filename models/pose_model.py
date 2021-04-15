@@ -48,7 +48,7 @@ class PoseModel:
                 p.requires_grad = False
 
     def init_with_opt(self, opt):
-        self.build(opt.cfg)
+        self.build(opt.model_cfg)
         if opt.freeze_bn:
             self.freeze_bn()
         self.freeze(opt.freeze)

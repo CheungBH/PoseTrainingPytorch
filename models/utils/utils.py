@@ -48,7 +48,7 @@ def parse_channel(cfg):
 
 
 if __name__ == '__main__':
-    data_cfg = "../../dataset/cfg.json"
+    data_cfg = "../../dataset/data_default.json"
     dicc = {"input_height": 256,
             "input_width": 256,
             "output_height": 64,

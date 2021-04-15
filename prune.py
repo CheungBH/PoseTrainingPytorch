@@ -140,6 +140,6 @@ class Pruner:
 
 if __name__ == '__main__':
     model_path = "exp/test_structure/res101_17kps_/res101_17kps__best_acc.pkl"
-    model_cfg = "exp/test_structure/res101_17kps_/cfg.json"
+    model_cfg = "exp/test_structure/res101_17kps_/data_default.json"
     pruner = Pruner(model_path, model_cfg)
     pruner.run(80)

@@ -7,22 +7,18 @@ parser.add_argument('--expID', default='default', type=str,
                     help='Experiment ID')
 parser.add_argument('--expFolder', default='test', type=str,
                     help='Experiment folder')
-parser.add_argument('--dataset', default='multiple', type=str,
-                    help='Dataset choice: mpii | coco')
 
 "----------------------------- Model options -----------------------------"
-parser.add_argument('--backbone', default="mobilenet", type=str,
-                    help='The backbone of the model')
-parser.add_argument('--struct', default=None, type=str,
-                    help='The structure of the model')
+parser.add_argument('--dataset', default='multiple', type=str,
+                    help='Dataset choice: mpii | coco')
+parser.add_argument('--data_cfg', default="config/data_cfg/data_default.json", type=str,
+                    help='Path of data cfg file')
+
+"----------------------------- Model options -----------------------------"
 parser.add_argument('--loadModel', default=None, type=str,
                     help='Provide full path to a previously trained model')
-parser.add_argument('--kps', default=17, type=int,
-                    help='Number of output channel')
-parser.add_argument('--DUC', default=0, type=int,
-                    help='DUC')
-parser.add_argument('--cfg', default=None, type=str,
-                    help='Path of cfg file')
+parser.add_argument('--model_cfg', default="config/model_cfg/default/cfg_resnet18.json", type=str,
+                    help='Path of model cfg file')
 
 "----------------------------- Hyperparameter options -----------------------------"
 parser.add_argument('--LR', default=1e-3, type=float,
@@ -47,12 +43,8 @@ parser.add_argument('--optMethod', default='rmsprop', type=str,
                     help='Optimization method: rmsprop | sgd | nag | adadelta')
 parser.add_argument('--sparse_s', default=0, type=float,
                     help='sparse')
-# parser.add_argument('--sparse_decay', default=1, type=float,
-#                     help='sparse_decay')
 parser.add_argument('--patience', default=6, type=float,
                     help='epoch of lr decay')
-# parser.add_argument('--lr_decay_time', default=2, type=float,
-#                     help='epoch of lr decay')
 
 "----------------------------- Training options -----------------------------"
 parser.add_argument('--nEpochs', default=500, type=int,
@@ -74,34 +66,5 @@ parser.add_argument('--val_worker', default=1, type=int,
 parser.add_argument('--save_interval', default=20, type=int,
                     help='interval')
 
-"---------------------------- Image options ----------------------------"
-parser.add_argument('--inputResH', default=320, type=int,
-                    help='Input image height')
-parser.add_argument('--inputResW', default=256, type=int,
-                    help='Input image width')
-parser.add_argument('--outputResH', default=80, type=int,
-                    help='Output heatmap height')
-parser.add_argument('--outputResW', default=64, type=int,
-                    help='Output heatmap width')
-parser.add_argument('--model_hm', default=None, type=str,
-                    help='heatmap set')
-
-"----------------------------- Data options -----------------------------"
-parser.add_argument('--addDPG', default=False, type=bool,
-                    help='Train with data augmentation')
-parser.add_argument('--scale', default=0.3, type=float,
-                    help='Degree of scale augmentation')
-parser.add_argument('--se_ratio', default=1, type=int,
-                    help='Degree of scale augmentation')
-parser.add_argument('--rotate', default=40, type=float,
-                    help='Degree of rotation augmentation')
-parser.add_argument('--hmGauss', default=1, type=int,
-                    help='Heatmap gaussian size')
-parser.add_argument('--ratio', default=3, type=int,
-                    help='Heatmap ratio')
-
-# try:
-#     opt = parser.parse_args()
-# except:
 opt, _ = parser.parse_known_args()
 
