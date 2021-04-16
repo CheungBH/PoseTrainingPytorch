@@ -31,8 +31,7 @@ if opt.dataset == "multiple":
     dataset = ["aic"]
     train_info = [item for key, item in datasets_info.items() if key in dataset]
 else:
-    train_info = datasets_info[opt.dataset]
-
+    train_info = [datasets_info[opt.dataset]]
 
 if opt.loss_weight == 0:
     loss_weight = {}

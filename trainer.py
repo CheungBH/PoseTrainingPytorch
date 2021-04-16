@@ -146,9 +146,14 @@ class Trainer:
             )
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
-        train_loader_desc.close()
         pckh = EpochEval.eval_per_epoch()
         print(pckh)
+
+        train_loader_desc.set_description(
+            'Train: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                format(epoch=self.curr_epoch, pckh=pckh, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
+        )
+        train_loader_desc.close()
 
         self.part_train_acc.append(body_part_acc)
         self.part_train_dist.append(body_part_dist)
@@ -212,10 +217,14 @@ class Trainer:
             )
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
-        val_loader_desc.close()
         pckh = EpochEval.eval_per_epoch()
-        print(pckh)
+        # print(pckh)
+        val_loader_desc.set_description(
+            'Valid: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                format(epoch=self.curr_epoch, pckh=pckh, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
+        )
 
+        val_loader_desc.close()
         self.part_train_acc.append(body_part_acc)
         self.part_train_dist.append(body_part_dist)
         self.part_train_auc.append(body_part_auc)

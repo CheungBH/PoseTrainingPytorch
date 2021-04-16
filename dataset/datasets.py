@@ -23,7 +23,7 @@ class BaseDataset(data.Dataset):
 
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
-        for name, info in data_info.items():
+        for info in data_info:
             annotation_file = os.path.join(info["root"], info[self.annot])
             imgs, kps, boxes, ids, valid = self.load_json(annotation_file, os.path.join(info["root"], info[self.imgs]))
             self.images += imgs
@@ -49,14 +49,9 @@ class BaseDataset(data.Dataset):
             kp, kp_valid = kps_reshape(img_info["keypoints"])
             if not sum(kp_valid):
                 continue
-            # images.append(img_info['image_id'])
             images.append(os.path.join(folder_name, str(img_info['image_id']).zfill(12) + ".jpg"))
-            # kps_tmp = img_info["keypoints"]
-            # keypoint.append(img_info["keypoints"])
             keypoint.append(kp)
             kps_valid.append(kp_valid)
-            # xs = img_info['keypoints'][0::3]
-            # ys = img_info['keypoints'][1::3]
             ids.append(img_info["id"])
             bbox.append(xywh2xyxy(img_info['bbox']))
         return images, keypoint, bbox, ids, kps_valid
@@ -75,11 +70,11 @@ class BaseDataset(data.Dataset):
 
 if __name__ == '__main__':
     data_cfg = "../config/data_cfg/data_default.json"
-    data_info = {"coco": {"root": "/media/hkuit155/Elements/coco",
+    data_info = [{"root": "/media/hkuit155/Elements/coco",
                           "train_imgs": "train2017",
                           "valid_imgs": "val2017",
                           "train_annot": "annotations/person_keypoints_train2017.json",
-                          "valid_annot": "annotations/person_keypoints_val2017.json"}}
+                          "valid_annot": "annotations/person_keypoints_val2017.json"}]
     dataset = BaseDataset(data_info, data_cfg)
     # for i in range(len(dataset)):
     #     try:
