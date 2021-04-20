@@ -23,19 +23,26 @@ class BaseDataset(data.Dataset):
 
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
-        for info in data_info:
-            annotation_file = os.path.join(info["root"], info[self.annot])
-            imgs, kps, boxes, ids, valid = self.load_json(annotation_file, os.path.join(info["root"], info[self.imgs]))
-            self.images += imgs
-            self.keypoints += kps
-            self.boxes += boxes
-            self.ids += ids
-            self.kps_valid += valid
-        # invalid_samples = [idx for idx, kp in enumerate(self.kps_valid) if sum(kp) == 0]
-        # invalid_samples.sort(reverse=True)
-        # for sample in invalid_samples
+        for item in data_info:
+            for name, info in item.items():
+                annotation_file = os.path.join(info["root"], info[self.annot])
+                if name == "coco":
+                    imgs, kps, boxes, ids, valid = self.load_json_coco(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                elif name == "mpii":
+                    imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                elif name == "aic":
+                    imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                elif name == "yoga":
+                    imgs, kps, boxes, ids, valid = self.load_json_yoga(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                else:
+                    raise NotImplementedError
+                self.images += imgs
+                self.keypoints += kps
+                self.boxes += boxes
+                self.ids += ids
+                self.kps_valid += valid
 
-    def load_json(self, json_file, folder_name):
+    def load_json_coco(self, json_file, folder_name):
         anno = json.load(open(json_file))
         keypoint = []
         images = []
@@ -56,6 +63,15 @@ class BaseDataset(data.Dataset):
             bbox.append(xywh2xyxy(img_info['bbox']))
         return images, keypoint, bbox, ids, kps_valid
 
+    def load_json_aic(self):
+        pass
+
+    def load_json_mpii(self):
+        pass
+
+    def load_json_yoga(self):
+        pass
+
     def __len__(self):
         return len(self.images)
 
@@ -69,17 +85,25 @@ class BaseDataset(data.Dataset):
 
 
 if __name__ == '__main__':
+    data_info = [{"coco": {"root": "/media/hkuit155/Elements/coco",
+                           "train_imgs": "train2017",
+                           "valid_imgs": "val2017",
+                           "train_annot": "annotations/person_keypoints_train2017.json",
+                           "valid_annot": "annotations/person_keypoints_val2017.json"}}]
+    sample_idx = 22
+
     data_cfg = "../config/data_cfg/data_default.json"
-    data_info = [{"root": "/media/hkuit155/Elements/coco",
-                          "train_imgs": "train2017",
-                          "valid_imgs": "val2017",
-                          "train_annot": "annotations/person_keypoints_train2017.json",
-                          "valid_annot": "annotations/person_keypoints_val2017.json"}]
     dataset = BaseDataset(data_info, data_cfg)
-    # for i in range(len(dataset)):
-    #     try:
-    result = dataset[3]
-    print(result)
-        # except:
-        #     print(i)
+
+    import cv2
+    from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
+    bbv, kpv = BBoxVisualizer(), KeyPointVisualizer(17, "coco")
+
+    result = dataset[sample_idx][-1]
+    img = cv2.imread(result["name"])
+    bbv.visualize([result["box"]], img)
+    kpv.visualize(img, [result["kps"]])
+    cv2.imshow("img", img)
+    cv2.waitKey(0)
+
 

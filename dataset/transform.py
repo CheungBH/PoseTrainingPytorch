@@ -11,11 +11,11 @@ import os
 
 
 class ImageTransform:
-    def __init__(self, color="rgb", save=""):
+    def __init__(self, color="rgb", save="", max_rot=40):
         self.color = color
         self.prob = 0.5
         self.save = save
-        self.max_rotation = 40
+        self.max_rotation = max_rot
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
         self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12), (13, 14), (15, 16)]
@@ -78,7 +78,7 @@ class ImageTransform:
             flipped_valid[l], flipped_valid[r] = kps_valid[r], kps_valid[l]
         return flipped_img, flipped_box, flipped_kps, flipped_valid
 
-    def rotate(self, img, box, kps):
+    def rotate_img(self, img, kps, valid):
         prob = random.random()
         degree = (prob-0.5) * 2 * self.max_rotation  #degrree between -40 and 40
         radian = degree/180.0 * math.pi
@@ -100,7 +100,7 @@ class ImageTransform:
         R[0, 2] += new_size[0]/2 - center[0]
         R[1, 2] += new_size[1]/2 - center[1]
         img_new = cv2.warpAffine(img, R, dsize=new_size, borderMode=cv2.BORDER_CONSTANT, borderValue=None)
-        return img_new, kps_new
+        return img_new, kps_new, valid
 
     def tensor2img(self, ts):
         img = np.asarray(F.to_pil_image(ts))
@@ -127,23 +127,43 @@ class ImageTransform:
 
 
 if __name__ == '__main__':
+    # data_cfg = "../config/data_cfg/data_default.json"
+    # img_path = 'sample.jpg'
+    # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
+    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
+    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
+    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
+    #
+    # IT = ImageTransform()
+    # IT.init_with_cfg(data_cfg)
+    # img = IT.load_img(img_path)
+    # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
+    #
+    # IT.BBV.visualize([f_box], f_img)
+    # IT.KPV.visualize(f_img, [f_kps])
+    # IT.BBV.visualize([box], img)
+    # IT.KPV.visualize(img, [kps])
+    #
+    # cv2.imshow("raw", img)
+    # cv2.imshow("flipped", f_img)
+    # cv2.waitKey(0)
+
     data_cfg = "../config/data_cfg/data_default.json"
-    img_path = '/media/hkuit155/Elements/coco/train2017/000000209468.jpg'
+    img_path = 'sample.jpg'
     box = [166.921, 85.08000000000001, 304.42900000000003, 479]
     kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
            [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
     valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
 
-    IT = ImageTransform()
+    max_rotate = 40
+    IT = ImageTransform(max_rot=max_rotate)
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
-    f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
+    f_img, f_kps, f_valid = IT.rotate_img(img, kps, valid)
 
-    IT.BBV.visualize([f_box], f_img)
     IT.KPV.visualize(f_img, [f_kps])
-    IT.BBV.visualize([box], img)
     IT.KPV.visualize(img, [kps])
 
     cv2.imshow("raw", img)
-    cv2.imshow("flipped", f_img)
+    cv2.imshow("rotated", f_img)
     cv2.waitKey(0)
