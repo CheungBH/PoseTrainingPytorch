@@ -78,7 +78,7 @@ class ImageTransform:
             flipped_valid[l], flipped_valid[r] = kps_valid[r], kps_valid[l]
         return flipped_img, flipped_box, flipped_kps, flipped_valid
 
-    def rotate_img(self, img, kps, valid):
+    def rotate_img(self, img, box, kps, valid):
         prob = random.random()
         degree = (prob-0.5) * 2 * self.max_rotation  #degrree between -40 and 40
         radian = degree/180.0 * math.pi
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     IT = ImageTransform(max_rot=max_rotate)
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
-    f_img, f_kps, f_valid = IT.rotate_img(img, kps, valid)
+    f_img, f_kps, f_valid = IT.rotate_img(img, box, kps, valid)
 
     IT.KPV.visualize(f_img, [f_kps])
     IT.KPV.visualize(img, [kps])
