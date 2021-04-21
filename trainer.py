@@ -117,7 +117,7 @@ class Trainer:
                 loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data, labels.data, self.opt.outputResH)
+                BatchEval.eval_per_batch(out.data, labels.data, self.out_height)
 
             EpochEval.update(preds, gts, valid.t())
 
@@ -167,7 +167,7 @@ class Trainer:
     def valid(self):
         drawn_kp, drawn_hm = False, False
         BatchEval = BatchEvaluator(self.kps, "Valid", self.opt.validBatch)
-        EpochEval = EpochEvaluator((self.opt.outputResH, self.opt.outputResW))
+        EpochEval = EpochEvaluator((self.out_height, self.out_width))
         self.model.eval()
         val_loader_desc = tqdm(self.val_loader)
 
@@ -204,7 +204,7 @@ class Trainer:
                     loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data, labels.data, self.opt.outputResH)
+                BatchEval.eval_per_batch(out.data, labels.data, self.out_height)
             BatchEval.update(acc, dist, exists, maxval, valid, loss)
             EpochEval.update(preds, gts, valid.t())
             self.valIter += 1
