@@ -3,11 +3,13 @@ import json
 import torch.utils.data as data
 import os
 from dataset.utils import xywh2xyxy, kps_reshape
+import torch
 
 trans = list(zip(
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     ))
+tensor = torch.Tensor
 
 
 class BaseDataset(data.Dataset):
@@ -22,25 +24,30 @@ class BaseDataset(data.Dataset):
         self.load_data(data_info)
 
     def load_data(self, data_info):
-        self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
+        images, keypoints, boxes, human_ids, kps_valid = [], [], [], [], []
         for item in data_info:
             for name, info in item.items():
                 annotation_file = os.path.join(info["root"], info[self.annot])
                 if name == "coco":
-                    imgs, kps, boxes, ids, valid = self.load_json_coco(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                    imgs, kps, box, human_id, valid = self.load_json_coco(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "mpii":
-                    imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                    imgs, kps, box, human_id, valid = self.load_json_mpii(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "aic":
-                    imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                    imgs, kps, box, human_id, valid = self.load_json_mpii(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "yoga":
-                    imgs, kps, boxes, ids, valid = self.load_json_yoga(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                    imgs, kps, box, human_id, valid = self.load_json_yoga(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 else:
                     raise NotImplementedError
-                self.images += imgs
-                self.keypoints += kps
-                self.boxes += boxes
-                self.ids += ids
-                self.kps_valid += valid
+                images += imgs
+                keypoints += kps
+                boxes += box
+                human_ids += human_id
+                kps_valid += valid
+        self.images = images
+        self.keypoints = tensor(keypoints)
+        self.boxes = tensor(boxes)
+        self.human_ids = tensor(human_ids)
+        self.kps_valid = tensor(kps_valid)
 
     def load_json_coco(self, json_file, folder_name):
         anno = json.load(open(json_file))
@@ -77,7 +84,7 @@ class BaseDataset(data.Dataset):
 
     def __getitem__(self, idx):
         path, kps, box, i, valid = \
-            self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+            self.images[idx], self.keypoints[idx], self.boxes[idx], self.human_ids[idx], self.kps_valid[idx]
         inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
         img_meta = {"name": path, "kps": kps, "box": box, "id": i, "enlarged_box": enlarged_box,
                     "padded_size": pad_size, "valid": valid}
@@ -102,7 +109,7 @@ if __name__ == '__main__':
     result = dataset[sample_idx][-1]
     img = cv2.imread(result["name"])
     bbv.visualize([result["box"]], img)
-    kpv.visualize(img, [result["kps"]])
+    kpv.visualize(img, result["kps"].unsqueeze(dim=0))
     cv2.imshow("img", img)
     cv2.waitKey(0)
 

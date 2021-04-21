@@ -68,7 +68,8 @@ class KeyPointVisualizer:
             raise NotImplementedError
 
     def visualize(self, frame, kps, kps_confs=None):
-        kps = torch.Tensor(kps)
+        if isinstance(kps, list):
+            kps = torch.Tensor(kps)
         if not kps_confs:
             kps_confs = torch.Tensor([[1 for _ in range(kps.shape[0])] for j in range(kps.shape[1])])
 

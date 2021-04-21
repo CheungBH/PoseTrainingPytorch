@@ -61,7 +61,7 @@ class ImageTransform:
         y_enlarged_min = max(0, y_min - height * self.scale_factor / 2)
         x_enlarged_max = min(imgwidth - 1, x_max + width * self.scale_factor / 2)
         y_enlarged_max = min(imgheight - 1, y_max + height * self.scale_factor / 2)
-        return [x_enlarged_min, y_enlarged_min, x_enlarged_max, y_enlarged_max]
+        return torch.tensor([x_enlarged_min, y_enlarged_min, x_enlarged_max, y_enlarged_max])
 
     def flip(self, img, box, kps, kps_valid):
         import copy
@@ -127,27 +127,6 @@ class ImageTransform:
 
 
 if __name__ == '__main__':
-    # data_cfg = "../config/data_cfg/data_default.json"
-    # img_path = 'sample.jpg'
-    # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
-    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
-    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
-    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
-    #
-    # IT = ImageTransform()
-    # IT.init_with_cfg(data_cfg)
-    # img = IT.load_img(img_path)
-    # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
-    #
-    # IT.BBV.visualize([f_box], f_img)
-    # IT.KPV.visualize(f_img, [f_kps])
-    # IT.BBV.visualize([box], img)
-    # IT.KPV.visualize(img, [kps])
-    #
-    # cv2.imshow("raw", img)
-    # cv2.imshow("flipped", f_img)
-    # cv2.waitKey(0)
-
     data_cfg = "../config/data_cfg/data_default.json"
     img_path = 'sample.jpg'
     box = [166.921, 85.08000000000001, 304.42900000000003, 479]
@@ -155,15 +134,36 @@ if __name__ == '__main__':
            [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
     valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
 
-    max_rotate = 40
-    IT = ImageTransform(max_rot=max_rotate)
+    IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
-    f_img, f_kps, f_valid = IT.rotate_img(img, box, kps, valid)
+    f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
+    IT.BBV.visualize([f_box], f_img)
     IT.KPV.visualize(f_img, [f_kps])
+    IT.BBV.visualize([box], img)
     IT.KPV.visualize(img, [kps])
 
     cv2.imshow("raw", img)
-    cv2.imshow("rotated", f_img)
+    cv2.imshow("flipped", f_img)
     cv2.waitKey(0)
+
+    # data_cfg = "../config/data_cfg/data_default.json"
+    # img_path = 'sample.jpg'
+    # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
+    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
+    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
+    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
+    #
+    # max_rotate = 40
+    # IT = ImageTransform(max_rot=max_rotate)
+    # IT.init_with_cfg(data_cfg)
+    # img = IT.load_img(img_path)
+    # f_img, f_kps, f_valid = IT.rotate_img(img, box, kps, valid)
+    #
+    # IT.KPV.visualize(f_img, [f_kps])
+    # IT.KPV.visualize(img, [kps])
+    #
+    # cv2.imshow("raw", img)
+    # cv2.imshow("rotated", f_img)
+    # cv2.waitKey(0)
