@@ -14,11 +14,11 @@ datasets_info = {"coco": {"root": "/media/hkuit155/Elements/coco",
                           "valid_imgs": "val2017",
                           "train_annot": "annotations/person_keypoints_train2017.json",
                           "valid_annot": "annotations/person_keypoints_val2017.json"},
-                 "aic": {"root": "data/ai_challenger",
-                         "train_imgs": "train",
-                         "valid_imgs": "val",
-                         "train_annot": "ai_challenger_train.json",
-                         "valid_annot": "ai_challenger_valid.json"},
+                 "aic": {"root": "/media/hkuit155/Elements/data/aic",
+                         "train_imgs": "ai_challenger_keypoint_train_20170902/keypoint_train_images_20170902",
+                         "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
+                         "train_annot": "ai_challenger_keypoint_train_20170902/keypoint_train_annotations_20170909.json",
+                         "valid_annot": "ai_challenger_keypoint_validation_20170911/keypoint_validation_annotations_20170911.json"},
                  "yoga": {"root": "data/ai_challenger",
                           "train_imgs": "train",
                           "valid_imgs": "val",
@@ -28,10 +28,10 @@ datasets_info = {"coco": {"root": "/media/hkuit155/Elements/coco",
 
 
 if opt.dataset == "multiple":
-    dataset = ["aic"]
-    train_info = [item for key, item in datasets_info.items() if key in dataset]
+    dataset = ["coco"]
+    train_info = [{key: item for key, item in datasets_info.items() if key in dataset}]
 else:
-    train_info = [datasets_info[opt.dataset]]
+    train_info = [{opt.dataset: datasets_info[opt.dataset]}]
 
 if opt.loss_weight == 0:
     loss_weight = {}
