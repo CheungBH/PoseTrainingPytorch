@@ -7,7 +7,7 @@ from dataset.sample import SampleGenerator
 import json
 from dataset.visualize import KeyPointVisualizer, BBoxVisualizer
 import numpy as np
-import os
+
 
 
 class ImageTransform:
@@ -80,26 +80,32 @@ class ImageTransform:
 
     def rotate_img(self, img, box, kps, valid):
         prob = random.random()
-        degree = (prob-0.5) * 2 * self.max_rotation  #degrree between -40 and 40
-        radian = degree/180.0 * math.pi
+        degree = (prob-0.5) * 2 * self.max_rotation
+        img_w, img_h = img.shape[0], img.shape[1]
         w, h = box[2], box[3]
-        center = (w / 2, h / 2)
-        radian_sin = math.sin(radian)
-        radian_cos = math.cos(radian)
-        kps_new = torch.zeros(kps.shape, dtype=kps.dtype)
-        x = kps[:, 0] - center[0]
-        y = kps[:, 1] - center[1]
-        kps_new[:, 0] = x * radian_cos - y * radian_sin + 0.5 * center[0]
-        kps_new[:, 1] = x * radian_sin + y * radian_cos + 0.5 * center[1]
-
-        R = cv2.getRotationMatrix2D(center, degree, 1)
-        cos, sin = abs(R[0, 0]), abs(R[0, 1])
-        new_w = h * sin + w * cos
-        new_h = h * cos + w * sin
-        new_size = (new_w, new_h)
-        R[0, 2] += new_size[0]/2 - center[0]
-        R[1, 2] += new_size[1]/2 - center[1]
-        img_new = cv2.warpAffine(img, R, dsize=new_size, borderMode=cv2.BORDER_CONSTANT, borderValue=None)
+        # center = (w / 2, h / 2)
+        center_img = (img_w/2, img_h/2)
+        # R = cv2.getRotationMatrix2D(center, degree, 1)
+        R_img = cv2.getRotationMatrix2D(center_img, degree, 1)
+        cos, sin = abs(R_img[0, 0]), abs(R_img[0, 1])    #degrree between -40 and 40
+        kps = np.asarray(kps)
+        kps_new = np.zeros(kps.shape, dtype=kps.dtype)
+        x = kps[:, 0] - center_img[0]
+        y = kps[:, 1] - center_img[1]
+        kps_new[:, 0] = x * cos + y * sin + center_img[0]
+        kps_new[:, 1] = x * sin + y * cos + center_img[1]
+        # new_w = int(h * sin + w * cos)
+        # new_h = int(h * cos + w * sin)
+        new_img_w = int(img_h * sin + img_w * cos)
+        new_img_h = int(img_h * cos + img_w * sin)
+        new_img_size = (new_img_w, new_img_h)
+        R_img[0, 2] += new_img_w/2 - center_img[0]
+        R_img[1, 2] += new_img_h/2 - center_img[1]
+        # new_size = (new_w, new_h)
+        # R[0, 2] += new_w/2 - center[0]
+        # R[1, 2] += new_h/2 - center[1]
+        # box_new = cv2.warpAffine(box, R, dsize=new_size, borderMode=cv2.BORDER_CONSTANT, borderValue=None)
+        img_new = cv2.warpAffine(img, R_img, dsize=new_img_size)
         return img_new, kps_new, valid
 
     def tensor2img(self, ts):
