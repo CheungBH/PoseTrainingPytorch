@@ -31,7 +31,7 @@ class BaseDataset(data.Dataset):
                 elif name == "mpii":
                     imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file, info["root"])
                 elif name == "aic":
-                    imgs, kps, boxes, ids, valid = self.load_json_aic(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                    imgs, kps, boxes, ids, valid = self.load_json_aic(annotation_file, info["root"])
                 elif name == "yoga":
                     imgs, kps, boxes, ids, valid = self.load_json_yoga(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 else:
@@ -63,8 +63,25 @@ class BaseDataset(data.Dataset):
             bbox.append(xywh2xyxy(img_info['bbox']))
         return images, keypoint, bbox, ids, kps_valid
 
-    # def load_json_aic(self,json_file,folder_name):
-    #same as mpii or coco
+    def load_json_aic(self,json_file,folder_name):
+        anno = json.load(open(json_file))
+        keypoint = []
+        images = []
+        bbox = []
+        ids = []
+        images_res = []
+        kps_valid = []
+        for i in range(len(anno['images'])):
+            images.append(os.path.join(folder_name,str(anno['images'][i]['file_name'])))
+        for img_info in anno['annotations']:
+            kp, kp_valid = kps_reshape(img_info["keypoints"])
+            if not sum(kp_valid):
+                continue
+            keypoint.append(kp)
+            kps_valid.append(kp_valid)
+            ids.append(img_info["id"])
+            bbox.append(xywh2xyxy(img_info['bbox']))
+        return images, keypoint, bbox, ids, kps_valid
 
     def load_json_mpii(self,json_file,folder_name):
         anno = json.load(open(json_file))
@@ -127,16 +144,22 @@ if __name__ == '__main__':
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
-    data_info = [{"mpii": {"root": "../../Mobile-Pose",
-                           "train_imgs": "MPIIimages",
-                           "valid_imgs": "MPIIimages",
-                           "train_annot": "img/mpiitrain_annotonly_train.json",
-                           "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
+    # data_info = [{"mpii": {"root": "../../Mobile-Pose",
+    #                        "train_imgs": "MPIIimages",
+    #                        "valid_imgs": "MPIIimages",
+    #                        "train_annot": "img/mpiitrain_annotonly_train.json",
+    #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
     # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
     #                        "train_imgs": "yoga_train2",
     #                        "valid_imgs": "yoga_test",
     #                        "train_annot": "yoga_train2.json",
     #                        "valid_annot": "yoga_test.json"}}]
+    data_info = [{"aic": {"root": "../../Mobile-Pose/img/ai_challenger",
+                           "train_imgs": "train",
+                           "valid_imgs": "valid",
+                           "train_annot": "aic_train.json",
+                           "valid_annot": "aic_val.json"}}]
+
     sample_idx = 20
 
     data_cfg = "../config/data_cfg/data_default.json"
