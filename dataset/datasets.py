@@ -3,6 +3,9 @@ import json
 import torch.utils.data as data
 import os
 from dataset.utils import xywh2xyxy, kps_reshape
+import cv2
+from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
+
 
 trans = list(zip(
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -21,6 +24,15 @@ class BaseDataset(data.Dataset):
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
 
+        bbv = BBoxVisualizer()
+        # img = cv2.imread(os.path.join(data_info[0]["mpii"]["root"],self.images[3270]))
+        img = cv2.imread(self.images[112])
+        box = self.boxes[112]
+        img = bbv.visualize([box],img)
+        cv2.imshow("frame",img)
+        cv2.waitKey(0)
+
+
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
         for item in data_info:
@@ -29,11 +41,13 @@ class BaseDataset(data.Dataset):
                 if name == "coco":
                     imgs, kps, boxes, ids, valid = self.load_json_coco(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "mpii":
-                    imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file, info["root"])
+                    imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file,info["root"])
                 elif name == "aic":
-                    imgs, kps, boxes, ids, valid = self.load_json_aic(annotation_file, info["root"])
+                    imgs, kps, boxes, ids, valid = self.load_json_aic(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "yoga":
                     imgs, kps, boxes, ids, valid = self.load_json_yoga(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                elif name == "ceiling":
+                    imgs, kps, boxes, ids, valid = self.load_json_ceiling(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 else:
                     raise NotImplementedError
                 self.images += imgs
@@ -69,7 +83,6 @@ class BaseDataset(data.Dataset):
         images = []
         bbox = []
         ids = []
-        images_res = []
         kps_valid = []
         for i in range(len(anno['images'])):
             images.append(os.path.join(folder_name,str(anno['images'][i]['file_name'])))
@@ -81,6 +94,7 @@ class BaseDataset(data.Dataset):
             kps_valid.append(kp_valid)
             ids.append(img_info["id"])
             bbox.append(xywh2xyxy(img_info['bbox']))
+
         return images, keypoint, bbox, ids, kps_valid
 
     def load_json_mpii(self,json_file,folder_name):
@@ -90,11 +104,44 @@ class BaseDataset(data.Dataset):
         bbox = []
         ids = []
         kps_valid = []
+        img_names = {}
+        for i in range(len(anno['images'])):
+            res = anno["images"][i]
+            img_names[res["id"]] = os.path.join(folder_name, str(res['file_name']))
+        for i in range(len(anno['annotations'])):
+            entry = anno['annotations'][i]
+            ids.append(entry["image_id"])
+            kp, kp_valid = kps_reshape(entry["keypoints"])
+            if not sum(kp_valid):
+                continue
+            bbox.append(xywh2xyxy(entry['bbox']))
+            keypoint.append(kp)
+            kps_valid.append(kp_valid)
+        name = list(img_names.keys())
+        value = list(img_names.values())
+        num = 0
+        for i in range(len(ids)):
+            if name[num] == ids[i]:
+                images.append(value[i])
+                num += 1
+            else:
+                images.append()
+                num -= 1
+        return images, keypoint, bbox, ids, kps_valid
+
+    def load_json_ceiling(self,json_file,folder_name):
+        anno = json.load(open(json_file))
+        keypoint = []
+        images = []
+        bbox = []
+        ids = []
+        images_res = []
+        kps_valid = []
         for i in range(len(anno['images'])):
             images.append(os.path.join(folder_name,str(anno['images'][i]['file_name'])))
         for i in range(len(anno['annotations'])):
             entry = anno['annotations'][i]
-            ids.append(entry["id"])
+            ids.append(entry["image_id"])
             kp, kp_valid = kps_reshape(entry["keypoints"])
             if not sum(kp_valid):
                 continue
@@ -144,38 +191,44 @@ if __name__ == '__main__':
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
-    # data_info = [{"mpii": {"root": "../../Mobile-Pose",
-    #                        "train_imgs": "MPIIimages",
-    #                        "valid_imgs": "MPIIimages",
-    #                        "train_annot": "img/mpiitrain_annotonly_train.json",
-    #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
+    data_info = [{"mpii": {"root": "../../Mobile-Pose",
+                           "train_imgs": "MPIIimages",
+                           "valid_imgs": "MPIIimages",
+                           "train_annot": "img/mpiitrain_annotonly_train.json",
+                           "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
     # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
     #                        "train_imgs": "yoga_train2",
     #                        "valid_imgs": "yoga_test",
     #                        "train_annot": "yoga_train2.json",
     #                        "valid_annot": "yoga_test.json"}}]
-    data_info = [{"aic": {"root": "../../Mobile-Pose/img/ai_challenger",
-                           "train_imgs": "train",
-                           "valid_imgs": "valid",
-                           "train_annot": "aic_train.json",
-                           "valid_annot": "aic_val.json"}}]
+    # data_info = [{"aic": {"root": "../../Mobile-Pose/img/ai_challenger",
+    #                        "train_imgs": "train",
+    #                        "valid_imgs": "valid",
+    #                        "train_annot": "aic_train.json",
+    #                        "valid_annot": "aic_val.json"}}]
+    # data_info = [{"ceiling": {"root": "../../Downloads/ceiling",
+    #                        "train_imgs": "ceiling_train",
+    #                        "valid_imgs": "ceiling_test",
+    #                        "train_annot": "ceiling_train.json",
+    #                        "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 20
+
+    sample_idx = 112
 
     data_cfg = "../config/data_cfg/data_default.json"
     dataset = BaseDataset(data_info, data_cfg)
 
-    import cv2
-    from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
-    # bbv, kpv = BBoxVisualizer(), KeyPointVisualizer(13, "mpii")
-
-    result = dataset[sample_idx][-1]
-    img = cv2.imread(result["name"])
-    print(result["box"])
-    print(result["kps"])
+    # import cv2
+    # from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
+    # bbv = BBoxVisualizer()
+    #
+    # result = dataset[sample_idx][-1]
+    # img = cv2.imread(result["name"])
+    # print(result["box"])
+    # print(result["kps"])
     # bbv.visualize([result["box"]], img)
-    # kpv.visualize(img, [result["kps"]])
-    cv2.imshow("img", img)
-    cv2.waitKey(0)
+    # # kpv.visualize(img, [result["kps"]])
+    # cv2.imshow("img", img)
+    # cv2.waitKey(0)
 
 
