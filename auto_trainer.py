@@ -16,7 +16,7 @@ class AutoTrainer:
         print("----------------------------------------------------------------------------------------------------")
         print(self.opt)
         print("This is the model with id {}".format(self.opt.expID))
-        print("Training backbone is: {}".format(self.opt.backbone))
+        # print("Training backbone is: {}".format(self.opt.backbone))
         dataset_str = ""
         for k, v in train_info.items():
             dataset_str += k
