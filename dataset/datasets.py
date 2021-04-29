@@ -32,7 +32,7 @@ class BaseDataset(data.Dataset):
                 if name == "coco":
                     imgs, kps, boxes, ids, valid = self.load_json_coco(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "mpii":
-                    imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file,info["root"])
+                    imgs, kps, boxes, ids, valid = self.load_json_mpii(annotation_file, info["root"])
                 elif name == "aic":
                     imgs, kps, boxes, ids, valid = self.load_json_aic(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "yoga":
@@ -126,7 +126,6 @@ class BaseDataset(data.Dataset):
         images = []
         bbox = []
         ids = []
-        images_res = []
         kps_valid = []
         # for i in range(len(anno['images'])):
         #     images.append(os.path.join(folder_name,str(anno['images'][i]['file_name'])))
