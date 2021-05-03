@@ -4,8 +4,10 @@ import torch.utils.data as data
 import os
 from dataset.utils import xywh2xyxy, kps_reshape
 import cv2
+import torch
 from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
 
+tensor = torch.Tensor
 
 trans = list(zip(
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -173,8 +175,8 @@ class BaseDataset(data.Dataset):
         path, kps, box, i, valid = \
             self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
         inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
-        img_meta = {"name": path, "kps": kps, "box": box, "id": i, "enlarged_box": enlarged_box,
-                    "padded_size": pad_size, "valid": valid}
+        img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
+                    "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
 
 
@@ -184,11 +186,11 @@ if __name__ == '__main__':
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
-    # data_info = [{"mpii": {"root": "../../Mobile-Pose",
-    #                        "train_imgs": "MPIIimages",
-    #                        "valid_imgs": "MPIIimages",
-    #                        "train_annot": "img/mpiitrain_annotonly_train.json",
-    #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
+    data_info = [{"mpii": {"root": "E:/data/mpii",
+                           "train_imgs": "images",
+                           "valid_imgs": "images",
+                           "train_annot": "img/mpiitrain_annotonly_train.json",
+                           "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
     # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
     #                        "train_imgs": "yoga_train2",
     #                        "valid_imgs": "yoga_test",
@@ -199,11 +201,11 @@ if __name__ == '__main__':
     #                        "valid_imgs": "valid",
     #                        "train_annot": "aic_train.json",
     #                        "valid_annot": "aic_val.json"}}]
-    data_info = [{"ceiling": {"root": "../data/ceiling",
-                             "train_imgs": "ceiling_train",
-                             "valid_imgs": "ceiling_test",
-                             "train_annot": "ceiling_train.json",
-                             "valid_annot": "ceiling_test.json"}}]
+    # data_info = [{"ceiling": {"root": "../data/ceiling",
+    #                          "train_imgs": "ceiling_train",
+    #                          "valid_imgs": "ceiling_test",
+    #                          "train_annot": "ceiling_train.json",
+    #                          "valid_annot": "ceiling_test.json"}}]
 
 
     sample_idx = 1035

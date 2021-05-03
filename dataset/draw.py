@@ -3,19 +3,78 @@ import numpy as np
 import cv2
 import torch
 import math
-import os
 from dataset.visualize import KeyPointVisualizer
 
 tensor = torch.Tensor
 
 
 class PredictionVisualizer:
-    def __init__(self, kps, bs, max_img=4, column=4, hm_colomn=6):
+    def __init__(self, kps, bs, out_height, out_width, in_height, in_width, max_img=4, column=4, final_size=(720, 540)):
         self.kps = kps
         self.img_num = min(bs, max_img)
         self.column = column
         self.row = math.floor(self.img_num / column)
-        self.hm_column = hm_colomn
+        self.final_size = final_size
+        self.out_width = out_width
+        self.out_height = out_height
+        self.in_width = in_width
+        self.in_height = in_height
+        self.KPV = KeyPointVisualizer(self.kps, "coco")
+
+    def getPred(self, hm):
+        max_val = 0
+        pred = [0, 0]
+        for column in range(hm.size(0)):
+            for row in range(hm.size(1)):
+                if hm[column][row] > max_val:
+                    max_val = hm[column][row]
+                    pred = [row, column]
+        return pred, max_val
+
+    def draw_kps(self, hms, meta_data):
+        img_path = meta_data["name"]
+        padded_size = meta_data["padded_size"]
+        box = meta_data["enlarged_box"]
+        img = cv2.imread(img_path)
+        # img_h, img_w = img.shape[0], img.shape[1]
+        img_h, img_w = box[3] - box[1], box[2] - box[0]
+        kps, kps_score = [], []
+        resize_ratio = min(self.in_width / img_w, self.in_height / img_h)
+        for i in range(hms.size(0)):
+            max_location, max_val = self.getPred(hms[i])
+            kps_score.append([max_val])
+            x_coord = (max_location[0]/self.out_width * self.in_width - padded_size[0])/resize_ratio + box[0]
+            y_coord = (max_location[1]/self.out_height * self.in_height - padded_size[1])/resize_ratio + box[1]
+            kps.append([x_coord, y_coord])
+        self.KPV.visualize(img, [kps], [kps_score])
+        return cv2.resize(img, self.final_size)
+
+    def process(self, hms, img_metas):
+        img_ls = []
+        for i, hm in enumerate(hms):
+            if i >= self.img_num:
+                break
+
+            img_ls.append(self.draw_kps(hm, self.extract_current_meta(i, img_metas)))
+        prediction_1 = np.concatenate((img_ls[0], img_ls[1]), axis=0)
+        prediction_2 = np.concatenate((img_ls[2], img_ls[3]), axis=0)
+        predictions = np.concatenate((prediction_1, prediction_2), axis=1)
+        return predictions
+
+    @staticmethod
+    def extract_current_meta(idx, meta):
+        tmp = {}
+        tmp["enlarged_box"] = meta["enlarged_box"][idx]
+        tmp["name"] = meta["name"][idx]
+        tmp["padded_size"] = meta["padded_size"][idx]
+        return tmp
+
+
+class HeatmapVisualizer:
+    def __init__(self, height, width, hm_column=6):
+        self.height = height
+        self.width = width
+        self.hm_column = hm_column
 
     def draw_hms(self, hms):
         hms = hms.cpu().numpy()
@@ -28,47 +87,8 @@ class PredictionVisualizer:
         hm = np.concatenate((hm1, hm2, hm3), axis=0)
         return tensor(hm).unsqueeze(dim=0)
 
-    def visualize(self, hms, img_meta, result_path=""):
-        img = cv2.imread(img_meta["img_path"])
-        self.inp_height, self.inp_width = img.shape[0], img.shape[1]
-        self.out_height, self.out_width = hms[0].size()
-        hms = hms.cpu()
-        img_ls = []
-        for i in range(self.img_num):
-            pt1, pt2, boxes, img_path, hm = _pt1[i].unsqueeze(dim=0), _pt2[i].unsqueeze(dim=0), _boxes[i].unsqueeze(
-                dim=0), _img_path[i], hms[i].unsqueeze(dim=0)
-            img, if_kps = self.draw_kp(hm, pt1, pt2, boxes, img_path)
-            img = cv2.resize(img, (720, 540))
-            img_ls.append(img)
-
-        prediction_1 = np.concatenate((img_ls[0], img_ls[1]), axis=0)
-        prediction_2 = np.concatenate((img_ls[2], img_ls[3]), axis=0)
-        predictions = np.concatenate((prediction_1, prediction_2), axis=1)
-
-        cv2.imwrite(os.path.join(result_path, "logs", "img.jpg"), predictions)
-
-        return predictions
-
     def generate_white(self, num):
-        rand = np.zeros((self.out_height, self.out_width))
+        rand = np.zeros((self.height, self.width))
         for _ in range(num - 1):
-            rand = np.concatenate((rand, np.zeros((self.out_height, self.out_width))), axis=1)
+            rand = np.concatenate((rand, np.zeros((self.height, self.width))), axis=1)
         return rand
-
-    def draw_kp(self, hm, pt1, pt2, boxes, img_path):
-        scores = tensor([[0.999]] * (boxes.shape[0]))
-        boxes = boxes.float()
-        preds_hm, preds_img, preds_scores = getPrediction(
-            hm, pt1, pt2, self.inp_height, self.inp_width, self.out_height, self.out_width)
-        kps, score = pose_nms(boxes, scores, preds_img, preds_scores, pose_classes)
-        orig_img = cv2.imread(img_path)
-        if kps:
-            cond = True
-            kpv = KeyPointVisualizer()
-            img = kpv.vis_ske(orig_img, kps, score)
-        else:
-            img = orig_img
-            cond = False
-        return img, cond
-
-

@@ -13,6 +13,7 @@ from dataset.dataloader import TrainerLoader
 from utils.utils import draw_graph
 import csv
 import shutil
+from dataset.draw import PredictionVisualizer, HeatmapVisualizer
 
 try:
     from apex import amp
@@ -43,7 +44,7 @@ class Trainer:
         self.vis = vis_in_training
         self.curr_epoch = opt.epoch
 
-        os.makedirs(os.path.join(self.expFolder, "logs"), exist_ok=True)
+        os.makedirs(os.path.join(self.expFolder, "logs/images"), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
         self.txt_log = os.path.join(self.expFolder, "logs/log.txt")
         self.bn_log = os.path.join(self.expFolder, "logs/bn.txt")
@@ -84,6 +85,7 @@ class Trainer:
 
         self.dataset = TrainerLoader(dataset_info, opt.data_cfg, loss_weight)
         self.loss_weight = {1: [-item for item in range(self.kps + 1)[1:]]}
+        self.train_batch, self.val_batch = opt.trainBatch, opt.validBatch
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
                                                                            opt.train_worker, opt.val_worker)
         self.inp_height, self.input_width, self.out_height, self.out_width = \
@@ -105,6 +107,7 @@ class Trainer:
         self.model.train()
         train_loader_desc = tqdm(self.train_loader)
         for i, (inps, labels, meta) in enumerate(train_loader_desc):
+            # self.stop = True
             if device != "cpu":
                 inps = inps.cuda().requires_grad_()
                 labels = labels.cuda()
@@ -147,7 +150,7 @@ class Trainer:
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
-        print(pckh)
+        # print(pckh)
         self.tb_writer.add_scalar('Train/pckh', pckh[0], self.curr_epoch)
 
         train_loader_desc.set_description(
@@ -166,7 +169,10 @@ class Trainer:
         self.update_indicators(acc, loss, dist, pckh[0], auc, pr, self.trainIter, "train")
 
     def valid(self):
-        drawn_kp, drawn_hm = False, False
+        drawn_kp = False
+        PV, HMV = PredictionVisualizer(self.kps, self.val_batch, self.out_height, self.out_width, self.inp_height,
+                                       self.input_width), \
+                  HeatmapVisualizer(self.out_height, self.out_width)
         BatchEval = BatchEvaluator(self.kps, "Valid", self.opt.validBatch)
         EpochEval = EpochEvaluator((self.out_height, self.out_width))
         self.model.eval()
@@ -181,24 +187,13 @@ class Trainer:
                 out = self.model(inps)
 
                 if not drawn_kp:
-                    try:
-                        kps_img, have_kp = draw_kps(out, img_info, self.kps)
-                        drawn_kp = True
-                        if self.vis:
-                            img = cv2.resize(kps_img, (1080, 720))
-                            drawn_kp = False
-                            cv2.imshow("val_pred", img)
-                            cv2.waitKey(0)
-                            # a = 1
-                            # draw_kps(out, img_info)
-                        else:
-                            self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch),
-                                             cv2.imread(
-                                                 os.path.join(self.expFolder, "logs/img.jpg"))[:,:,::-1], dataformats='HWC')
-                            hm = draw_hms(out[0])
-                            self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm)
-                    except:
-                        pass
+                    preds_img = PV.process(out, meta)
+                    # hm_img = HMV.draw_hms(out)
+                    # self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm_img)
+
+                    cv2.imwrite(os.path.join(self.expFolder, "logs/images/img_{}.jpg".format(self.curr_epoch)), preds_img)
+                    self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch), preds_img[:,:,::-1], dataformats='HWC')
+                    drawn_kp = True
 
                 loss = torch.zeros(1).cuda()
                 for cons, idx_ls in self.loss_weight.items():
