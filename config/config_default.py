@@ -24,6 +24,11 @@ datasets_info = {"coco": {"root": "/media/hkuit155/Elements/coco",
                           "valid_imgs": "val",
                           "train_annot": "ai_challenger_train.json",
                           "valid_annot": "ai_challenger_valid.json"},
+                 "ceiling": {"root": "data/ceiling",
+                             "train_imgs": "ceiling_train",
+                             "valid_imgs": "ceiling_test",
+                             "train_annot": "ceiling_train.json",
+                             "valid_annot": "ceiling_test.json"},
                  }
 
 
