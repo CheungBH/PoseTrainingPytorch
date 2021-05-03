@@ -68,7 +68,7 @@ class SampleGenerator:
         img_w, img_h = img.shape[1], img.shape[0]
         new_w = int(img_w * min(self.inp_width / img_w, self.inp_height / img_h))
         new_h = int(img_h * min(self.inp_width / img_w, self.inp_height / img_h))
-        pad_size = [self.inp_width - new_w, self.inp_height - new_h]
+        pad_size = [(self.inp_width - new_w)/2, (self.inp_height - new_h)/2]
         resized_image = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
         canvas = np.full((self.inp_height, self.inp_width, 3), 128, dtype="uint8")
         canvas[(self.inp_height - new_h) // 2:(self.inp_height - new_h) // 2 + new_h,
