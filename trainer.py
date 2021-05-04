@@ -150,7 +150,7 @@ class Trainer:
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
-        # print(pckh)
+        print(pckh)
         self.tb_writer.add_scalar('Train/pckh', pckh[0], self.curr_epoch)
 
         train_loader_desc.set_description(
@@ -214,6 +214,7 @@ class Trainer:
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
+        print(pckh)
         self.tb_writer.add_scalar('Valid/pckh', pckh[0], self.curr_epoch)
 
         val_loader_desc.set_description(
@@ -222,11 +223,11 @@ class Trainer:
         )
 
         val_loader_desc.close()
-        self.part_train_acc.append(body_part_acc)
-        self.part_train_dist.append(body_part_dist)
-        self.part_train_auc.append(body_part_auc)
-        self.part_train_pr.append(body_part_pr)
-        self.part_train_pckh.append(pckh[1:])
+        self.part_val_acc.append(body_part_acc)
+        self.part_val_dist.append(body_part_dist)
+        self.part_val_auc.append(body_part_auc)
+        self.part_val_pr.append(body_part_pr)
+        self.part_val_pckh.append(pckh[1:])
 
         loss, acc, dist, auc, pr = BatchEval.get_batch_result()
         self.update_indicators(acc, loss, dist, pckh[0], auc, pr, self.trainIter, "val")

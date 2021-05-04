@@ -113,13 +113,13 @@ class BaseDataset(data.Dataset):
         name = list(img_names.keys())
         value = list(img_names.values())
         num = 0
-        for i in range(len(ids)):
-            if name[num] == ids[i]:
-                images.append(value[i])
-                num += 1
-            else:
-                images.append()
-                num -= 1
+        # for i in range(len(ids)):
+        #     if name[num] == ids[i]:
+        #         images.append(value[i])
+        #         num += 1
+        #     else:
+        #         images.append()
+        #         num -= 1
         return images, keypoint, bbox, ids, kps_valid
 
     def load_json_ceiling(self, json_file, folder_name):
@@ -186,21 +186,21 @@ if __name__ == '__main__':
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
-    data_info = [{"mpii": {"root": "E:/data/mpii",
-                           "train_imgs": "images",
-                           "valid_imgs": "images",
-                           "train_annot": "img/mpiitrain_annotonly_train.json",
-                           "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
+    # data_info = [{"mpii": {"root": "E:/data/mpii",
+    #                        "train_imgs": "images",
+    #                        "valid_imgs": "images",
+    #                        "train_annot": "img/mpiitrain_annotonly_train.json",
+    #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
     # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
     #                        "train_imgs": "yoga_train2",
     #                        "valid_imgs": "yoga_test",
     #                        "train_annot": "yoga_train2.json",
     #                        "valid_annot": "yoga_test.json"}}]
-    # data_info = [{"aic": {"root": "../../Mobile-Pose/img/ai_challenger",
-    #                        "train_imgs": "train",
-    #                        "valid_imgs": "valid",
-    #                        "train_annot": "aic_train.json",
-    #                        "valid_annot": "aic_val.json"}}]
+    data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
+                           "train_imgs": "train",
+                           "valid_imgs": "valid",
+                           "train_annot": "aic_train.json",
+                           "valid_annot": "aic_val.json"}}]
     # data_info = [{"ceiling": {"root": "../data/ceiling",
     #                          "train_imgs": "ceiling_train",
     #                          "valid_imgs": "ceiling_test",
