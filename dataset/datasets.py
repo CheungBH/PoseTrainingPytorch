@@ -24,14 +24,6 @@ class BaseDataset(data.Dataset):
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
 
-        # bbv = BBoxVisualizer()
-        # # img = cv2.imread(os.path.join(data_info[0]["mpii"]["root"],self.images[3270]))
-        # img = cv2.imread(self.images[112])
-        # box = self.boxes[112]
-        # img = bbv.visualize([box],img)
-        # cv2.imshow("frame",img)
-        # cv2.waitKey(0)
-
 
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
@@ -127,7 +119,7 @@ class BaseDataset(data.Dataset):
                 num -= 1
         return images, keypoint, bbox, ids, kps_valid
 
-    def load_json_ceiling(self,json_file,folder_name):
+    def load_json_ceiling(self, json_file, folder_name):
         anno = json.load(open(json_file))
         keypoint = []
         images = []
@@ -135,18 +127,22 @@ class BaseDataset(data.Dataset):
         ids = []
         images_res = []
         kps_valid = []
-        for i in range(len(anno['images'])):
-            images.append(os.path.join(folder_name,str(anno['images'][i]['file_name'])))
+        # for i in range(len(anno['images'])):
+        #     images.append(os.path.join(folder_name,str(anno['images'][i]['file_name'])))
         for i in range(len(anno['annotations'])):
             entry = anno['annotations'][i]
             ids.append(entry["image_id"])
             kp, kp_valid = kps_reshape(entry["keypoints"])
             if not sum(kp_valid):
                 continue
+            if len(kp) == 16:
+                # images.pop(i)
+                continue
+            images.append(os.path.join(folder_name, entry["image_id"]+'.jpg'))
             bbox.append(xywh2xyxy(entry['bbox']))
             keypoint.append(kp)
             kps_valid.append(kp_valid)
-        return images, keypoint, bbox, ids, kps_valid
+        return images[:-20], keypoint[:-20], bbox[:-20], ids[:-20], kps_valid[:-20]
 
     def load_json_yoga(self,json_file,folder_name):
         anno = json.load(open(json_file))
@@ -169,7 +165,6 @@ class BaseDataset(data.Dataset):
             keypoint.append(kp)
             kps_valid.append(kp_valid)
         return images, keypoint, bbox, ids, kps_valid
-
 
     def __len__(self):
         return len(self.images)
@@ -213,6 +208,8 @@ if __name__ == '__main__':
 
     sample_idx = 33
 
+
+
     data_cfg = "../config/data_cfg/data_default.json"
     dataset = BaseDataset(data_info, data_cfg)
 
@@ -227,6 +224,7 @@ if __name__ == '__main__':
     bbv.visualize([result["box"]], img)
     kpv.visualize(img, [result["kps"]])
     cv2.imshow("img", img)
+
     cv2.waitKey(0)
 
 

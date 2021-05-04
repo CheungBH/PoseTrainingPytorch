@@ -117,7 +117,7 @@ class Trainer:
                 loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data, labels.data, self.opt.outputResH)
+                BatchEval.eval_per_batch(out.data, labels.data, self.out_height)
 
             EpochEval.update(preds, gts, valid.t())
 
@@ -148,11 +148,12 @@ class Trainer:
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
         print(pckh)
+        self.tb_writer.add_scalar('Train/pckh', pckh, self.curr_epoch)
 
-        train_loader_desc.set_description(
-            'Train: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
-                format(epoch=self.curr_epoch, pckh=pckh, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
-        )
+        # train_loader_desc.set_description(
+        #     'Train: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+        #         format(epoch=self.curr_epoch, pckh=pckh, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
+        # )
         train_loader_desc.close()
 
         self.part_train_acc.append(body_part_acc)
@@ -167,7 +168,7 @@ class Trainer:
     def valid(self):
         drawn_kp, drawn_hm = False, False
         BatchEval = BatchEvaluator(self.kps, "Valid", self.opt.validBatch)
-        EpochEval = EpochEvaluator((self.opt.outputResH, self.opt.outputResW))
+        EpochEval = EpochEvaluator((self.out_height, self.out_width))
         self.model.eval()
         val_loader_desc = tqdm(self.val_loader)
 
@@ -204,7 +205,7 @@ class Trainer:
                     loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data, labels.data, self.opt.outputResH)
+                BatchEval.eval_per_batch(out.data, labels.data, self.out_height)
             BatchEval.update(acc, dist, exists, maxval, valid, loss)
             EpochEval.update(preds, gts, valid.t())
             self.valIter += 1
@@ -218,11 +219,12 @@ class Trainer:
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
-        # print(pckh)
-        val_loader_desc.set_description(
-            'Valid: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
-                format(epoch=self.curr_epoch, pckh=pckh, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
-        )
+        self.tb_writer.add_scalar('Valid/pckh', pckh, self.curr_epoch)
+
+        # val_loader_desc.set_description(
+        #     'Valid: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+        #         format(epoch=self.curr_epoch, pckh=pckh, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
+        # )
 
         val_loader_desc.close()
         self.part_train_acc.append(body_part_acc)
