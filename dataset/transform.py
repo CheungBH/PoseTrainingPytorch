@@ -108,6 +108,10 @@ class ImageTransform:
         img_new = cv2.warpAffine(img, R_img, dsize=new_img_size)
         return img_new, kps_new, valid
 
+    def rotate_cropped_img(self, im):
+        # rotate with center
+        return im
+
     def tensor2img(self, ts):
         img = np.asarray(F.to_pil_image(ts))
         return img
@@ -153,7 +157,7 @@ if __name__ == '__main__':
     # cv2.imshow("raw", img)
     # cv2.imshow("flipped", f_img)
     # cv2.waitKey(0)
-
+    import copy
     data_cfg = "../config/data_cfg/data_default.json"
     img_path = 'sample.jpg'
     box = [166.921, 85.08000000000001, 304.42900000000003, 479]
@@ -165,11 +169,14 @@ if __name__ == '__main__':
     IT = ImageTransform(max_rot=max_rotate)
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
-    f_img, f_kps, f_valid = IT.rotate_img(img, box, kps, valid)
+    cropped = IT.SAMPLE.crop(box, img)
+    cv2.imshow("raw", copy.deepcopy(cropped))
+    rotated = IT.rotate_cropped_img(cropped)
 
-    IT.KPV.visualize(f_img, [f_kps])
-    IT.KPV.visualize(img, [kps])
+    # f_img, f_kps, f_valid = IT.rotate_img(img, box, kps, valid)
 
-    cv2.imshow("raw", img)
-    cv2.imshow("rotated", f_img)
+    # IT.KPV.visualize(f_img, [f_kps])
+    # IT.KPV.visualize(img, [kps])
+
+    cv2.imshow("rotated", rotated)
     cv2.waitKey(0)

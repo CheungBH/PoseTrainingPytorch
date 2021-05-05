@@ -196,34 +196,34 @@ if __name__ == '__main__':
     #                        "valid_imgs": "yoga_test",
     #                        "train_annot": "yoga_train2.json",
     #                        "valid_annot": "yoga_test.json"}}]
-    data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
-                           "train_imgs": "train",
-                           "valid_imgs": "valid",
-                           "train_annot": "aic_train.json",
-                           "valid_annot": "aic_val.json"}}]
-    # data_info = [{"ceiling": {"root": "../data/ceiling",
-    #                          "train_imgs": "ceiling_train",
-    #                          "valid_imgs": "ceiling_test",
-    #                          "train_annot": "ceiling_train.json",
-    #                          "valid_annot": "ceiling_test.json"}}]
+    # data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
+    #                        "train_imgs": "train",
+    #                        "valid_imgs": "valid",
+    #                        "train_annot": "aic_train.json",
+    #                        "valid_annot": "aic_val.json"}}]
+    data_info = [{"ceiling": {"root": "../data/ceiling",
+                             "train_imgs": "ceiling_train",
+                             "valid_imgs": "ceiling_test",
+                             "train_annot": "ceiling_train.json",
+                             "valid_annot": "ceiling_test.json"}}]
 
 
     sample_idx = 1035
-
     data_cfg = "../config/data_cfg/data_default.json"
-    dataset = BaseDataset(data_info, data_cfg)
+    dataset = BaseDataset(data_info, data_cfg, train=False)
 
-    import cv2
-    from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
-    bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(17, "coco")
-    result = dataset[sample_idx][-1]
-    img = cv2.imread(result["name"])
-    print(result["box"])
-    print(result["kps"])
-    bbv.visualize([result["box"]], img)
-    kpv.visualize(img, [result["kps"]])
-    cv2.imshow("img", cv2.resize(img, (720, 540)))
-    cv2.waitKey(0)
+    for i in range(sample_idx):
+        import cv2
+        from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
+        bbv = BBoxVisualizer()
+        kpv = KeyPointVisualizer(17, "coco")
+        result = dataset[i][-1]
+        img = cv2.imread(result["name"])
+        # print(result["box"])
+        # print(result["kps"])
+        bbv.visualize([result["box"]], img)
+        kpv.visualize(img, result["kps"].unsqueeze(dim=0))
+        cv2.imshow("img", cv2.resize(img, (720, 540)))
+        cv2.waitKey(0)
 
 
