@@ -3,9 +3,7 @@ import json
 import torch.utils.data as data
 import os
 from dataset.utils import xywh2xyxy, kps_reshape
-import cv2
 import torch
-from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
 
 tensor = torch.Tensor
 
@@ -16,12 +14,17 @@ trans = list(zip(
 
 
 class BaseDataset(data.Dataset):
-    def __init__(self, data_info, data_cfg, save=False, train=True):
-        self.is_train = train
-        if self.is_train:
+    def __init__(self, data_info, data_cfg, save=False, phase="train"):
+        # self.is_train = train
+        if phase == "train":
             self.annot, self.imgs = "train_annot", "train_imgs"
-        else:
+        elif phase == "valid":
             self.annot, self.imgs = "valid_annot", "valid_imgs"
+        elif phase == "test":
+            self.annot, self.imgs = "test_annot", "test_imgs"
+        else:
+            raise ValueError("Wrong phase of '{}'. Should be chosen from [train, valid, test]".format(phase))
+
         self.transform = ImageTransform(save=save)
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
@@ -205,10 +208,9 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-
-    sample_idx = 4342
+    sample_idx = 0
     data_cfg = "../config/data_cfg/data_default.json"
-    dataset = BaseDataset(data_info, data_cfg, train=False)
+    dataset = BaseDataset(data_info, data_cfg)
 
     # for i in range(sample_idx):
     import cv2
