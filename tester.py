@@ -2,13 +2,12 @@ from tqdm import tqdm
 import torch
 import os
 from config.config import device
-from trash.dataset.dataloader import TestDataset
+# from trash.dataset.dataloader import TestDataset
 from src.opt import opt
-from utils.eval import cal_accuracy
-from eval.logger import DataLogger, CurveLogger
 from utils.train_utils import Criterion
 from models.pose_model import PoseModel
 from utils.test_utils import check_option_file, list_to_str
+from eval.evaluator import BatchEvaluator, EpochEvaluator
 
 criterion = Criterion()
 posenet = PoseModel()
@@ -19,10 +18,14 @@ class Tester:
         self.test_data = test_data
         self.model_path = model_path
         self.option_file = check_option_file(model_path)
+        option = torch.load(self.option_file)
+        self.out_height, self.out_width = option.out_height, option.out_width
         self.print = print_info
         self.cfg = model_cfg
         self.batch_size = batchsize
         self.num_worker = num_worker
+        self.part_test_acc, self.part_test_dist, self.part_test_auc, self.part_test_pr, self.part_test_pckh = \
+            [], [], [], [], []
 
     def build(self, cfg, crit, model_height=256, model_width=256):
         posenet.build(cfg)
@@ -47,70 +50,113 @@ class Tester:
         self.loader = TestDataset(self.test_data).build_dataloader(self.batch_size, self.num_worker, shuffle=False)
 
     def test(self):
-        accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
-        pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
-        pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
-        pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
-        pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
+        BatchEval = BatchEvaluator(self.kps, "Test", self.batch_size)
+        EpochEval = EpochEvaluator((self.out_height, self.out_width))
         self.model.eval()
+        test_loader_desc = tqdm(self.test_loader)
 
-        test_loader_desc = tqdm(self.loader)
-
-        for i, (inps, labels, setMask, img_info) in enumerate(test_loader_desc):
+        for i, (inps, labels, meta) in enumerate(test_loader_desc):
             if device != "cpu":
                 inps = inps.cuda()
                 labels = labels.cuda()
-                setMask = setMask.cuda()
 
             with torch.no_grad():
                 out = self.model(inps)
 
-                loss = self.criterion(out.mul(setMask), labels)
+                loss = torch.zeros(1).cuda()
+                for cons, idx_ls in self.loss_weight.items():
+                    loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
-            acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
+            acc, dist, exists, (maxval, valid), (preds, gts) = \
+                BatchEval.eval_per_batch(out.data, labels.data, self.out_height)
+            BatchEval.update(acc, dist, exists, maxval, valid, loss)
+            EpochEval.update(preds, gts, valid.t())
 
-            accLogger.update(acc[0].item(), inps.size(0))
-            lossLogger.update(loss.item(), inps.size(0))
-            distLogger.update(dist[0].item(), inps.size(0))
-            pckhLogger.update(pckh[0], inps.size(0))
-            curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
-            ave_auc = curveLogger.cal_AUC()
-            pr_area = curveLogger.cal_PR()
-
-            exists = exists.tolist()
-            for k, v in pts_acc_Loggers.items():
-                pts_curve_Loggers[k].update(maxval[k], gt[k])
-                if exists[k] > 0:
-                    pts_acc_Loggers[k].update(acc.tolist()[k + 1], exists[k])
-                    pts_dist_Loggers[k].update(dist.tolist()[k + 1], exists[k])
-            pckh_exist = exists[-12:]
-            for k, v in pts_pckh_Loggers.items():
-                if exists[k] > 0:
-                    pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
-
+            loss, acc, dist, auc, pr = BatchEval.get_batch_result()
             test_loader_desc.set_description(
-                'Test: | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
-                    loss=lossLogger.avg,
-                    acc=accLogger.avg * 100,
-                    pckh=pckhLogger.avg * 100,
-                    dist=distLogger.avg,
-                    AUC=ave_auc,
-                    PR=pr_area
-                )
+                'Test: {epoch} | loss: {loss:.4f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                    format(epoch=0, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
             )
 
-        self.body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
-        self.body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
-        self.body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
-        self.body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
-        self.body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
-        self.body_part_thresh = [Logger.get_thresh() for k, Logger in pts_curve_Loggers.items()]
-        test_loader_desc.close()
-        print("----------------------------------------------------------------------------------------------------")
+        body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
+        pckh = EpochEval.eval_per_epoch()
+        self.test_pckh = pckh[0]
 
-        self.test_loss, self.test_acc, self.test_pckh, self.test_dist, self.test_auc, self.test_pr \
-            = lossLogger.avg, accLogger.avg, pckhLogger.avg, distLogger.avg, curveLogger.cal_AUC(), \
-              curveLogger.cal_PR()
+        test_loader_desc.close()
+        self.part_test_acc.append(body_part_acc)
+        self.part_test_dist.append(body_part_dist)
+        self.part_test_auc.append(body_part_auc)
+        self.part_test_pr.append(body_part_pr)
+        self.part_test_pckh.append(pckh[1:])
+
+        self.test_loss, self.test_acc, self.test_dist, self.test_auc, self.test_pr = BatchEval.get_batch_result()
+
+
+    # def test2(self):
+    #     accLogger, distLogger, lossLogger, pckhLogger, curveLogger = DataLogger(), DataLogger(), DataLogger(), DataLogger(), CurveLogger()
+    #     pts_acc_Loggers = {i: DataLogger() for i in range(self.kps)}
+    #     pts_dist_Loggers = {i: DataLogger() for i in range(self.kps)}
+    #     pts_curve_Loggers = {i: CurveLogger() for i in range(self.kps)}
+    #     pts_pckh_Loggers = {i: DataLogger() for i in range(12)}
+    #     self.model.eval()
+    #
+    #     test_loader_desc = tqdm(self.loader)
+    #
+    #     for i, (inps, labels, setMask, img_info) in enumerate(test_loader_desc):
+    #         if device != "cpu":
+    #             inps = inps.cuda()
+    #             labels = labels.cuda()
+    #             setMask = setMask.cuda()
+    #
+    #         with torch.no_grad():
+    #             out = self.model(inps)
+    #
+    #             loss = self.criterion(out.mul(setMask), labels)
+    #
+    #         acc, dist, exists, pckh, (maxval, gt) = cal_accuracy(out.data.mul(setMask), labels.data, self.loader.dataset.accIdxs)
+    #
+    #         accLogger.update(acc[0].item(), inps.size(0))
+    #         lossLogger.update(loss.item(), inps.size(0))
+    #         distLogger.update(dist[0].item(), inps.size(0))
+    #         pckhLogger.update(pckh[0], inps.size(0))
+    #         curveLogger.update(maxval.reshape(1, -1).squeeze(), gt.reshape(1, -1).squeeze())
+    #         ave_auc = curveLogger.cal_AUC()
+    #         pr_area = curveLogger.cal_PR()
+    #
+    #         exists = exists.tolist()
+    #         for k, v in pts_acc_Loggers.items():
+    #             pts_curve_Loggers[k].update(maxval[k], gt[k])
+    #             if exists[k] > 0:
+    #                 pts_acc_Loggers[k].update(acc.tolist()[k + 1], exists[k])
+    #                 pts_dist_Loggers[k].update(dist.tolist()[k + 1], exists[k])
+    #         pckh_exist = exists[-12:]
+    #         for k, v in pts_pckh_Loggers.items():
+    #             if exists[k] > 0:
+    #                 pts_pckh_Loggers[k].update(pckh[k + 1], pckh_exist[k])
+    #
+    #         test_loader_desc.set_description(
+    #             'Test: | loss: {loss:.8f} | acc: {acc:.2f} | PCKh: {pckh:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.format(
+    #                 loss=lossLogger.avg,
+    #                 acc=accLogger.avg * 100,
+    #                 pckh=pckhLogger.avg * 100,
+    #                 dist=distLogger.avg,
+    #                 AUC=ave_auc,
+    #                 PR=pr_area
+    #             )
+    #         )
+    #
+    #     self.body_part_acc = [Logger.avg for k, Logger in pts_acc_Loggers.items()]
+    #     self.body_part_dist = [Logger.avg for k, Logger in pts_dist_Loggers.items()]
+    #     self.body_part_auc = [Logger.cal_AUC() for k, Logger in pts_curve_Loggers.items()]
+    #     self.body_part_pr = [Logger.cal_PR() for k, Logger in pts_curve_Loggers.items()]
+    #     self.body_part_pckh = [Logger.avg for k, Logger in pts_pckh_Loggers.items()]
+    #     self.body_part_thresh = [Logger.get_thresh() for k, Logger in pts_curve_Loggers.items()]
+    #     test_loader_desc.close()
+    #     print("----------------------------------------------------------------------------------------------------")
+    #
+    #     self.test_loss, self.test_acc, self.test_pckh, self.test_dist, self.test_auc, self.test_pr \
+    #         = lossLogger.avg, accLogger.avg, pckhLogger.avg, distLogger.avg, curveLogger.cal_AUC(), \
+    #           curveLogger.cal_PR()
 
     def get_benchmark(self):
         self.flops, self.params, self.infer_time = posenet.benchmark()

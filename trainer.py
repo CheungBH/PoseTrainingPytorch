@@ -9,7 +9,7 @@ import os
 from tensorboardX import SummaryWriter
 import time
 # from utils.draw import draw_kps, draw_hms
-from dataset.dataloader import TrainerLoader
+from dataset.dataloader import TrainLoader
 from utils.utils import draw_graph
 import csv
 import shutil
@@ -84,7 +84,7 @@ class Trainer:
         self.kps, self.backbone, self.se_ratio = posenet.kps, posenet.backbone, posenet.se_ratio
         opt.kps = posenet.kps
 
-        self.dataset = TrainerLoader(dataset_info, opt.data_cfg, loss_weight)
+        self.dataset = TrainLoader(dataset_info, opt.data_cfg, loss_weight)
         self.loss_weight = {1: [-item for item in range(self.kps + 1)[1:]]}
         self.train_batch, self.val_batch = opt.trainBatch, opt.validBatch
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
@@ -379,16 +379,6 @@ class Trainer:
         with open(self.summary_log, "a+") as summary:
             if not exist:
                 summary.write(summary_title())
-            # info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
-            #            "{},{},{},{},{},{},{},{},{},{},{}\n". \
-            #     format(self.opt.expID, self.opt.backbone, self.opt.struct, self.opt.se_ratio, self.opt.DUC,
-            #            self.opt.inputResH, self.opt.inputResW, self.params, self.flops, self.inf_time,
-            #            self.opt.loss_weight, self.opt.addDPG, self.opt.kps, self.opt.trainBatch, self.opt.optMethod,
-            #            self.opt.freeze_bn, self.opt.freeze, self.opt.sparse_s, self.opt.nEpochs, self.opt.LR,
-            #            self.opt.hmGauss, self.opt.ratio, self.opt.weightDecay, self.opt.loadModel, config.computer,
-            #            self.expFolder, self.time_elapse, self.train_acc, self.train_loss, self.train_pckh,
-            #            self.train_dist, self.train_auc, self.train_pr, self.val_acc, self.val_loss, self.val_pckh,
-            #            self.val_dist, self.val_auc, self.val_pr, self.best_epoch, self.curr_epoch)
             info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
                        "{},{},{},{},{},{},{},{},{},{},{}\n". \
                 format(self.opt.expID, self.kps, self.backbone, self.se_ratio, self.params, self.flops, self.inf_time,

@@ -4,7 +4,7 @@ from .datasets import BaseDataset
 import torch
 
 
-class TrainerLoader:
+class TrainLoader:
     def __init__(self, data_info, data_cfg, joint_weight_dict=None):
         self.train_dataset = BaseDataset(data_info, data_cfg)
         self.val_dataset = BaseDataset(data_info, data_cfg, train=False)
@@ -15,3 +15,13 @@ class TrainerLoader:
         val_loader = torch.utils.data.DataLoader(
             self.val_dataset, batch_size=val_batch, shuffle=shuffle, num_workers=val_worker, pin_memory=pin_memory)
         return train_loader, val_loader
+
+
+class TestLoader:
+    def __init__(self, data_info, data_cfg):
+        self.dataset = BaseDataset(data_info, data_cfg)
+
+    def build_dataloader(self, batch, worker, shuffle=True, pin_memory=True):
+        loader = torch.utils.data.DataLoader(self.dataset, batch_size=batch, shuffle=shuffle, num_workers=worker,
+                                             pin_memory=pin_memory)
+        return loader
