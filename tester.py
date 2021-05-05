@@ -62,10 +62,7 @@ class Tester:
 
             with torch.no_grad():
                 out = self.model(inps)
-
-                loss = torch.zeros(1).cuda()
-                for cons, idx_ls in self.loss_weight.items():
-                    loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
+                loss = self.criterion(out, labels)
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
                 BatchEval.eval_per_batch(out.data, labels.data, self.out_height)
@@ -78,17 +75,11 @@ class Tester:
                     format(epoch=0, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
             )
 
-        body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
+        self.body_part_acc, self.body_part_dist, self.body_part_auc, self.body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
         self.test_pckh = pckh[0]
-
-        test_loader_desc.close()
-        self.part_test_acc.append(body_part_acc)
-        self.part_test_dist.append(body_part_dist)
-        self.part_test_auc.append(body_part_auc)
-        self.part_test_pr.append(body_part_pr)
-        self.part_test_pckh.append(pckh[1:])
-
+        self.body_part_pckh = pckh[1:]
+        self.body_part_thresh = [Logger.get_thresh() for k, Logger in BatchEval.curveLogger.items()]
         self.test_loss, self.test_acc, self.test_dist, self.test_auc, self.test_pr = BatchEval.get_batch_result()
 
 
