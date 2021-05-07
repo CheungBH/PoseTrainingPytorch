@@ -173,9 +173,14 @@ class BaseDataset(data.Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        path, kps, box, i, valid = \
-            self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-        inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
+        try:
+            path, kps, box, i, valid = \
+                self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+            inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
+        except:
+            path, kps, box, i, valid = \
+                self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
+            inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
         img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
                     "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
@@ -192,23 +197,23 @@ if __name__ == '__main__':
     #                        "valid_imgs": "images",
     #                        "train_annot": "img/mpiitrain_annotonly_train.json",
     #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
-    # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
-    #                        "train_imgs": "yoga_train2",
-    #                        "valid_imgs": "yoga_test",
-    #                        "train_annot": "yoga_train2.json",
-    #                        "valid_annot": "yoga_test.json"}}]
-    data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic",
-                           "train_imgs": "ai_challenger_keypoint_train_20170909/keypoint_train_images_20170902",
-                           "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
-                           "train_annot": "ai_challenger_keypoint_train_20170909/keypoint_train_annotations_20170909.json",
-                           "valid_annot": "ai_challenger_keypoint_validation_20170911/keypoint_validation_annotations_20170911.json"}}]
+    data_info = [{"yoga": {"root": "../data/yoga",
+                           "train_imgs": "yoga_train2",
+                           "valid_imgs": "yoga_test",
+                           "train_annot": "yoga_train2.json",
+                           "valid_annot": "yoga_test.json"}}]
+    # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic",
+    #                        "train_imgs": "ai_challenger_keypoint_train_20170909/keypoint_train_images_20170902",
+    #                        "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
+    #                        "train_annot": "ai_challenger_keypoint_train_20170909/keypoint_train_annotations_20170909.json",
+    #                        "valid_annot": "ai_challenger_keypoint_validation_20170911/keypoint_validation_annotations_20170911.json"}}]
     # data_info = [{"ceiling": {"root": "../data/ceiling",
     #                          "train_imgs": "ceiling_train",
     #                          "valid_imgs": "ceiling_test",
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 0
+    sample_idx = 432
     data_cfg = "../config/data_cfg/data_default.json"
     dataset = BaseDataset(data_info, data_cfg)
 
