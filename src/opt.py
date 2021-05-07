@@ -9,7 +9,7 @@ parser.add_argument('--expFolder', default='test', type=str,
                     help='Experiment folder')
 
 "----------------------------- Model options -----------------------------"
-parser.add_argument('--dataset', default='multiple', type=str,
+parser.add_argument('--dataset', default='coco', type=str,
                     help='Dataset choice: mpii | coco')
 parser.add_argument('--data_cfg', default="config/data_cfg/data_default.json", type=str,
                     help='Path of data cfg file')
