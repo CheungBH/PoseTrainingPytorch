@@ -7,7 +7,7 @@ import torch
 class TrainLoader:
     def __init__(self, data_info, data_cfg, joint_weight_dict=None):
         self.train_dataset = BaseDataset(data_info, data_cfg)
-        self.val_dataset = BaseDataset(data_info, data_cfg, train=False)
+        self.val_dataset = BaseDataset(data_info, data_cfg, phase="valid")
 
     def build_dataloader(self, train_batch, val_batch, train_worker, val_worker, shuffle=True, pin_memory=True):
         train_loader = torch.utils.data.DataLoader(
