@@ -30,7 +30,7 @@ class ImageTransform:
         self.rotate = load_dict["rotate"]
         self.flip_prob = load_dict["flip_prob"]
         self.scale_factor = load_dict["scale"]
-        self.kps = load_dict["kps"]
+        self.kps = load_dict["keypoints"]
         self.rotate_prob = load_dict["rotate_prob"]
         self.SAMPLE = SampleGenerator(self.output_height, self.output_width, self.input_height, self.input_width,
                                       self.sigma)
