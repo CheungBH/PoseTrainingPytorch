@@ -80,8 +80,7 @@ class ImageTransform:
         return flipped_img, flipped_box, flipped_kps, flipped_valid
 
     def rotate_img(self, img, box, kps, valid):
-        prob = random.random()
-        degree = (prob-0.5) * 2 * self.rotate
+
         img_w, img_h = img.shape[0], img.shape[1]
         w, h = box[2], box[3]
         # center = (w / 2, h / 2)
@@ -109,7 +108,7 @@ class ImageTransform:
         img_new = cv2.warpAffine(img, R_img, dsize=new_img_size)
         return img_new, kps_new, valid
 
-    def rotate_cropped_img(self, im):
+    def rotate_cropped_img(self, im, degree):
         # rotate with center
         return im
 
@@ -123,9 +122,11 @@ class ImageTransform:
         if random.random() > 1 - self.flip_prob:
             raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
-        # if random.random() > self.rotate_prob:
-        #     img = self.rotate_cropped_img(img)
-        #     labels = self.rotate_hm(labels)
+        if random.random() > 1 - self.rotate_prob:
+            prob = random.random()
+            degree = (prob - 0.5) * 2 * self.rotate
+            img = self.rotate_cropped_img(img, degree)
+            # labels = self.rotate_hm(labels)
         inputs = self.normalize(self.img2tensor(img))
         if self.save:
             import os
@@ -150,11 +151,12 @@ if __name__ == '__main__':
     #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
     # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
 
+    degree = 40
     IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
     cv2.imshow("raw", img)
-    rotate_img = IT.rotate_cropped_img(img)
+    rotate_img = IT.rotate_cropped_img(img, degree)
     # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
     # IT.BBV.visualize([f_box], f_img)
