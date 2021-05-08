@@ -173,14 +173,18 @@ class BaseDataset(data.Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        try:
-            path, kps, box, i, valid = \
-                self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-            inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
-        except:
-            path, kps, box, i, valid = \
-                self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
-            inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
+        path, kps, box, i, valid = \
+            self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+        inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
+        # try:
+        #     path, kps, box, i, valid = \
+        #         self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+        #     inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
+        # except:
+        #     print(idx)
+        #     path, kps, box, i, valid = \
+        #         self.images[10], self.keypoints[10], self.boxes[10], self.ids[10], self.kps_valid[10]
+        #     inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
         img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
                     "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
@@ -213,15 +217,15 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 432
+    sample_idx = 9834
     data_cfg = "../config/data_cfg/data_default.json"
-    dataset = BaseDataset(data_info, data_cfg)
+    dataset = BaseDataset(data_info, data_cfg, phase="train")
 
     # for i in range(sample_idx):
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
     bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(13, "coco")
+    kpv = KeyPointVisualizer(17, "coco")
     result = dataset[sample_idx][-1]
     img = cv2.imread(result["name"])
     # print(result["box"])

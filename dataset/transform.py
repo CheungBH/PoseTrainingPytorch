@@ -39,6 +39,7 @@ class ImageTransform:
         self.BBV = BBoxVisualizer()
 
     def load_img(self, img_path):
+    
         img = cv2.imread(img_path)
         if self.color == "rgb":
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
