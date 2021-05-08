@@ -432,10 +432,10 @@ class Trainer:
                     error_string = ", The accuracy is too low"
                     break
                 self.curr_epoch += 1
-        except IOError:
-            error_string = ",Some file is closed"
-        except ZeroDivisionError:
-            error_string = ",Gradient flow"
+        # except IOError:
+        #     error_string = ",Some file is closed"
+        # except ZeroDivisionError:
+        #     error_string = ",Gradient flow"
         except KeyboardInterrupt:
             error_string = ",Process was killed"
 

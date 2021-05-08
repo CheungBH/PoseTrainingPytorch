@@ -71,7 +71,7 @@ class ImageTransform:
         img_width = img.shape[1]
         # box_w, box_tl, box_br = box[2] - box[0], box[0], box[2]
         new_box_tl, new_box_br = img_width - box[2] - 1, img_width - box[0] - 1
-        flipped_box = [new_box_br, box[1], new_box_tl, box[3]]
+        flipped_box = [new_box_tl, box[1], new_box_br, box[3]]
         for l, r in self.flip_pairs:
             left_kp, right_kp = kps[l], kps[r]
             flipped_x_l, flipped_x_r = img_width - kps[r][0] - 1, img_width - kps[l][0] - 1
@@ -120,7 +120,7 @@ class ImageTransform:
     def process(self, img_path, box, kps, kps_valid):
         raw_img = self.load_img(img_path)
         enlarged_box = self.scale(raw_img, box)
-        if random.random() > self.flip_prob:
+        if random.random() > 1 - self.flip_prob:
             raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
         # if random.random() > self.rotate_prob:
@@ -139,31 +139,10 @@ class ImageTransform:
             for idx in range(self.kps):
                 hm = self.SAMPLE.save_hm(img, labels[idx])
                 cv2.imwrite("{}/kps_{}.jpg".format(self.save, idx), cv2.resize(hm, (640, 640)))
-        return inputs, labels, enlarged_box, pad_size, valid
+        return inputs, labels, enlarged_box, pad_size, kps_valid
 
 
 if __name__ == '__main__':
-    # data_cfg = "../config/data_cfg/data_default.json"
-    # img_path = 'sample.jpg'
-    # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
-    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
-    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
-    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
-    #
-    # IT = ImageTransform()
-    # IT.init_with_cfg(data_cfg)
-    # img = IT.load_img(img_path)
-    # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
-    #
-    # IT.BBV.visualize([f_box], f_img)
-    # IT.KPV.visualize(f_img, [f_kps])
-    # IT.BBV.visualize([box], img)
-    # IT.KPV.visualize(img, [kps])
-    #
-    # cv2.imshow("raw", img)
-    # cv2.imshow("flipped", f_img)
-    # cv2.waitKey(0)
-    import copy
     data_cfg = "../config/data_cfg/data_default.json"
     img_path = 'sample.jpg'
     box = [166.921, 85.08000000000001, 304.42900000000003, 479]
@@ -171,18 +150,39 @@ if __name__ == '__main__':
            [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
     valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
 
-    max_rotate = 40
     IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
-    cropped = IT.SAMPLE.crop(box, img)
-    cv2.imshow("raw", copy.deepcopy(cropped))
-    rotated = IT.rotate_cropped_img(cropped)
+    f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
-    # f_img, f_kps, f_valid = IT.rotate_img(img, box, kps, valid)
+    IT.BBV.visualize([f_box], f_img)
+    IT.KPV.visualize(f_img, [f_kps])
+    IT.BBV.visualize([box], img)
+    IT.KPV.visualize(img, [kps])
 
-    # IT.KPV.visualize(f_img, [f_kps])
-    # IT.KPV.visualize(img, [kps])
-
-    cv2.imshow("rotated", rotated)
+    cv2.imshow("raw", img)
+    cv2.imshow("flipped", f_img)
     cv2.waitKey(0)
+    # import copy
+    # data_cfg = "../config/data_cfg/data_default.json"
+    # img_path = 'sample.jpg'
+    # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
+    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
+    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
+    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
+    #
+    # max_rotate = 40
+    # IT = ImageTransform()
+    # IT.init_with_cfg(data_cfg)
+    # img = IT.load_img(img_path)
+    # cropped = IT.SAMPLE.crop(box, img)
+    # cv2.imshow("raw", copy.deepcopy(cropped))
+    # rotated = IT.rotate_cropped_img(cropped)
+    #
+    # # f_img, f_kps, f_valid = IT.rotate_img(img, box, kps, valid)
+    #
+    # # IT.KPV.visualize(f_img, [f_kps])
+    # # IT.KPV.visualize(img, [kps])
+    #
+    # cv2.imshow("rotated", rotated)
+    # cv2.waitKey(0)

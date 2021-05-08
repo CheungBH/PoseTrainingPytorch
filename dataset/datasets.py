@@ -173,9 +173,15 @@ class BaseDataset(data.Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        path, kps, box, i, valid = \
-            self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-        inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+        try:
+            path, kps, box, i, valid = \
+                self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+        except:
+            print(idx)
+            path, kps, box, i, valid = \
+                self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
+            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
         img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
                     "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
@@ -197,21 +203,22 @@ if __name__ == '__main__':
     #                        "valid_imgs": "yoga_test",
     #                        "train_annot": "yoga_train2.json",
     #                        "valid_annot": "yoga_test.json"}}]
-    data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
-                           "train_imgs": "train",
-                           "valid_imgs": "valid",
-                           "train_annot": "aic_train.json",
-                           "valid_annot": "aic_val.json"}}]
-    # data_info = [{"ceiling": {"root": "../data/ceiling",
-    #                          "train_imgs": "ceiling_train",
-    #                          "valid_imgs": "ceiling_test",
-    #                          "train_annot": "ceiling_train.json",
-    #                          "valid_annot": "ceiling_test.json"}}]
+    # data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
+    #                        "train_imgs": "train",
+    #                        "valid_imgs": "valid",
+    #                        "train_annot": "aic_train.json",
+    #                        "valid_annot": "aic_val.json"}}]
+    data_info = [{"ceiling": {"root": "../data/ceiling",
+                             "train_imgs": "ceiling_train",
+                             "valid_imgs": "ceiling_test",
+                             "train_annot": "ceiling_train.json",
+                             "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 9834
+    sample_idx = 0
 
     data_cfg = "../config/data_cfg/data_default.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")
+    dataset.transform.save = True
 
     # for i in range(sample_idx):
     import cv2
