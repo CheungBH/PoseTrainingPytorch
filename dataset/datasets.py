@@ -188,11 +188,11 @@ class BaseDataset(data.Dataset):
 
 
 if __name__ == '__main__':
-    # data_info = [{"coco": {"root": "../../mmpose/data/coco",
-    #                        "train_imgs": "train2017",
-    #                        "valid_imgs": "val2017",
-    #                        "train_annot": "annotations/person_keypoints_train2017.json",
-    #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
+    data_info = [{"coco": {"root": "E:/coco",
+                           "train_imgs": "train2017",
+                           "valid_imgs": "val2017",
+                           "train_annot": "annotations/person_keypoints_train2017.json",
+                           "valid_annot": "annotations/person_keypoints_val2017.json"}}]
     # data_info = [{"mpii": {"root": "E:/data/mpii",
     #                        "train_imgs": "images",
     #                        "valid_imgs": "images",
@@ -208,11 +208,11 @@ if __name__ == '__main__':
     #                        "valid_imgs": "valid",
     #                        "train_annot": "aic_train.json",
     #                        "valid_annot": "aic_val.json"}}]
-    data_info = [{"ceiling": {"root": "../data/ceiling",
-                             "train_imgs": "ceiling_train",
-                             "valid_imgs": "ceiling_test",
-                             "train_annot": "ceiling_train.json",
-                             "valid_annot": "ceiling_test.json"}}]
+    # data_info = [{"ceiling": {"root": "../data/ceiling",
+    #                          "train_imgs": "ceiling_train",
+    #                          "valid_imgs": "ceiling_test",
+    #                          "train_annot": "ceiling_train.json",
+    #                          "valid_annot": "ceiling_test.json"}}]
 
     sample_idx = 0
 
@@ -227,6 +227,7 @@ if __name__ == '__main__':
     kpv = KeyPointVisualizer(17, "coco")
     result = dataset[sample_idx][-1]
     img = cv2.imread(result["name"])
+    # print(result["name"])
     # print(result["box"])
     # print(result["kps"])
     bbv.visualize([result["box"]], img)
