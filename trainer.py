@@ -9,10 +9,11 @@ import os
 from tensorboardX import SummaryWriter
 import time
 # from utils.draw import draw_kps, draw_hms
-from dataset.dataloader import TrainerLoader
+from dataset.dataloader import TrainLoader
 from utils.utils import draw_graph
 import csv
 import shutil
+from dataset.draw import PredictionVisualizer, HeatmapVisualizer
 
 try:
     from apex import amp
@@ -43,7 +44,7 @@ class Trainer:
         self.vis = vis_in_training
         self.curr_epoch = opt.epoch
 
-        os.makedirs(os.path.join(self.expFolder, "logs"), exist_ok=True)
+        os.makedirs(os.path.join(self.expFolder, "logs/images"), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
         self.txt_log = os.path.join(self.expFolder, "logs/log.txt")
         self.bn_log = os.path.join(self.expFolder, "logs/bn.txt")
@@ -78,17 +79,20 @@ class Trainer:
         self.build_criterion(opt.crit)
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
         posenet.model_transfer(device)
+        # self.backbone
         self.model = posenet.model
-        self.kps = posenet.kps
+        self.kps, self.backbone, self.se_ratio = posenet.kps, posenet.backbone, posenet.se_ratio
         opt.kps = posenet.kps
 
-        self.dataset = TrainerLoader(dataset_info, opt.data_cfg, loss_weight)
+        self.dataset = TrainLoader(dataset_info, opt.data_cfg, loss_weight)
         self.loss_weight = {1: [-item for item in range(self.kps + 1)[1:]]}
+        self.train_batch, self.val_batch = opt.trainBatch, opt.validBatch
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
                                                                            opt.train_worker, opt.val_worker)
-        self.inp_height, self.input_width, self.out_height, self.out_width = \
+        self.inp_height, self.input_width, self.out_height, self.out_width, self.sigma = \
             self.dataset.train_dataset.transform.input_height, self.dataset.train_dataset.transform.input_width, \
-            self.dataset.train_dataset.transform.output_height, self.dataset.train_dataset.transform.output_width,
+            self.dataset.train_dataset.transform.output_height, self.dataset.train_dataset.transform.output_width, \
+            self.dataset.train_dataset.transform.sigma
 
         if opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler
@@ -105,6 +109,7 @@ class Trainer:
         self.model.train()
         train_loader_desc = tqdm(self.train_loader)
         for i, (inps, labels, meta) in enumerate(train_loader_desc):
+            # self.stop = True
             if device != "cpu":
                 inps = inps.cuda().requires_grad_()
                 labels = labels.cuda()
@@ -148,12 +153,12 @@ class Trainer:
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
         print(pckh)
-        self.tb_writer.add_scalar('Train/pckh', pckh, self.curr_epoch)
+        self.tb_writer.add_scalar('Train/pckh', pckh[0], self.curr_epoch)
 
-        # train_loader_desc.set_description(
-        #     'Train: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
-        #         format(epoch=self.curr_epoch, pckh=pckh, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
-        # )
+        train_loader_desc.set_description(
+            'Train: {epoch} | pckh: {pckh:.4f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                format(epoch=self.curr_epoch, pckh=pckh[0], loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
+        )
         train_loader_desc.close()
 
         self.part_train_acc.append(body_part_acc)
@@ -166,7 +171,10 @@ class Trainer:
         self.update_indicators(acc, loss, dist, pckh[0], auc, pr, self.trainIter, "train")
 
     def valid(self):
-        drawn_kp, drawn_hm = False, False
+        drawn_kp = False
+        PV, HMV = PredictionVisualizer(self.kps, self.val_batch, self.out_height, self.out_width, self.inp_height,
+                                       self.input_width), \
+                  HeatmapVisualizer(self.out_height, self.out_width)
         BatchEval = BatchEvaluator(self.kps, "Valid", self.opt.validBatch)
         EpochEval = EpochEvaluator((self.out_height, self.out_width))
         self.model.eval()
@@ -181,24 +189,13 @@ class Trainer:
                 out = self.model(inps)
 
                 if not drawn_kp:
-                    try:
-                        kps_img, have_kp = draw_kps(out, img_info, self.kps)
-                        drawn_kp = True
-                        if self.vis:
-                            img = cv2.resize(kps_img, (1080, 720))
-                            drawn_kp = False
-                            cv2.imshow("val_pred", img)
-                            cv2.waitKey(0)
-                            # a = 1
-                            # draw_kps(out, img_info)
-                        else:
-                            self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch),
-                                             cv2.imread(
-                                                 os.path.join(self.expFolder, "logs/img.jpg"))[:,:,::-1], dataformats='HWC')
-                            hm = draw_hms(out[0])
-                            self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm)
-                    except:
-                        pass
+                    preds_img = PV.process(out, meta)
+                    # hm_img = HMV.draw_hms(out)
+                    # self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm_img)
+
+                    cv2.imwrite(os.path.join(self.expFolder, "logs/images/img_{}.jpg".format(self.curr_epoch)), preds_img)
+                    self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch), preds_img[:,:,::-1], dataformats='HWC')
+                    drawn_kp = True
 
                 loss = torch.zeros(1).cuda()
                 for cons, idx_ls in self.loss_weight.items():
@@ -213,25 +210,26 @@ class Trainer:
             loss, acc, dist, auc, pr = BatchEval.get_batch_result()
             BatchEval.update_tb(self.tb_writer, self.valIter)
             val_loader_desc.set_description(
-                'Valid: {epoch} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                'Valid: {epoch} | loss: {loss:.4f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
                     format(epoch=self.curr_epoch, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
             )
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
-        self.tb_writer.add_scalar('Valid/pckh', pckh, self.curr_epoch)
+        print(pckh)
+        self.tb_writer.add_scalar('Valid/pckh', pckh[0], self.curr_epoch)
 
-        # val_loader_desc.set_description(
-        #     'Valid: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
-        #         format(epoch=self.curr_epoch, pckh=pckh, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
-        # )
+        val_loader_desc.set_description(
+            'Valid: {epoch} | pckh: {pckh:.8f} | loss: {loss:.8f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                format(epoch=self.curr_epoch, pckh=pckh[0], loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
+        )
 
         val_loader_desc.close()
-        self.part_train_acc.append(body_part_acc)
-        self.part_train_dist.append(body_part_dist)
-        self.part_train_auc.append(body_part_auc)
-        self.part_train_pr.append(body_part_pr)
-        self.part_train_pckh.append(pckh[1:])
+        self.part_val_acc.append(body_part_acc)
+        self.part_val_dist.append(body_part_dist)
+        self.part_val_auc.append(body_part_auc)
+        self.part_val_pr.append(body_part_pr)
+        self.part_val_pckh.append(pckh[1:])
 
         loss, acc, dist, auc, pr = BatchEval.get_batch_result()
         self.update_indicators(acc, loss, dist, pckh[0], auc, pr, self.trainIter, "val")
@@ -381,13 +379,12 @@ class Trainer:
         with open(self.summary_log, "a+") as summary:
             if not exist:
                 summary.write(summary_title())
-            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
+            info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
                        "{},{},{},{},{},{},{},{},{},{},{}\n". \
-                format(self.opt.expID, self.opt.backbone, self.opt.struct, self.opt.se_ratio, self.opt.DUC,
-                       self.opt.inputResH, self.opt.inputResW, self.params, self.flops, self.inf_time,
-                       self.opt.loss_weight, self.opt.addDPG, self.opt.kps, self.opt.trainBatch, self.opt.optMethod,
-                       self.opt.freeze_bn, self.opt.freeze, self.opt.sparse_s, self.opt.nEpochs, self.opt.LR,
-                       self.opt.hmGauss, self.opt.ratio, self.opt.weightDecay, self.opt.loadModel, config.computer,
+                format(self.opt.expID, self.kps, self.backbone, self.se_ratio, self.params, self.flops, self.inf_time,
+                       self.input_width, self.inp_height, self.out_width, self.out_height, self.train_batch,
+                       self.opt.optMethod, self.opt.freeze_bn, self.opt.freeze, self.opt.sparse_s, self.total_epochs,
+                       self.opt.LR, self.sigma, self.opt.weightDecay, self.opt.loadModel, config.computer,
                        self.expFolder, self.time_elapse, self.train_acc, self.train_loss, self.train_pckh,
                        self.train_dist, self.train_auc, self.train_pr, self.val_acc, self.val_loss, self.val_pckh,
                        self.val_dist, self.val_auc, self.val_pr, self.best_epoch, self.curr_epoch)

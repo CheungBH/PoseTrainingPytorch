@@ -90,10 +90,10 @@ def generate_cmd(ls):
 
 
 def summary_title():
-    title_str = "id,backbone,structure,se ratio,DUC,input height,input width,params,flops,time,loss_weight,addDPG," \
-                "kps,batch_size,optimizer,freeze_bn,freeze,sparse,total epochs,LR,Gaussian,thresh,weightDecay," \
-                "loadModel,model_location, ,folder_name,training_time,train_acc,train_loss,train_pckh,train_dist," \
-                "train_AUC,train_PR,val_acc,val_loss,val_pckh,val_dist,val_AUC,val_PR,best_epoch,final_epoch\n"
+    title_str = "id,kps,backbone,se-ratio,params,flops,infer_time,in_width,in_height,out_width,out_height,batch size," \
+                "optimizer,freeze_bn,freeze,sparse,total epochs,LR,Gaussian,weightDecay,loadModel,model_location, ," \
+                "folder_name,training_time,train_acc,train_loss,train_pckh,train_dist,train_AUC,train_PR,val_acc," \
+                "val_loss,val_pckh,val_dist,val_AUC,val_PR,best_epoch,final_epoch\n"
     return title_str
 
 

@@ -33,7 +33,7 @@ class BatchEvaluator:
             if len(nums) > 0:
                 dist = kps_dist[nums]
                 sum_dist[i + 1] = torch.sum(dist) / exist[i]
-                acc[i + 1] = acc_dist(dist - 1)
+                acc[i + 1] = acc_dist(dist, thr=1)
 
         sum_dist[0] = cal_ave(exist, sum_dist[1:])
         acc[0] = cal_ave(exist, acc[1:])
