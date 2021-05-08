@@ -11,11 +11,10 @@ import numpy as np
 
 
 class ImageTransform:
-    def __init__(self, color="rgb", save="", max_rot=40):
+    def __init__(self, color="rgb", save=""):
         self.color = color
         self.prob = 0.5
         self.save = save
-        self.max_rotation = max_rot
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
         self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12), (13, 14), (15, 16)]
@@ -32,6 +31,7 @@ class ImageTransform:
         self.flip_prob = load_dict["flip_prob"]
         self.scale_factor = load_dict["scale"]
         self.kps = load_dict["kps"]
+        self.rotate_prob = load_dict["rotate_prob"]
         self.SAMPLE = SampleGenerator(self.output_height, self.output_width, self.input_height, self.input_width,
                                       self.sigma)
         # if self.save:
@@ -81,7 +81,7 @@ class ImageTransform:
 
     def rotate_img(self, img, box, kps, valid):
         prob = random.random()
-        degree = (prob-0.5) * 2 * self.max_rotation
+        degree = (prob-0.5) * 2 * self.rotate
         img_w, img_h = img.shape[0], img.shape[1]
         w, h = box[2], box[3]
         # center = (w / 2, h / 2)
@@ -117,10 +117,15 @@ class ImageTransform:
         img = np.asarray(F.to_pil_image(ts))
         return img
 
-    def process(self, img_path, box, kps):
+    def process(self, img_path, box, kps, kps_valid):
         raw_img = self.load_img(img_path)
         enlarged_box = self.scale(raw_img, box)
+        if random.random() > self.flip_prob:
+            raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
+        # if random.random() > self.rotate_prob:
+        #     img = self.rotate_cropped_img(img)
+        #     labels = self.rotate_hm(labels)
         inputs = self.normalize(self.img2tensor(img))
         if self.save:
             import os
@@ -134,7 +139,7 @@ class ImageTransform:
             for idx in range(self.kps):
                 hm = self.SAMPLE.save_hm(img, labels[idx])
                 cv2.imwrite("{}/kps_{}.jpg".format(self.save, idx), cv2.resize(hm, (640, 640)))
-        return inputs, labels, enlarged_box, pad_size
+        return inputs, labels, enlarged_box, pad_size, valid
 
 
 if __name__ == '__main__':
@@ -167,7 +172,7 @@ if __name__ == '__main__':
     valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
 
     max_rotate = 40
-    IT = ImageTransform(max_rot=max_rotate)
+    IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
     cropped = IT.SAMPLE.crop(box, img)
