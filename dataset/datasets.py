@@ -192,16 +192,16 @@ if __name__ == '__main__':
     #                        "valid_imgs": "images",
     #                        "train_annot": "img/mpiitrain_annotonly_train.json",
     #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
-    data_info = [{"yoga": {"root": "../data/yoga",
-                           "train_imgs": "yoga_train2",
-                           "valid_imgs": "yoga_test",
-                           "train_annot": "yoga_train2.json",
-                           "valid_annot": "yoga_test.json"}}]
-    # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic",
-    #                        "train_imgs": "ai_challenger_keypoint_train_20170909/keypoint_train_images_20170902",
-    #                        "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
-    #                        "train_annot": "ai_challenger_keypoint_train_20170909/keypoint_train_annotations_20170909.json",
-    #                        "valid_annot": "ai_challenger_keypoint_validation_20170911/keypoint_validation_annotations_20170911.json"}}]
+    # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
+    #                        "train_imgs": "yoga_train2",
+    #                        "valid_imgs": "yoga_test",
+    #                        "train_annot": "yoga_train2.json",
+    #                        "valid_annot": "yoga_test.json"}}]
+    data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
+                           "train_imgs": "train",
+                           "valid_imgs": "valid",
+                           "train_annot": "aic_train.json",
+                           "valid_annot": "aic_val.json"}}]
     # data_info = [{"ceiling": {"root": "../data/ceiling",
     #                          "train_imgs": "ceiling_train",
     #                          "valid_imgs": "ceiling_test",
@@ -209,6 +209,7 @@ if __name__ == '__main__':
     #                          "valid_annot": "ceiling_test.json"}}]
 
     sample_idx = 9834
+
     data_cfg = "../config/data_cfg/data_default.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")
 
