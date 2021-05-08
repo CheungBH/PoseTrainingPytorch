@@ -192,7 +192,7 @@ class Trainer:
 
                 if not drawn_kp:
                     preds_img = PV.process(out, meta)
-                    hm_img = HMV.draw_hms(out)
+                    hm_img = HMV.draw_hms(out[0])
                     self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm_img)
 
                     cv2.imwrite(os.path.join(self.expFolder, "logs/images/img_{}.jpg".format(self.curr_epoch)), preds_img)
@@ -434,7 +434,7 @@ class Trainer:
                 self.lr_ls.append(curr_lr)
                 self.sparse_s = self.sparse_scheduler.update(epoch)
 
-                # self.train()
+                self.train()
                 self.valid()
                 self.record_bn()
                 self.write_log()
@@ -445,10 +445,10 @@ class Trainer:
                     error_string = ", The accuracy is too low"
                     break
                 self.curr_epoch += 1
-        # except IOError:
-        #     error_string = ",Some file is closed"
-        # except ZeroDivisionError:
-        #     error_string = ",Gradient flow"
+        except IOError:
+            error_string = ",Some file is closed"
+        except ZeroDivisionError:
+            error_string = ",Gradient flow"
         except KeyboardInterrupt:
             error_string = ",Process was killed"
 
