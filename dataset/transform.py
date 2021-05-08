@@ -1,13 +1,10 @@
 from torchvision.transforms import functional as F
 import cv2
-import math
-import torch
 import random
 from dataset.sample import SampleGenerator
 import json
 from dataset.visualize import KeyPointVisualizer, BBoxVisualizer
 import numpy as np
-
 
 
 class ImageTransform:

@@ -81,7 +81,8 @@ class Trainer:
         posenet.model_transfer(device)
         # self.backbone
         self.model = posenet.model
-        self.kps, self.backbone, self.se_ratio = posenet.kps, posenet.backbone, posenet.se_ratio
+        self.kps, self.backbone, self.se_ratio, self.head = \
+            posenet.kps, posenet.backbone, posenet.se_ratio, posenet.head
         opt.kps = posenet.kps
 
         self.dataset = TrainLoader(dataset_info, opt.data_cfg, loss_weight)
@@ -89,7 +90,7 @@ class Trainer:
         self.train_batch, self.val_batch = opt.trainBatch, opt.validBatch
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
                                                                            opt.train_worker, opt.val_worker)
-        self.inp_height, self.input_width, self.out_height, self.out_width, self.sigma = \
+        self.input_height, self.input_width, self.output_height, self.output_width, self.sigma = \
             self.dataset.train_dataset.transform.input_height, self.dataset.train_dataset.transform.input_width, \
             self.dataset.train_dataset.transform.output_height, self.dataset.train_dataset.transform.output_width, \
             self.dataset.train_dataset.transform.sigma
@@ -101,11 +102,12 @@ class Trainer:
         self.lr_scheduler = scheduler(self.total_epochs, lr_warm_up_dict, lr_decay_dict, self.lr)
         self.save_interval = opt.save_interval
         self.build_sparse_scheduler(opt.sparse_s)
-        self.flops, self.params, self.inf_time = posenet.benchmark(height=self.inp_height, width=self.input_width)
+        self.flops, self.params, self.inf_time = posenet.benchmark(height=self.input_height, width=self.input_width)
+        self.refresh_opt()
 
     def train(self):
         BatchEval = BatchEvaluator(self.kps, "Train", self.opt.trainBatch)
-        EpochEval = EpochEvaluator((self.out_height, self.out_width))
+        EpochEval = EpochEvaluator((self.output_height, self.output_width))
         self.model.train()
         train_loader_desc = tqdm(self.train_loader)
         for i, (inps, labels, meta) in enumerate(train_loader_desc):
@@ -122,7 +124,7 @@ class Trainer:
                 loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data, labels.data, self.out_height)
+                BatchEval.eval_per_batch(out.data, labels.data, self.output_height)
 
             EpochEval.update(preds, gts, valid.t())
 
@@ -172,11 +174,11 @@ class Trainer:
 
     def valid(self):
         drawn_kp = False
-        PV, HMV = PredictionVisualizer(self.kps, self.val_batch, self.out_height, self.out_width, self.inp_height,
+        PV, HMV = PredictionVisualizer(self.kps, self.val_batch, self.output_height, self.output_width, self.input_height,
                                        self.input_width), \
-                  HeatmapVisualizer(self.out_height, self.out_width)
+                  HeatmapVisualizer(self.output_height, self.output_width)
         BatchEval = BatchEvaluator(self.kps, "Valid", self.opt.validBatch)
-        EpochEval = EpochEvaluator((self.out_height, self.out_width))
+        EpochEval = EpochEvaluator((self.output_height, self.output_width))
         self.model.eval()
         val_loader_desc = tqdm(self.val_loader)
 
@@ -190,8 +192,8 @@ class Trainer:
 
                 if not drawn_kp:
                     preds_img = PV.process(out, meta)
-                    # hm_img = HMV.draw_hms(out)
-                    # self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm_img)
+                    hm_img = HMV.draw_hms(out)
+                    self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm_img)
 
                     cv2.imwrite(os.path.join(self.expFolder, "logs/images/img_{}.jpg".format(self.curr_epoch)), preds_img)
                     self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch), preds_img[:,:,::-1], dataformats='HWC')
@@ -202,7 +204,7 @@ class Trainer:
                     loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data, labels.data, self.out_height)
+                BatchEval.eval_per_batch(out.data, labels.data, self.output_height)
             BatchEval.update(acc, dist, exists, maxval, valid, loss)
             EpochEval.update(preds, gts, valid.t())
             self.valIter += 1
@@ -252,6 +254,17 @@ class Trainer:
             if self.curr_epoch == stop_epoch and self.val_acc < stop_acc:
                 self.stop = True
                 print("The accuracy is too low! Stop.")
+
+    def refresh_opt(self):
+        self.opt.input_height = self.input_height
+        self.opt.output_height = self.output_height
+        self.opt.input_width = self.input_width
+        self.opt.output_width = self.output_width
+        self.opt.sigma = self.sigma
+        self.opt.backbone = self.backbone
+        self.opt.se_ratio = self.se_ratio
+        self.opt.kps = self.kps
+        self.opt.head_type = self.head
 
     def save(self):
         torch.save(self.opt, self.opt_path)
@@ -382,7 +395,7 @@ class Trainer:
             info_str = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, ,{},{},{},{},{}," \
                        "{},{},{},{},{},{},{},{},{},{},{}\n". \
                 format(self.opt.expID, self.kps, self.backbone, self.se_ratio, self.params, self.flops, self.inf_time,
-                       self.input_width, self.inp_height, self.out_width, self.out_height, self.train_batch,
+                       self.input_width, self.input_height, self.output_width, self.output_height, self.train_batch,
                        self.opt.optMethod, self.opt.freeze_bn, self.opt.freeze, self.opt.sparse_s, self.total_epochs,
                        self.opt.LR, self.sigma, self.opt.weightDecay, self.opt.loadModel, config.computer,
                        self.expFolder, self.time_elapse, self.train_acc, self.train_loss, self.train_pckh,
@@ -421,7 +434,7 @@ class Trainer:
                 self.lr_ls.append(curr_lr)
                 self.sparse_s = self.sparse_scheduler.update(epoch)
 
-                self.train()
+                # self.train()
                 self.valid()
                 self.record_bn()
                 self.write_log()
