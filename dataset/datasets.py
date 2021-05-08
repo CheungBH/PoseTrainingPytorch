@@ -174,7 +174,7 @@ class BaseDataset(data.Dataset):
     def __getitem__(self, idx):
         path, kps, box, i, valid = \
             self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-        inp, out, enlarged_box, pad_size = self.transform.process(path, box, kps)
+        inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
         img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
                     "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
