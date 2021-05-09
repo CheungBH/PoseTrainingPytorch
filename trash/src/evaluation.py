@@ -7,14 +7,12 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 from src.predict.annot.coco_minival import Mscoco_minival
-from src.predict.p_poseNMS import pose_nms, write_json
+from trash.src.predict.p_poseNMS import pose_nms, write_json
 import numpy as np
 from src.predict.opt import opt
 from tqdm import tqdm
-from src.utils.img import flip, shuffleLR, vis_frame
 from src.utils.eval import getPrediction
 from src.utils.eval import getmap
-import os
 import cv2
 from src.models.FastPose import createModel
 
