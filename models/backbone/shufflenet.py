@@ -158,7 +158,7 @@ def shufflenet_v2_x0_5(pretrained=False, progress=True, **kwargs):
                          [4, 8, 4], [24, 48, 96, 192, 1024], **kwargs)
 
 
-def shufflenet_v2_x1_0(pretrained=False, progress=True, **kwargs):
+def shufflenet_v2_x1_0(cfg, pretrained=False, progress=True, **kwargs):
     """
     Constructs a ShuffleNetV2 with 1.0x output channels, as described in
     `"ShuffleNet V2: Practical Guidelines for Efficient CNN Architecture Design"

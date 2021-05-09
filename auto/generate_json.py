@@ -1,12 +1,27 @@
 import sys
 
 data_cfg_path = "../config/data_cfg/data_default.json"
-model_cfg_path = "../config/model_cfg/default/cfg_resnet18.json"
 
 
 def generate_json():
     args = sys.argv
     dest_data_path, dest_cfg_path = args[2], args[3]
+    model_cfg_path = select_model_cfg(backbone)
+
+
+def select_model_cfg(backbone):
+    if backbone == "mobilenet":
+        return "../config/model_cfg/cfg_mobile.json"
+    elif backbone == "seresnet18":
+        return "../config/model_cfg/cfg_resnet18.json"
+    elif backbone == "seresnet50":
+        return "../config/model_cfg/cfg_resnet50.json"
+    elif backbone == "seresnet101":
+        return "../config/model_cfg/cfg_resnet101.json"
+    elif backbone == "shufflenet":
+        return "../config/model_cfg/cfg_shuffle.json"
+    else:
+        raise NotImplementedError
 
 
 if __name__ == '__main__':

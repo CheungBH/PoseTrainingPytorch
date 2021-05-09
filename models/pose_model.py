@@ -86,7 +86,7 @@ class PoseModel:
 
 if __name__ == '__main__':
     PM = PoseModel(device="cpu")
-    cfg = "./cfg/default/cfg_seresnet50.json"
+    cfg = "./cfg/test/cfg_seresnet50.json"
     PM.build(cfg)
     net = PM.model
     y = net(torch.randn(1, 3, 320, 256))

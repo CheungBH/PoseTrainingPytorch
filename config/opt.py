@@ -3,7 +3,7 @@ import argparse
 parser = argparse.ArgumentParser(description='PyTorch AlphaPose Training')
 
 "----------------------------- General options -----------------------------"
-parser.add_argument('--expID', default='default', type=str,
+parser.add_argument('--expID', default='test', type=str,
                     help='Experiment ID')
 parser.add_argument('--expFolder', default='test', type=str,
                     help='Experiment folder')
@@ -17,7 +17,7 @@ parser.add_argument('--data_cfg', default="config/data_cfg/data_default.json", t
 "----------------------------- Model options -----------------------------"
 parser.add_argument('--loadModel', default=None, type=str,
                     help='Provide full path to a previously trained model')
-parser.add_argument('--model_cfg', default="config/model_cfg/default/cfg_resnet18.json", type=str,
+parser.add_argument('--model_cfg', default="config/model_cfg/test/cfg_resnet18.json", type=str,
                     help='Path of model cfg file')
 
 "----------------------------- Hyperparameter options -----------------------------"
