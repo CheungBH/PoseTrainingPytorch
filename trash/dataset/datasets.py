@@ -10,7 +10,7 @@ from utils.pose import generateSampleBox, choose_kps
 import random
 from trash.dataset.bbox_visualize import BBoxVisualizer
 from trash.dataset.kps_visualize import KeyPointVisualizer
-from src.opt import opt
+from config.opt import opt
 from dataset.keypoint import KeyPointsProcessor
 
 

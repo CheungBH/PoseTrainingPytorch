@@ -1,5 +1,4 @@
-import os
-from src.opt import opt
+from config.opt import opt
 
 computer = "laptop win"
 device = "cuda:0"

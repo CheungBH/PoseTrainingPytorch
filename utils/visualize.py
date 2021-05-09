@@ -2,7 +2,7 @@ import torch
 import cv2
 from PIL import Image
 import numpy as np
-from src.opt import opt
+from config.opt import opt
 
 pose_classes = opt.kps
 RED = (0, 0, 255)

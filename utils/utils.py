@@ -1,5 +1,5 @@
 import torch
-from src.opt import opt
+from config.opt import opt
 from config import config
 import os
 import matplotlib.pyplot as plt

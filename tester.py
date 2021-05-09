@@ -3,7 +3,7 @@ import torch
 import os
 from config.config import device
 # from trash.dataset.dataloader import TestDataset
-from src.opt import opt
+from config.opt import opt
 from utils.train_utils import Criterion
 from models.pose_model import PoseModel
 from utils.test_utils import check_option_file, list_to_str

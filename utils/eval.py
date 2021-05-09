@@ -2,17 +2,14 @@
 # Copyright (c) Shanghai Jiao Tong University. All rights reserved.
 # Written by Jiefeng Li (jeff.lee.sjtu@gmail.com)
 # -----------------------------------------------------
-from scipy.io import savemat, loadmat
 
-from src.opt import opt
+from config.opt import opt
 from sklearn import metrics
 import numpy as np
-import os
 
 import torch
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
-from collections import OrderedDict
 
 from utils.img import transformBoxInvert
 

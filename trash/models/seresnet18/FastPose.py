@@ -4,7 +4,7 @@ from torch.autograd import Variable
 
 from .SE_Resnet18 import SEResnet
 from models.duc.DUC import DUC
-from src.opt import opt
+from config.opt import opt
 
 
 class SeResPose18(nn.Module):

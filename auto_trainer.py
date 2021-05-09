@@ -1,4 +1,3 @@
-import os
 from trainer import Trainer
 from utils.train_utils import generate_cmd
 import sys
@@ -40,7 +39,7 @@ class AutoTrainer:
 
 
 if __name__ == '__main__':
-    from src.opt import opt
+    from config.opt import opt
     AutoTrainer(opt).train()
 
 

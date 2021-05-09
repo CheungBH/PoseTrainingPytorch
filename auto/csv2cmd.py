@@ -1,13 +1,15 @@
 import csv    #加载csv包便于读取csv文件
 import os
-from .config import task_folder, batch_folder
+from auto.config import task_folder, excel_name, base_name
 
 include_cuda = True
+negative = ["False", "FALSE", "false"]
+positive = ["True", "TRUE", "true"]
 
 
 def csvTransform(file):
     csv_name = file
-    out_name = csv_name[:-4] + ".txt"
+    out_name = os.path.join(task_folder, "{}.txt".format(base_name))
     csv_file = open(csv_name)    #打开csv文件
     csv_reader_lines = csv.reader(csv_file)   #逐行读取csv文件
 
@@ -15,33 +17,31 @@ def csvTransform(file):
     opt = [item for item in data[0]]
 
     if include_cuda:
-        begin = "'CUDA_VISIBLE_DEVICES= python train_opt.py "
+        begin = "'CUDA_VISIBLE_DEVICES= python trainer.py "
     else:
-        begin = "'python train_opt.py "
-
-
-    def change_name(name):
-        if name == "TRUE":
-            return 'True'
-        elif name == "FALSE":
-            return "False"
-        else:
-            return name
+        begin = "'python trainer.py "
 
     cmds = []
     for idx, mdl in enumerate(data[1:]):
         tmp = ""
         valid = False
         for o, m in zip(opt, mdl):
-            if m != "":
+            if m in positive:
                 tmp += "--"
                 tmp += o
                 tmp += " "
-                tmp += change_name(m)
-                tmp += " "
-                valid = True
+            elif m in negative:
+                continue
+            else:
+                if m != "":
+                    tmp += "--"
+                    tmp += o
+                    tmp += " "
+                    tmp += m
+                    tmp += " "
+                    valid = True
 
-        tmp += "--expFolder {}-{} ".format(task_folder, batch_folder)
+        tmp += "--expFolder {}-{} ".format(task_folder, base_name)
         tmp += "--expID {}".format(idx+1)
         cmd = begin + tmp + "'\n"
         if valid:
@@ -55,7 +55,7 @@ def csvTransform(file):
 
 
 if __name__ == '__main__':
-    file_name = "{}.csv".format(os.path.join(task_folder, batch_folder, batch_folder))
+    file_name = os.path.join(task_folder, excel_name)
     csvTransform(file_name)
 
     # src_folder = "underwater"

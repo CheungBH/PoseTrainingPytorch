@@ -3,12 +3,12 @@
 # Written by Jiefeng Li (jeff.lee.sjtu@gmail.com)
 # -----------------------------------------------------
 
-from utils.img import (load_image, drawGaussian, cropBox, transformBox, flip, shuffleLR, cv_rotate)
+from utils.img import (load_image, drawGaussian, cropBox, transformBox, cv_rotate)
 import torch
 import numpy as np
 import random
-from src.opt import opt
-from utils.utils import check_hm, check_part
+from config.opt import opt
+
 # import config.config as config
 
 inputResH = opt.inputResH

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.SE.SE_module import SELayer
-from src.opt import opt
+from config.opt import opt
 
 
 class SeBottleneck(nn.Module):

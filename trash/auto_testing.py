@@ -1,6 +1,6 @@
 from test import main
 import os
-from src.opt import opt
+from config.opt import opt
 import torch
 import csv
 from utils.utils import write_test_title

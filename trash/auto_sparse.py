@@ -1,6 +1,6 @@
 from sparse import detect_sparse
 import os
-from src.opt import opt
+from config.opt import opt
 import torch
 
 model_folders = "test_weight/ceiling_0911"

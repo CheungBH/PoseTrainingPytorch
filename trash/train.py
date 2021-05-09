@@ -10,7 +10,7 @@ import torch.nn as nn
 from trash.dataset.datasets import MyDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, cal_accuracy, CurveLogger
-from src.opt import opt
+from config.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config

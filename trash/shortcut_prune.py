@@ -1,10 +1,9 @@
-import os
 import torch
 import torch.nn as nn
 import numpy as np
 # from config.config import device
 from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50, get_residual_channel, get_channel_dict
-from src.opt import opt
+from config.opt import opt
 from models.utils.utils import write_cfg
 
 

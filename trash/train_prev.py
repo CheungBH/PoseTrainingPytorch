@@ -10,7 +10,7 @@ from trash.dataset.datasets import MyDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, accuracy
 from utils.img import flip, shuffleLR
-from src.opt import opt
+from config.opt import opt
 from tensorboardX import SummaryWriter
 import os
 import config.config as config

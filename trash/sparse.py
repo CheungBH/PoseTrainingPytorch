@@ -3,8 +3,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 # from config.config import device
-from models.seresnet.FastPose import createModel
-from src.opt import opt
+from config.opt import opt
 
 
 def obtain_prune_idx(path):

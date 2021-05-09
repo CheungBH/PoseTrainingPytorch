@@ -1,7 +1,5 @@
 import os
-import torch
 from models.pose_model import PoseModel
-from src.opt import opt
 from utils.test_utils import check_option_file
 from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50, sort_bn, obtain_bn_threshold, write_filters_mask
 from utils.utils import get_superior_path

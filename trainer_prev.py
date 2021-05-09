@@ -645,6 +645,6 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    from src.opt import opt
+    from config.opt import opt
     trainer = Trainer(opt)
     trainer.process()

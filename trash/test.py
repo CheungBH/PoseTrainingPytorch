@@ -3,7 +3,7 @@ import torch.utils.data
 from trash.dataset.datasets import TestDataset
 from tqdm import tqdm
 from utils.eval import DataLogger, cal_accuracy, CurveLogger
-from src.opt import opt
+from config.opt import opt
 import config.config as config
 from utils.model_info import print_model_param_flops, print_model_param_nums, get_inference_time
 from utils.draw import draw_kps

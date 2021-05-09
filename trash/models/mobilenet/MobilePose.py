@@ -1,4 +1,4 @@
-from src.opt import opt
+from config.opt import opt
 import torch.nn as nn
 from models.duc.DUC import DUC
 from models.mobilenet.mobilenet import MobileNetV2

@@ -4,8 +4,8 @@ from torch.autograd import Variable
 
 from .SE_Resnet101 import SEResnet
 from models.duc.DUC import DUC
-from src.opt import opt
-from config.config import train_body_part, device
+from config.opt import opt
+from config.config import device
 
 
 class FastPose(nn.Module):

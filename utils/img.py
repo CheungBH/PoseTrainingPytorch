@@ -8,7 +8,7 @@ import torch
 import scipy.misc
 # from utils.utils import check_hm
 import cv2
-from src.opt import opt
+from config.opt import opt
 
 
 RED = (0, 0, 255)
