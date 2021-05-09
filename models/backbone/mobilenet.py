@@ -1,7 +1,7 @@
 from torch import nn
 
 
-__all__ = ['MobileNetV2', 'mobilenet_v2']
+__all__ = ['MobileNetV2']
 
 
 model_urls = {
@@ -139,7 +139,7 @@ class MobileNetV2(nn.Module):
         return x
 
 
-def create(**kwargs):
+def create(cfg, **kwargs):
     """
     Constructs a MobileNetV2 architecture from
     `"MobileNetV2: Inverted Residuals and Linear Bottlenecks" <https://arxiv.org/abs/1801.04381>`_.

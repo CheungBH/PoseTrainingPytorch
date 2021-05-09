@@ -38,13 +38,19 @@ def parse_se(cfg):
 
 
 def parse_num_block(cfg):
-    channels = cfg["channels"].values()
-    return [len(channel) for channel in channels]
+    try:
+        channels = cfg["channels"].values()
+        return [len(channel) for channel in channels]
+    except:
+        return 0
 
 
 def parse_channel(cfg):
-    channels = cfg["channels"].values()
-    return [i for sub_ls in channels for sub_itm in sub_ls for i in sub_itm]
+    try:
+        channels = cfg["channels"].values()
+        return [i for sub_ls in channels for sub_itm in sub_ls for i in sub_itm]
+    except:
+        return 0
 
 
 if __name__ == '__main__':

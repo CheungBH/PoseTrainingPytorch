@@ -86,7 +86,7 @@ class EpochEvaluator:
 
     def eval_per_epoch(self):
         pckh_ls = self.eval_pckh()
-        return pckh_ls
+        return [round(pckh, 4) for pckh in pckh_ls]
         # pck = self.eval_pck()
         # return pckh_ls, pck
 
@@ -101,12 +101,14 @@ class EpochEvaluator:
             head_size = np.linalg.norm(np.subtract(central, self.gts[i][0]))
             if not head_size:
                 continue
-            valid = np.array(self.valids[i][-12:])
+            # valid = np.array(self.valids[i][-12:])
+            sum_valid = sum(self.valids[i][-12:]).tolist()
+            valid = np.array(list(map(lambda x:2*x-1, self.valids[i][-12:])))
             dist = np.linalg.norm(self.kps[i][-12:] - self.gts[i][-12:], axis=1)
             ratio = dist / head_size
             scale = ratio * valid
-            correct_num = sum((0 < scale) & (scale <= refp))  # valid_joints(a)
-            pckh.append(correct_num / sum(valid)) if sum(valid) > 0 else pckh.append(0)
+            correct_num = sum((0 <= scale) & (scale <= refp))  # valid_joints(a)
+            pckh.append(correct_num / sum_valid) if sum_valid > 0 else pckh.append(0)
 
             for idx, (s, v) in enumerate(zip(scale, valid)):
                 if v == 1 and s <= refp:
