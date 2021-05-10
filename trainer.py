@@ -2,7 +2,7 @@ from tqdm import tqdm
 from eval.evaluator import BatchEvaluator, EpochEvaluator
 from config import config
 import torch
-from utils.train_utils import Criterion, Optimizer, write_csv_title, summary_title
+from utils.train_utils import Criterion, Optimizer, write_csv_title, summary_title, resume
 from models.pose_model import PoseModel
 import cv2
 import os
@@ -10,7 +10,7 @@ from tensorboardX import SummaryWriter
 import time
 # from utils.draw import draw_kps, draw_hms
 from dataset.dataloader import TrainLoader
-from utils.utils import draw_graph, get_option_path
+from utils.utils import draw_graph
 import csv
 import shutil
 from dataset.draw import PredictionVisualizer, HeatmapVisualizer
@@ -42,7 +42,6 @@ class Trainer:
         self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
-        self.curr_epoch = opt.epoch
 
         os.makedirs(os.path.join(self.expFolder, "logs/images"), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
@@ -54,7 +53,6 @@ class Trainer:
         self.build_with_opt(opt)
         self.freeze = False
         self.stop = False
-        self.best_epoch = self.curr_epoch
 
         self.epoch_ls, self.lr_ls, self.bn_mean_ls = [], [], []
         self.train_pckh, self.val_pckh, self.train_pckh_ls, self.val_pckh_ls, self.part_train_pckh, self.part_val_pckh = 0, 0, [], [], [], []
@@ -67,9 +65,11 @@ class Trainer:
     def build_with_opt(self, opt):
         self.opt = opt
         if opt.resume:
-            self.opt = self.resume(self.opt)
-        self.total_epochs = opt.nEpochs
+            self.opt = resume(self.opt)
+        self.total_epochs = self.opt.nEpochs
         self.lr = opt.LR
+        self.curr_epoch = self.opt.epoch
+        self.best_epoch = self.curr_epoch
 
         posenet.init_with_opt(opt)
         self.params_to_update, _ = posenet.get_updating_param()
@@ -77,8 +77,8 @@ class Trainer:
         self.model = posenet.model
         posenet.write_structure(os.path.join(self.expFolder, "logs/model.txt"))
 
-        self.build_criterion(opt.crit)
-        self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
+        self.build_criterion(self.opt.crit)
+        self.build_optimizer(self.opt.optMethod, self.opt.LR, self.opt.momentum, self.opt.weightDecay)
         posenet.model_transfer(device)
 
         self.model = posenet.model
@@ -86,55 +86,26 @@ class Trainer:
             posenet.kps, posenet.backbone, posenet.se_ratio, posenet.head
         opt.kps = posenet.kps
 
-        self.dataset = TrainLoader(dataset_info, opt.data_cfg, loss_weight)
+        self.dataset = TrainLoader(dataset_info, self.opt.data_cfg, loss_weight)
         self.loss_weight = {1: [-item for item in range(self.kps + 1)[1:]]}
         self.trainIter, self.valIter = self.opt.trainIters, self.opt.valIters
         self.train_batch, self.val_batch = self.opt.trainBatch, self.opt.validBatch
-        self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
-                                                                           opt.train_worker, opt.val_worker)
+        self.train_loader, self.val_loader = self.dataset.build_dataloader(self.opt.trainBatch, self.opt.validBatch,
+                                                                           self.opt.train_worker, self.opt.val_worker)
         self.input_height, self.input_width, self.output_height, self.output_width, self.sigma = \
             self.dataset.train_dataset.transform.input_height, self.dataset.train_dataset.transform.input_width, \
             self.dataset.train_dataset.transform.output_height, self.dataset.train_dataset.transform.output_width, \
             self.dataset.train_dataset.transform.sigma
 
-        if opt.lr_schedule == "step":
+        if self.opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler
         else:
             raise ValueError("Scheduler not supported")
         self.lr_scheduler = scheduler(self.total_epochs, lr_warm_up_dict, lr_decay_dict, self.lr)
-        self.save_interval = opt.save_interval
-        self.build_sparse_scheduler(opt.sparse_s)
+        self.save_interval = self.opt.save_interval
+        self.build_sparse_scheduler(self.opt.sparse_s)
         self.flops, self.params, self.inf_time = posenet.benchmark(height=self.input_height, width=self.input_width)
         self.refresh_opt()
-
-    @staticmethod
-    def resume(opt):
-        print("Before resuming" + opt)
-        model_path = opt.loadModel
-        import os
-        option_path = get_option_path(model_path)
-        if not os.path.exists(option_path):
-            raise ValueError("The file 'option.pkl' does not exist. Can not be resumed")
-        option = torch.load(option_path)
-        opt.epoch = option.epoch
-        opt.valIters = option.epoch * option.validBatch
-        opt.trainIters = option.epoch * option.trainBatch
-        opt.data_cfg = option.data_cfg
-        opt.model_cfg = option.model_cfg
-        opt.LR = option.LR
-        opt.dataset = option.dataset
-        opt.kps = option.kps
-        opt.expID = option.expID
-        opt.optMethod = option.optMethod
-        opt.save_interval = option.save_interval
-        opt.freeze = option.freeze
-        opt.freeze_bn = option.freeze_bn
-        opt.lr_schedule = option.lr_schedule
-        opt.momentum = option.momentum
-        opt.weightDecay = option.weightDecay
-        print("After resuming" + opt)
-        return opt
-
 
     def train(self):
         BatchEval = BatchEvaluator(self.kps, "Train", self.opt.trainBatch)
@@ -300,7 +271,7 @@ class Trainer:
     def save(self):
         torch.save(self.opt, self.opt_path)
         torch.save(self.optimizer, '{}/optimizer.pkl'.format(self.expFolder))
-        torch.save(self.model.module.state_dict(), "latest.pth")
+        torch.save(self.model.module.state_dict(), "{}/latest.pth".format(self.expFolder))
 
         if self.curr_epoch % self.save_interval == 0 and self.curr_epoch != 0:
             torch.save(self.model.module.state_dict(), os.path.join(self.expFolder, "{}.pth".format(self.curr_epoch)))
@@ -477,7 +448,7 @@ class Trainer:
                     error_string = ", The accuracy is too low"
                     break
                 self.curr_epoch += 1
-                self.epoch = self.curr_epoch
+                self.opt.epoch = self.curr_epoch
         except IOError:
             error_string = ",Some file is closed"
         except ZeroDivisionError:

@@ -142,3 +142,39 @@ def warm_up_lr(optimizer, lr, epoch, warm_up_dict):
     for pg in optimizer.param_groups:
         pg["lr"] = lr
     return optimizer, lr
+
+
+def resume(opt):
+    from .utils import get_option_path
+    print("Before resuming:")
+    print(opt)
+    model_path = opt.loadModel
+    import os
+    option_path = get_option_path(model_path)
+    if not os.path.exists(option_path):
+        raise ValueError("The file 'option.pkl' does not exist. Can not be resumed")
+    option = torch.load(option_path)
+    opt.nEpochs = option.nEpochs
+    opt.epoch = option.epoch
+    opt.valIters = option.epoch * option.validBatch
+    opt.trainIters = option.epoch * option.trainBatch
+    opt.validBatch = option.validBatch
+    opt.trainBatch = option.trainBatch
+    opt.data_cfg = option.data_cfg
+    opt.model_cfg = option.model_cfg
+    opt.LR = option.LR
+    opt.dataset = option.dataset
+    opt.kps = option.kps
+    opt.expID = option.expID
+    opt.expFolder = option.expFolder
+    opt.optMethod = option.optMethod
+    opt.save_interval = option.save_interval
+    opt.freeze = option.freeze
+    opt.freeze_bn = option.freeze_bn
+    opt.lr_schedule = option.lr_schedule
+    opt.momentum = option.momentum
+    opt.weightDecay = option.weightDecay
+    opt.sparse_s = option.sparse_s
+    print("After resuming")
+    print(opt)
+    return opt

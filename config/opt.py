@@ -53,9 +53,9 @@ parser.add_argument('--nEpochs', default=120, type=int,
                     help='Number of hourglasses to stack')
 parser.add_argument('--epoch', default=0, type=int,
                     help='Current epoch')
-parser.add_argument('--trainBatch', default=12, type=int,
+parser.add_argument('--trainBatch', default=64, type=int,
                     help='Train-batch size')
-parser.add_argument('--validBatch', default=12, type=int,
+parser.add_argument('--validBatch', default=64, type=int,
                     help='Valid-batch size')
 parser.add_argument('--trainIters', default=0, type=int,
                     help='Total train iters')

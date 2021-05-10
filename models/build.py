@@ -7,7 +7,6 @@ class PoseNet(nn.Module):
         self.cfg = cfg_file
         self.backbone = self.build_backbone(backbone)
         self.head = self.build_head(head)
-        a = 1
 
     def build_backbone(self, backbone):
         if backbone == "mobilenet":
