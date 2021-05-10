@@ -10,7 +10,7 @@ from tensorboardX import SummaryWriter
 import time
 # from utils.draw import draw_kps, draw_hms
 from dataset.dataloader import TrainLoader
-from utils.utils import draw_graph
+from utils.utils import draw_graph, get_option_path
 import csv
 import shutil
 from dataset.draw import PredictionVisualizer, HeatmapVisualizer
@@ -66,9 +66,10 @@ class Trainer:
         
     def build_with_opt(self, opt):
         self.opt = opt
+        if opt.resume:
+            self.opt = self.resume(self.opt)
         self.total_epochs = opt.nEpochs
         self.lr = opt.LR
-        self.trainIter, self.valIter = opt.trainIters, opt.valIters
 
         posenet.init_with_opt(opt)
         self.params_to_update, _ = posenet.get_updating_param()
@@ -79,7 +80,7 @@ class Trainer:
         self.build_criterion(opt.crit)
         self.build_optimizer(opt.optMethod, opt.LR, opt.momentum, opt.weightDecay)
         posenet.model_transfer(device)
-        # self.backbone
+
         self.model = posenet.model
         self.kps, self.backbone, self.se_ratio, self.head = \
             posenet.kps, posenet.backbone, posenet.se_ratio, posenet.head
@@ -87,7 +88,8 @@ class Trainer:
 
         self.dataset = TrainLoader(dataset_info, opt.data_cfg, loss_weight)
         self.loss_weight = {1: [-item for item in range(self.kps + 1)[1:]]}
-        self.train_batch, self.val_batch = opt.trainBatch, opt.validBatch
+        self.trainIter, self.valIter = self.opt.trainIters, self.opt.valIters
+        self.train_batch, self.val_batch = self.opt.trainBatch, self.opt.validBatch
         self.train_loader, self.val_loader = self.dataset.build_dataloader(opt.trainBatch, opt.validBatch,
                                                                            opt.train_worker, opt.val_worker)
         self.input_height, self.input_width, self.output_height, self.output_width, self.sigma = \
@@ -104,6 +106,33 @@ class Trainer:
         self.build_sparse_scheduler(opt.sparse_s)
         self.flops, self.params, self.inf_time = posenet.benchmark(height=self.input_height, width=self.input_width)
         self.refresh_opt()
+
+    @staticmethod
+    def resume(opt):
+        model_path = opt.loadModel
+        import os
+        option_path = get_option_path(model_path)
+        if not os.path.exists(option_path):
+            raise ValueError("The file 'option.pkl' does not exist. Can not be resumed")
+        option = torch.load(option_path)
+        opt.epoch = option.epoch
+        opt.valIters = option.epoch * option.validBatch
+        opt.trainIters = option.epoch * option.trainBatch
+        opt.data_cfg = option.data_cfg
+        opt.model_cfg = option.model_cfg
+        opt.LR = option.LR
+        opt.dataset = option.dataset
+        opt.kps = option.kps
+        opt.expID = option.expID
+        opt.optMethod = option.optMethod
+        opt.save_interval = option.save_interval
+        opt.freeze = option.freeze
+        opt.freeze_bn = option.freeze_bn
+        opt.lr_schedule = option.lr_schedule
+        opt.momentum = option.momentum
+        opt.weightDecay = option.weightDecay
+        return opt
+
 
     def train(self):
         BatchEval = BatchEvaluator(self.kps, "Train", self.opt.trainBatch)
@@ -269,9 +298,10 @@ class Trainer:
     def save(self):
         torch.save(self.opt, self.opt_path)
         torch.save(self.optimizer, '{}/optimizer.pkl'.format(self.expFolder))
+        torch.save(self.model.module.state_dict(), "latest.pth")
 
         if self.curr_epoch % self.save_interval == 0 and self.curr_epoch != 0:
-            torch.save(self.model.module.state_dict(), os.path.join(self.expFolder, "{}.pkl".format(self.curr_epoch)))
+            torch.save(self.model.module.state_dict(), os.path.join(self.expFolder, "{}.pth".format(self.curr_epoch)))
 
     def record_bn(self):
         bn_sum, bn_num = 0, 0
@@ -315,25 +345,25 @@ class Trainer:
             if acc > self.val_acc:
                 self.val_acc = acc
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_acc.pkl".format(self.opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_acc.pth".format(self.opt.expID)))
                 self.best_epoch = self.curr_epoch
             if pckh > self.val_pckh:
                 self.val_pckh = pckh
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_pckh.pkl".format(self.opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_pckh.pth".format(self.opt.expID)))
             if auc > self.val_auc:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_auc.pkl".format(self.opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_auc.pth".format(self.opt.expID)))
                 self.val_auc = auc
             if pr > self.val_pr:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_pr.pkl".format(self.opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_pr.pth".format(self.opt.expID)))
                 self.val_pr = pr
             if loss < self.val_loss:
                 self.val_loss = loss
             if dist < self.val_dist:
                 torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_dist.pkl".format(self.opt.expID)))
+                           os.path.join(self.expFolder, "{}_best_dist.pth".format(self.opt.expID)))
                 self.val_dist = dist
             self.opt.valAcc, self.opt.valLoss, self.opt.valPCKh, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
                 self.opt.valIters = acc, loss, pckh, dist, auc, pr, iter
@@ -445,6 +475,7 @@ class Trainer:
                     error_string = ", The accuracy is too low"
                     break
                 self.curr_epoch += 1
+                self.epoch = self.curr_epoch
         except IOError:
             error_string = ",Some file is closed"
         except ZeroDivisionError:
