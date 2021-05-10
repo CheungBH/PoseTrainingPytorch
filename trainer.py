@@ -109,6 +109,7 @@ class Trainer:
 
     @staticmethod
     def resume(opt):
+        print("Before resuming" + opt)
         model_path = opt.loadModel
         import os
         option_path = get_option_path(model_path)
@@ -131,6 +132,7 @@ class Trainer:
         opt.lr_schedule = option.lr_schedule
         opt.momentum = option.momentum
         opt.weightDecay = option.weightDecay
+        print("After resuming" + opt)
         return opt
 
 
