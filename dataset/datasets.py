@@ -153,13 +153,13 @@ class BaseDataset(data.Dataset):
         images = []
         bbox = []
         ids = []
-        images_res = []
+        # images_res = []
         kps_valid = []
-        for i in range(len(anno['images'])):
-            images_res.append(anno['images'][i]['file_name'])
+        # for i in range(len(anno['images'])):
+        #     images_res.append(anno['images'][i]['file_name'])
         for i in range(len(anno['annotations'])):
             entry = anno['annotations'][i]
-            ids.append(entry["image_id"])
+            ids.append(entry["id"])
             kp, kp_valid = kps_reshape(entry["keypoints"])
             if not sum(kp_valid):
                 continue
@@ -188,21 +188,21 @@ class BaseDataset(data.Dataset):
 
 
 if __name__ == '__main__':
-    data_info = [{"coco": {"root": "E:/coco",
-                           "train_imgs": "train2017",
-                           "valid_imgs": "val2017",
-                           "train_annot": "annotations/person_keypoints_train2017.json",
-                           "valid_annot": "annotations/person_keypoints_val2017.json"}}]
+    # data_info = [{"coco": {"root": "E:/coco",
+    #                        "train_imgs": "train2017",
+    #                        "valid_imgs": "val2017",
+    #                        "train_annot": "annotations/person_keypoints_train2017.json",
+    #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
     # data_info = [{"mpii": {"root": "E:/data/mpii",
     #                        "train_imgs": "images",
     #                        "valid_imgs": "images",
     #                        "train_annot": "img/mpiitrain_annotonly_train.json",
     #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
-    # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
-    #                        "train_imgs": "yoga_train2",
-    #                        "valid_imgs": "yoga_test",
-    #                        "train_annot": "yoga_train2.json",
-    #                        "valid_annot": "yoga_test.json"}}]
+    data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
+                           "train_imgs": "yoga_train2",
+                           "valid_imgs": "yoga_test",
+                           "train_annot": "yoga_train2.json",
+                           "valid_annot": "yoga_test.json"}}]
     # data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
     #                        "train_imgs": "train",
     #                        "valid_imgs": "valid",
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 0
+    sample_idx = 12328
 
     data_cfg = "../config/data_cfg/data_default.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")
