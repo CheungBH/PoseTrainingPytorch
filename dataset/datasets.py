@@ -4,6 +4,7 @@ import torch.utils.data as data
 import os
 from dataset.utils import xywh2xyxy, kps_reshape
 import torch
+import numpy as np
 
 tensor = torch.Tensor
 
@@ -51,6 +52,11 @@ class BaseDataset(data.Dataset):
                 self.boxes += boxes
                 self.ids += ids
                 self.kps_valid += valid
+        self.images = np.array(self.images)
+        self.keypoints = np.array(self.keypoints)
+        self.boxes = np.array(self.boxes)
+        self.ids = np.array(self.ids)
+        self.kps_valid = np.array(self.kps_valid)
 
     def load_json_coco(self, json_file, folder_name):
         anno = json.load(open(json_file))
