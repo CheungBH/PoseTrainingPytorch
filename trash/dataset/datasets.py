@@ -11,7 +11,7 @@ import random
 from trash.dataset.bbox_visualize import BBoxVisualizer
 from trash.dataset.kps_visualize import KeyPointVisualizer
 from config.opt import opt
-from dataset.keypoint import KeyPointsProcessor
+from dataset.database.keypoint import KeyPointsProcessor
 
 
 origin_flipRef = ((2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17))

@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 import torch
 
+
 def xywh2xyxy(box):
     y_max = box[1] + box[3]
     x_max = box[0] + box[2]

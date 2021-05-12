@@ -97,7 +97,7 @@ class BaseDataset(data.Dataset):
             ids.append(anno[i]['url'])
         return images, keypoint, bbox, ids, kps_valid
 
-    def load_json_mpii(self,json_file,folder_name):
+    def load_json_mpii(self, json_file, folder_name):
         anno = json.load(open(json_file))
         keypoint = []
         images = []
