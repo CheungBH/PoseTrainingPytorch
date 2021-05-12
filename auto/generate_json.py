@@ -16,7 +16,7 @@ def generate_json():
             a.append(s[i])
         else:b.append(s[i])
     args = dict(zip(a,b))
-    dest_data_path, dest_cfg_path = s[1], s[2]
+    dest_data_path, dest_cfg_path = os.path.join("/media/hkuit155/8221f964-4062-4f55-a2f3-78a6632f7418/PoseTrainingPytorch/"+ s[1]), os.path.join("/media/hkuit155/8221f964-4062-4f55-a2f3-78a6632f7418/PoseTrainingPytorch/"+s[2])
     res,res1 = {},{}
     model_json = select_model_cfg(args['backbone'])
     data_default = json.load(open(data_cfg_path))
