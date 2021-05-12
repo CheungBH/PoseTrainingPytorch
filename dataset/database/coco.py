@@ -1,12 +1,12 @@
 import json
 import os
-from .utils import kps_reshape, xywh2xyxy
-from .base import BaseDataset
+from .base import *
 
 
 class COCO(BaseDataset):
     def __init__(self, kps):
         super().__init__(kps)
+        self.kps_num = 17
 
     def init_kps(self):
         self.KPP.init_kps(self.kps, "coco")
@@ -24,6 +24,7 @@ class COCO(BaseDataset):
             images_res.append(anno['images'][i]['file_name'])
         for img_info in anno['annotations']:
             kp, kp_valid = kps_reshape(img_info["keypoints"])
+            kp, kp_valid = select_kps(kp, kp_valid, self.body_part_idx, self.kps_num)
             if not sum(kp_valid):
                 continue
             images.append(os.path.join(folder_name, str(img_info['image_id']).zfill(12) + ".jpg"))

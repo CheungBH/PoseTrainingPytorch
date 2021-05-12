@@ -1,12 +1,12 @@
 import json
 import os
-from .utils import kps_reshape, xywh2xyxy
-from .base import BaseDataset
+from .base import *
 
 
 class YOGA(BaseDataset):
     def __init__(self, kps):
         super().__init__(kps)
+        self.kps_num = 17
 
     def init_kps(self):
         self.KPP.init_kps(self.kps, "yoga")
@@ -26,6 +26,7 @@ class YOGA(BaseDataset):
             entry = anno['annotations'][i]
             ids.append(entry["id"])
             kp, kp_valid = kps_reshape(entry["keypoints"])
+            kp, kp_valid = select_kps(kp, kp_valid, self.body_part_idx, self.kps_num)
             if not sum(kp_valid):
                 continue
             bbox.append(xywh2xyxy(entry['bbox']))

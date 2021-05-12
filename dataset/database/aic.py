@@ -1,12 +1,12 @@
 import json
 import os
-from .utils import kps_reshape
-from .base import BaseDataset
+from .base import *
 
 
 class AIChallenger(BaseDataset):
     def __init__(self, kps):
         super().__init__(kps)
+        self.kps_num = 13
 
     def init_kps(self):
         self.KPP.init_kps(self.kps, "aic")
@@ -22,6 +22,7 @@ class AIChallenger(BaseDataset):
         for i in range(len(anno)):
             images.append(os.path.join(folder_name,str(anno[i]['image_id'])+'.jpg'))
             kp, kp_valid = kps_reshape(anno[i]["keypoint_annotations"]["human1"])
+            kp, kp_valid = select_kps(kp, kp_valid, self.body_part_idx, self.kps_num)
             if not sum(kp_valid):
                 continue
             keypoint.append(kp)
