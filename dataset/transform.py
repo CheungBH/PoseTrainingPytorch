@@ -141,28 +141,29 @@ class ImageTransform:
 
 
 if __name__ == '__main__':
+    import copy
     data_cfg = "../config/data_cfg/data_default.json"
     img_path = 'sample.jpg'
     # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
-    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
-    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
-    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
+    kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
+           [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
+    valid = [[0], [0], [2], [0], [2], [2], [2], [2], [2], [0], [2], [2], [2], [2], [2], [2], [2]]
 
     degree = 40
     IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
-    cv2.imshow("raw", img)
-    rotate_img = IT.rotate_cropped_img(img, degree)
+    rot_img = copy.deepcopy(img)
+    IT.KPV.visualize(img, [kps], [valid])
+
+    rot_img, kps, valid = IT.rotate_cropped_img(rot_img, kps, valid, degree)
     # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
     # IT.BBV.visualize([f_box], f_img)
-    # IT.KPV.visualize(f_img, [f_kps])
+    IT.KPV.visualize(rot_img, [kps], [valid])
     # IT.BBV.visualize([box], img)
-    # IT.KPV.visualize(img, [kps])
-
     cv2.imshow("raw", img)
-    cv2.imshow("flipped", rotate_img)
+    cv2.imshow("rot", rot_img)
     cv2.waitKey(0)
     # import copy
     # data_cfg = "../config/data_cfg/data_default.json"
