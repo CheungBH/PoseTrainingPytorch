@@ -30,6 +30,7 @@ class BaseDataset(data.Dataset):
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
 
+
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
         for item in data_info:
@@ -211,7 +212,7 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 12
+    sample_idx = 9834
 
     data_cfg = "../config/data_cfg/data_mpii.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")
@@ -228,6 +229,7 @@ if __name__ == '__main__':
     # print(result["box"])
     # print(result["kps"])
     bbv.visualize([result["box"]], img)
+
     kpv.visualize(img, result["kps"].unsqueeze(dim=0))
     cv2.imshow("img", cv2.resize(img, (720, 540)))
     cv2.waitKey(0)
