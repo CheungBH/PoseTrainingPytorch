@@ -105,9 +105,9 @@ class ImageTransform:
         img_new = cv2.warpAffine(img, R_img, dsize=new_img_size)
         return img_new, kps_new, valid
 
-    def rotate_cropped_img(self, im, degree):
+    def rotate_cropped_img(self, im, kps, kps_valid, degree):
         # rotate with center
-        return im
+        return im, kps, kps_valid
 
     def tensor2img(self, ts):
         img = np.asarray(F.to_pil_image(ts))
