@@ -44,7 +44,7 @@ datasets_info = {"coco": {"root": "/media/hkuit155/Elements/coco",
 
 
 if opt.dataset == "multiple":
-    dataset = ["coco", "mpii", "aic"]
+    dataset = ["coco", "aic", "mpii"]
     train_info = [{key: item for key, item in datasets_info.items() if key in dataset}]
 else:
     train_info = [{opt.dataset: datasets_info[opt.dataset]}]

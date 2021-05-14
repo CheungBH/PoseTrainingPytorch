@@ -7,7 +7,7 @@ import numpy as np
 tensor = torch.Tensor
 
 
-class BaseDataset(data.Dataset):
+class MixedDataset(data.Dataset):
     def __init__(self, data_info, data_cfg, save=False, phase="train"):
         # self.is_train = train
         if phase == "train":
@@ -23,7 +23,6 @@ class BaseDataset(data.Dataset):
         self.kps = self.transform.kps
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
-
 
     def load_data(self, data_info):
         self.database = {}
@@ -114,7 +113,7 @@ if __name__ == '__main__':
     sample_idx = 12328
 
     data_cfg = "../config/data_cfg/data_default.json"
-    dataset = BaseDataset(data_info, data_cfg, phase="train")
+    dataset = MixedDataset(data_info, data_cfg, phase="train")
     dataset.transform.save = True
 
     # for i in range(sample_idx):
