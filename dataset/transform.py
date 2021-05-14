@@ -105,9 +105,9 @@ class ImageTransform:
         img_new = cv2.warpAffine(img, R_img, dsize=new_img_size)
         return img_new, kps_new, valid
 
-    def rotate_cropped_img(self, im, degree):
+    def rotate_cropped_img(self, im, kps, kps_valid, degree):
         # rotate with center
-        return im
+        return im, kps, kps_valid
 
     def tensor2img(self, ts):
         img = np.asarray(F.to_pil_image(ts))
@@ -118,12 +118,11 @@ class ImageTransform:
         enlarged_box = self.scale(raw_img, box)
         if random.random() > 1 - self.flip_prob:
             raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
-        img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
         if random.random() > 1 - self.rotate_prob:
             prob = random.random()
             degree = (prob - 0.5) * 2 * self.rotate
-            img = self.rotate_cropped_img(img, degree)
-            # labels = self.rotate_hm(labels)
+            raw_img, kps, kps_valid = self.rotate_cropped_img(raw_img, kps, kps_valid, degree)
+        img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
         inputs = self.normalize(self.img2tensor(img))
         if self.save:
             import os
@@ -139,30 +138,37 @@ class ImageTransform:
                 cv2.imwrite("{}/kps_{}.jpg".format(self.save, idx), cv2.resize(hm, (640, 640)))
         return inputs, labels, enlarged_box, pad_size, kps_valid
 
+    def process_single_img(self, img_path):
+        img = self.load_img(img_path)
+        padded_img, padded_size = self.SAMPLE.padding(img)
+        inputs = self.normalize(self.img2tensor(padded_img))
+        return inputs, padded_size
+
 
 if __name__ == '__main__':
+    import copy
     data_cfg = "../config/data_cfg/data_default.json"
     img_path = 'sample.jpg'
     # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
-    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
-    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
-    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
+    kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
+           [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
+    valid = [[0], [0], [2], [0], [2], [2], [2], [2], [2], [0], [2], [2], [2], [2], [2], [2], [2]]
 
     degree = 40
     IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
-    cv2.imshow("raw", img)
-    rotate_img = IT.rotate_cropped_img(img, degree)
+    rot_img = copy.deepcopy(img)
+    IT.KPV.visualize(img, [kps], [valid])
+
+    rot_img, kps, valid = IT.rotate_cropped_img(rot_img, kps, valid, degree)
     # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
     # IT.BBV.visualize([f_box], f_img)
-    # IT.KPV.visualize(f_img, [f_kps])
+    IT.KPV.visualize(rot_img, [kps], [valid])
     # IT.BBV.visualize([box], img)
-    # IT.KPV.visualize(img, [kps])
-
     cv2.imshow("raw", img)
-    cv2.imshow("flipped", rotate_img)
+    cv2.imshow("rot", rot_img)
     cv2.waitKey(0)
     # import copy
     # data_cfg = "../config/data_cfg/data_default.json"

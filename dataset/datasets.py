@@ -30,6 +30,10 @@ class BaseDataset(data.Dataset):
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
 
+        self.out_h, self.out_w, self.in_h, self.in_w = self.transform.output_height, self.transform.output_width, \
+                                                       self.transform.input_height, self.transform.input_width
+        self.kps = self.transform.kps
+
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
         for item in data_info:
@@ -110,23 +114,14 @@ class BaseDataset(data.Dataset):
             img_names[res["id"]] = os.path.join(folder_name, str(res['file_name']))
         for i in range(len(anno['annotations'])):
             entry = anno['annotations'][i]
-            ids.append(entry["image_id"])
+            ids.append(entry["id"])
             kp, kp_valid = kps_reshape(entry["keypoints"])
             if not sum(kp_valid):
                 continue
             bbox.append(xywh2xyxy(entry['bbox']))
             keypoint.append(kp)
             kps_valid.append(kp_valid)
-        name = list(img_names.keys())
-        value = list(img_names.values())
-        num = 0
-        # for i in range(len(ids)):
-        #     if name[num] == ids[i]:
-        #         images.append(value[i])
-        #         num += 1
-        #     else:
-        #         images.append()
-        #         num -= 1
+            images.append(img_names[entry["image_id"]])
         return images, keypoint, bbox, ids, kps_valid
 
     def load_json_ceiling(self, json_file, folder_name):
@@ -199,16 +194,16 @@ if __name__ == '__main__':
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
-    # data_info = [{"mpii": {"root": "E:/data/mpii",
-    #                        "train_imgs": "images",
-    #                        "valid_imgs": "images",
-    #                        "train_annot": "img/mpiitrain_annotonly_train.json",
-    #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
-    data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
-                           "train_imgs": "yoga_train2",
-                           "valid_imgs": "yoga_test",
-                           "train_annot": "yoga_train2.json",
-                           "valid_annot": "yoga_test.json"}}]
+    data_info = [{"mpii": {"root": "E:/data/mpii",
+                           "train_imgs": "MPIIimages",
+                           "valid_imgs": "MPIIimages",
+                           "train_annot": "mpiitrain_annotonly_train.json",
+                           "valid_annot": "mpiitrain_annotonly_test.json"}}]
+    # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
+    #                        "train_imgs": "yoga_train2",
+    #                        "valid_imgs": "yoga_test",
+    #                        "train_annot": "yoga_train2.json",
+    #                        "valid_annot": "yoga_test.json"}}]
     # data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
     #                        "train_imgs": "train",
     #                        "valid_imgs": "valid",
@@ -220,9 +215,9 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 12328
+    sample_idx = 9834
 
-    data_cfg = "../config/data_cfg/data_default.json"
+    data_cfg = "../config/data_cfg/data_mpii.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")
     dataset.transform.save = True
 
@@ -230,13 +225,14 @@ if __name__ == '__main__':
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
     bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(17, "coco")
+    kpv = KeyPointVisualizer(13, "coco")
     result = dataset[sample_idx][-1]
     img = cv2.imread(result["name"])
     # print(result["name"])
     # print(result["box"])
     # print(result["kps"])
     bbv.visualize([result["box"]], img)
+
     kpv.visualize(img, result["kps"].unsqueeze(dim=0))
     cv2.imshow("img", cv2.resize(img, (720, 540)))
     cv2.waitKey(0)

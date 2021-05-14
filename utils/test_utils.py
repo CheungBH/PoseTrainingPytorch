@@ -2,10 +2,10 @@ from utils.utils import csv_body_part
 from .train_utils import pckh_title
 
 
-def check_option_file(path):
-    model_path = path.replace("\\", "/")
-    option_path = "/".join(model_path.split("/")[:-1]) + "/option.pkl"
-    return option_path
+# def check_option_file(path):
+#     model_path = path.replace("\\", "/")
+#     option_path = "/".join(model_path.split("/")[:-1]) + "/option.pkl"
+#     return option_path
 
 
 def list_to_str(ls):

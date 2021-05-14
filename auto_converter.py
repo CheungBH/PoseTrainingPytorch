@@ -1,6 +1,6 @@
 #-*-coding:utf-8-*-
 import os
-from convert import Converter
+from trash.convert import Converter
 
 
 class AutoConverter:

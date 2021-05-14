@@ -1,5 +1,5 @@
 import os
-from tester import Tester
+from trash.tester import Tester
 from utils.test_utils import write_test_title
 from config.config import computer
 import csv

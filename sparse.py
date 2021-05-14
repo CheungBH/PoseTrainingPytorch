@@ -1,15 +1,15 @@
 import os
 from models.pose_model import PoseModel
-from utils.test_utils import check_option_file
+from utils.utils import get_option_path
 from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50, sort_bn, obtain_bn_threshold, write_filters_mask
 from utils.utils import get_superior_path
 
 
 class SparseDetector:
 
-    def __init__(self, model_path, model_cfg=None, device="cpu", thresh=(50, 99), step=1, method="shortcut", print_info=True,
+    def __init__(self, model_path, model_cfg, device="cpu", thresh=(50, 99), step=1, method="shortcut", print_info=True,
                  mask_interval=5):
-        self.option_file = check_option_file(model_path)
+        self.option_file = get_option_path(model_path)
 
         posenet = PoseModel()
         posenet.build(model_cfg)
