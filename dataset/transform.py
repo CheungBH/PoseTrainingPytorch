@@ -15,6 +15,7 @@ class ImageTransform:
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
         self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12), (13, 14), (15, 16)]
+        self.not_flip_idx = [0]
 
     def init_with_cfg(self, data_cfg):
         with open(data_cfg, "r") as load_f:
@@ -34,11 +35,22 @@ class ImageTransform:
         # if self.save:
         self.KPV = KeyPointVisualizer(self.kps, "aic")
         self.BBV = BBoxVisualizer()
+        self.update_flip_pairs()
+
+    def update_flip_pairs(self):
         if self.kps == 13:
             self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]
+            self.not_flip_idx = [0]
+        elif self.kps == 16:
+            self.flip_pairs = ([0, 5], [1, 4], [2, 3], [10, 15], [11, 14], [12, 13])
+            self.not_flip_idx = [6, 7, 8, 9]
+        elif self.kps == 14:
+            self.flip_pairs = ([0, 3], [1, 4], [2, 5], [6, 9], [7, 10], [8, 11])
+            self.not_flip_idx = [12, 13]
+        else:
+            raise NotImplementedError
 
     def load_img(self, img_path):
-    
         img = cv2.imread(img_path)
         if self.color == "rgb":
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -71,6 +83,8 @@ class ImageTransform:
         # box_w, box_tl, box_br = box[2] - box[0], box[0], box[2]
         new_box_tl, new_box_br = img_width - box[2] - 1, img_width - box[0] - 1
         flipped_box = [new_box_tl, box[1], new_box_br, box[3]]
+        for idx in self.not_flip_idx:
+            flipped_kps[idx] = [img_width - kps[idx][0] - 1, kps[idx][1]]
         for l, r in self.flip_pairs:
             left_kp, right_kp = kps[l], kps[r]
             flipped_x_l, flipped_x_r = img_width - kps[r][0] - 1, img_width - kps[l][0] - 1
