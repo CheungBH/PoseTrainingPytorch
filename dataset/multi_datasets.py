@@ -92,9 +92,9 @@ if __name__ == '__main__':
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
-    # data_info = [{"mpii": {"root": "E:/data/mpii",
-    #                        "train_imgs": "images",
-    #                        "valid_imgs": "images",
+    # data_info = [{"mpii": {"root": "/media/hkuit155/Elements/data",
+    #                        "train_imgs": "MPIIimages",
+    #                        "valid_imgs": "MPIIimages",
     #                        "train_annot": "img/mpiitrain_annotonly_train.json",
     #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
     # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     sample_idx = 23
 
-    data_cfg = "../config/data_cfg/data_13kps.json"
+    data_cfg = "../config/data_cfg/data_aic.json"
     dataset = MixedDataset(data_info, data_cfg, phase="train")
     # dataset.transform.save = True
 
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
     bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(13, "coco")
+    kpv = KeyPointVisualizer(dataset.kps, "aic")
     result = dataset[sample_idx][-1]
     img = cv2.imread(result["name"])
     # print(result["name"])

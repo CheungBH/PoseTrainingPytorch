@@ -32,7 +32,7 @@ class ImageTransform:
         self.SAMPLE = SampleGenerator(self.output_height, self.output_width, self.input_height, self.input_width,
                                       self.sigma)
         # if self.save:
-        self.KPV = KeyPointVisualizer(self.kps, "coco")
+        self.KPV = KeyPointVisualizer(self.kps, "aic")
         self.BBV = BBoxVisualizer()
         if self.kps == 13:
             self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]
