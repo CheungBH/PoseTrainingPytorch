@@ -39,12 +39,16 @@ class KeyPointsProcessor:
 
     def init_kps(self, idx, dataset_type):
         if isinstance(idx, int):
-            assert idx == 17 or idx == 13 or idx == 14, "Wrong keypoints nums"
+            assert idx in [13, 14, 16, 17], "Wrong keypoints nums"
             if idx == 17:
                 self.body_part_idx = [i+1 for i in range(17)]
                 self.body_part_name = self.coco_parts_name
                 self.flip_pairs = self.coco_flip_pairs
             elif idx == 14:
+                self.body_part_idx = [i+1 for i in range(14)]
+                self.body_part_name = self.mpii_parts_name
+                self.flip_pairs = self.mpii_flip_pairs
+            elif idx == 16:
                 self.body_part_idx = [i+1 for i in range(14)]
                 self.body_part_name = self.mpii_parts_name
                 self.flip_pairs = self.mpii_flip_pairs
