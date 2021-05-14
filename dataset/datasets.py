@@ -30,6 +30,9 @@ class BaseDataset(data.Dataset):
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
 
+        self.out_h, self.out_w, self.in_h, self.in_w = self.transform.output_height, self.transform.output_width, \
+                                                       self.transform.input_height, self.transform.input_width
+        self.kps = self.transform.kps
 
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []

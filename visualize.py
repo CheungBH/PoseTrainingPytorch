@@ -1,7 +1,7 @@
 from models.pose_model import PoseModel
 from dataset.transform import ImageTransform
 from dataset.draw import PredictionVisualizer
-from utils.test_utils import check_option_file
+from utils.utils import get_option_path
 import cv2
 import os
 import torch
@@ -11,9 +11,10 @@ posenet = PoseModel()
 
 class ImageVisualizer:
     out_h, out_w, in_h, in_w = 64, 64, 256, 256
+
     def __init__(self, model_cfg, model_path, data_cfg=None, show=True):
         self.show = show
-        option_file = check_option_file(model_path)
+        option_file = get_option_path(model_path)
         self.transform = ImageTransform()
 
         if os.path.exists(option_file):
