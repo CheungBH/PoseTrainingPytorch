@@ -47,13 +47,20 @@ class ImageTransform:
         elif self.kps == 14:
             self.flip_pairs = ([0, 3], [1, 4], [2, 5], [6, 9], [7, 10], [8, 11])
             self.not_flip_idx = [12, 13]
+        elif self.kps == 17:
+            return
         else:
             raise NotImplementedError
 
     def load_img(self, img_path):
-        img = cv2.imread(img_path)
-        if self.color == "rgb":
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        try:
+            img = cv2.imread(img_path)
+            if self.color == "rgb":
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        except:
+            import sys
+            print(img_path)
+            sys.exit()
         return img
 
     def img2tensor(self, img):

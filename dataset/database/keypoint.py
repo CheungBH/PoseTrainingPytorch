@@ -49,7 +49,7 @@ class KeyPointsProcessor:
             elif idx == 14:
                 self.body_part_idx = [i+1 for i in range(14)]
                 self.body_part_name = self.mpii_parts_name
-                self.flip_pairs = self.mpii_flip_pairs
+                self.flip_pairs = self.aic_flip_pairs
                 self.not_flip_idx = [12, 13]
             elif idx == 16:
                 self.body_part_idx = [i+1 for i in range(16)]

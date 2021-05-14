@@ -97,6 +97,8 @@ class Trainer:
             self.dataset.train_dataset.transform.output_height, self.dataset.train_dataset.transform.output_width, \
             self.dataset.train_dataset.transform.sigma
 
+        assert posenet.kps == self.dataset.train_dataset.kps, "Your model key-point and data key-point are not equal!"
+
         if self.opt.lr_schedule == "step":
             from utils.train_utils import StepLRScheduler as scheduler
         else:
@@ -449,10 +451,10 @@ class Trainer:
                     break
                 self.curr_epoch += 1
                 self.opt.epoch = self.curr_epoch
-        except IOError:
-            error_string = ",Some file is closed"
-        except ZeroDivisionError:
-            error_string = ",Gradient flow"
+        # except IOError:
+        #     error_string = ",Some file is closed"
+        # except ZeroDivisionError:
+        #     error_string = ",Gradient flow"
         except KeyboardInterrupt:
             error_string = ",Process was killed"
 
