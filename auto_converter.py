@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 import os
 from trash.convert import Converter
+from utils.utils import init_model_list
 
 
 class AutoConverter:
@@ -9,26 +10,7 @@ class AutoConverter:
         self.onnx = onnx
         self.libtorch = libtorch
         self.onnx_sim = onnx_sim
-        self.model_ls = []
-        self.cfg_ls = []
-
-    def load_models(self):
-        for folder in os.listdir(self.model_folder):
-            cfg = None
-            for file in os.listdir(os.path.join(self.model_folder, folder)):
-                file_path = os.path.join(self.model_folder, folder, file)
-                if "option" not in file and ".pkl" in file or ".pth" in file:
-                    model = file_path
-                elif "cfg" in file or "json" in file:
-                    cfg = file_path
-                else:
-                    continue
-
-            try:
-                self.model_ls.append(model)
-            except:
-                raise FileNotFoundError("Target model doesn't exist!")
-            self.cfg_ls.append(cfg)
+        self.model_ls, self.cfg_ls, _, _ = init_model_list(self.model_folder)
 
     @staticmethod
     def get_superior_path(path):
@@ -53,7 +35,6 @@ class AutoConverter:
             return None
 
     def run(self):
-        self.load_models()
         total_num = len(self.model_ls)
         for idx, (model, cfg) in enumerate(zip(self.model_ls, self.cfg_ls)):
             print("-------------------[{}/{}]: Begin Converting {}--------------".format(idx+1, total_num, model))
