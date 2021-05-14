@@ -34,6 +34,8 @@ class ImageTransform:
         # if self.save:
         self.KPV = KeyPointVisualizer(self.kps, "coco")
         self.BBV = BBoxVisualizer()
+        if self.kps == 13:
+            self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]
 
     def load_img(self, img_path):
     

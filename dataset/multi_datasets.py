@@ -20,8 +20,11 @@ class MixedDataset(data.Dataset):
             raise ValueError("Wrong phase of '{}'. Should be chosen from [train, valid, test]".format(phase))
 
         self.transform = ImageTransform(save=save)
-        self.kps = self.transform.kps
         self.transform.init_with_cfg(data_cfg)
+
+        self.kps = self.transform.kps
+        self.out_h, self.out_w, self.in_h, self.in_w = self.transform.output_height, self.transform.output_width, \
+                                                       self.transform.input_height, self.transform.input_width
         self.load_data(data_info)
 
     def load_data(self, data_info):
@@ -31,23 +34,23 @@ class MixedDataset(data.Dataset):
             for name, info in item.items():
                 annotation_file = os.path.join(info["root"], info[self.annot])
                 if name == "coco":
-                    from .database.coco import COCO
+                    from dataset.database.coco import COCO
                     self.database[name] = COCO(self.kps)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "mpii":
-                    from .database.mpii import MPII
+                    from dataset.database.mpii import MPII
                     self.database[name] = MPII(self.kps)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, info["root"])
                 elif name == "aic":
-                    from .database.aic import AIChallenger
+                    from dataset.database.aic import AIChallenger
                     self.database[name] = AIChallenger(self.kps)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "yoga":
-                    from .database.yoga import YOGA
+                    from dataset.database.yoga import YOGA
                     self.database[name] = YOGA(self.kps)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "ceiling":
-                    from .database.yoga import YOGA
+                    from dataset.database.yoga import YOGA
                     self.database[name] = YOGA(self.kps)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 else:
@@ -69,22 +72,22 @@ class MixedDataset(data.Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        try:
-            path, kps, box, i, valid = \
-                self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
-        except:
-            print(idx)
-            path, kps, box, i, valid = \
-                self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
-            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+        # try:
+        path, kps, box, i, valid = \
+            self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+        inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+        # except:
+        # print(idx)
+        # path, kps, box, i, valid = \
+        #     self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
+        # inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
         img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
                     "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
 
 
 if __name__ == '__main__':
-    # data_info = [{"coco": {"root": "E:/coco",
+    # data_info = [{"coco": {"root": "/media/hkuit155/Elements/coco",
     #                        "train_imgs": "train2017",
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
@@ -94,33 +97,33 @@ if __name__ == '__main__':
     #                        "valid_imgs": "images",
     #                        "train_annot": "img/mpiitrain_annotonly_train.json",
     #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
-    data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
-                           "train_imgs": "yoga_train2",
-                           "valid_imgs": "yoga_test",
-                           "train_annot": "yoga_train2.json",
-                           "valid_annot": "yoga_test.json"}}]
-    # data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
-    #                        "train_imgs": "train",
-    #                        "valid_imgs": "valid",
-    #                        "train_annot": "aic_train.json",
-    #                        "valid_annot": "aic_val.json"}}]
+    # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
+    #                        "train_imgs": "yoga_train2",
+    #                        "valid_imgs": "yoga_test",
+    #                        "train_annot": "yoga_train2.json",
+    #                        "valid_annot": "yoga_test.json"}}]
+    data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic",
+                         "train_imgs": "ai_challenger_keypoint_train_20170902/keypoint_train_images_20170902",
+                         "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
+                         "train_annot": "ai_challenger_keypoint_train_20170902/keypoint_train_annotations_20170909.json",
+                         "valid_annot": "ai_challenger_keypoint_validation_20170911/keypoint_validation_annotations_20170911.json"}}]
     # data_info = [{"ceiling": {"root": "../data/ceiling",
     #                          "train_imgs": "ceiling_train",
     #                          "valid_imgs": "ceiling_test",
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 12328
+    sample_idx = 23
 
-    data_cfg = "../config/data_cfg/data_default.json"
+    data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = MixedDataset(data_info, data_cfg, phase="train")
-    dataset.transform.save = True
+    # dataset.transform.save = True
 
     # for i in range(sample_idx):
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
     bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(17, "coco")
+    kpv = KeyPointVisualizer(13, "coco")
     result = dataset[sample_idx][-1]
     img = cv2.imread(result["name"])
     # print(result["name"])

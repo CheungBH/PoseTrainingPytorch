@@ -189,37 +189,37 @@ class BaseDataset(data.Dataset):
 
 
 if __name__ == '__main__':
-    # data_info = [{"coco": {"root": "E:/coco",
+    # data_info = [{"coco": {"root": "/media/hkuit155/Elements/coco",
     #                        "train_imgs": "train2017",
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
-    data_info = [{"mpii": {"root": "E:/data/mpii",
-                           "train_imgs": "MPIIimages",
-                           "valid_imgs": "MPIIimages",
-                           "train_annot": "mpiitrain_annotonly_train.json",
-                           "valid_annot": "mpiitrain_annotonly_test.json"}}]
+    # data_info = [{"mpii": {"root": "E:/data/mpii",
+    #                        "train_imgs": "MPIIimages",
+    #                        "valid_imgs": "MPIIimages",
+    #                        "train_annot": "mpiitrain_annotonly_train.json",
+    #                        "valid_annot": "mpiitrain_annotonly_test.json"}}]
     # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
     #                        "train_imgs": "yoga_train2",
     #                        "valid_imgs": "yoga_test",
     #                        "train_annot": "yoga_train2.json",
     #                        "valid_annot": "yoga_test.json"}}]
-    # data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
-    #                        "train_imgs": "train",
-    #                        "valid_imgs": "valid",
-    #                        "train_annot": "aic_train.json",
-    #                        "valid_annot": "aic_val.json"}}]
+    data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic/ai_challenger",
+                           "train_imgs": "train",
+                           "valid_imgs": "valid",
+                           "train_annot": "aic_train.json",
+                           "valid_annot": "aic_val.json"}}]
     # data_info = [{"ceiling": {"root": "../data/ceiling",
     #                          "train_imgs": "ceiling_train",
     #                          "valid_imgs": "ceiling_test",
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 9834
+    sample_idx = 34
 
-    data_cfg = "../config/data_cfg/data_mpii.json"
+    data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")
-    dataset.transform.save = True
+    # dataset.transform.save = True
 
     # for i in range(sample_idx):
     import cv2

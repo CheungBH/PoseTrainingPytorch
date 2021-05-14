@@ -17,8 +17,8 @@ def kps_reshape(raw_kps):
 
 def select_kps(kps, kps_valid, idx_list, all_kps_num):
     new_kps, new_kps_valid = [], []
-    for i in range(len(all_kps_num)):
-        if i in idx_list:
+    for i in range(all_kps_num):
+        if i+1 in idx_list:
             new_kps.append(kps[i])
             new_kps_valid.append(kps_valid[i])
     return new_kps, new_kps_valid
