@@ -166,7 +166,7 @@ class ImageTransform:
         self.SAMPLE = SampleGenerator(out_h, out_w, in_h, in_w)
         img = self.load_img(img_path)
         padded_img, padded_size = self.SAMPLE.padding(img)
-        cv2.imshow("padded", padded_img)
+        # cv2.imshow("padded", padded_img)
         inputs = self.normalize(self.img2tensor(padded_img))
         return inputs, padded_size
 
