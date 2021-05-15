@@ -136,15 +136,16 @@ class ImageTransform:
         img = np.asarray(F.to_pil_image(ts))
         return img
 
-    def process(self, img_path, box, kps, kps_valid):
+    def process(self, img_path, box, kps, kps_valid, img_aug=False):
         raw_img = self.load_img(img_path)
         enlarged_box = self.scale(raw_img, box)
-        if random.random() > 1 - self.flip_prob:
-            raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
-        if random.random() > 1 - self.rotate_prob:
-            prob = random.random()
-            degree = (prob - 0.5) * 2 * self.rotate
-            raw_img, kps, kps_valid = self.rotate_cropped_img(raw_img, kps, kps_valid, degree)
+        if img_aug:
+            if random.random() > 1 - self.flip_prob:
+                raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
+            if random.random() > 1 - self.rotate_prob:
+                prob = random.random()
+                degree = (prob - 0.5) * 2 * self.rotate
+                raw_img, kps, kps_valid = self.rotate_cropped_img(raw_img, kps, kps_valid, degree)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
         inputs = self.normalize(self.img2tensor(img))
         if self.save:
