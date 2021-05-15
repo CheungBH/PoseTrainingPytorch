@@ -25,7 +25,7 @@ def init_model_list(folder):
                     raise AssertionError("More than one model exist in the folder: {}".format(sub_folder_path))
             else:
                 continue
-    assert len(model_cfg) == len(model) == len(option) == len(data_cfg), "Wrong length"
+    # assert len(model_cfg) == len(model) == len(option) == len(data_cfg), "Wrong length"
     return model, model_cfg, data_cfg, option
 
 

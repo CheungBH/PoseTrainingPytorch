@@ -1,6 +1,6 @@
 #-*-coding:utf-8-*-
 import os
-from trash.convert import Converter
+from convert import Converter
 from utils.utils import init_model_list
 
 
@@ -44,6 +44,6 @@ class AutoConverter:
 
 
 if __name__ == '__main__':
-    model_folder = "onnx/0407"
+    model_folder = "exp/test_init"
     convert = AutoConverter(model_folder)
     convert.run()
