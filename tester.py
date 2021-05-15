@@ -8,12 +8,12 @@ from models.pose_model import PoseModel
 from utils.utils import get_option_path
 from eval.evaluator import BatchEvaluator, EpochEvaluator
 
-criterion = Criterion()
+
 posenet = PoseModel()
 
 
 class Tester:
-    out_h, out_w, in_h, in_w, crit = 64, 64, 256, 256, "MSE"
+    out_h, out_w, in_h, in_w, criterion = 64, 64, 256, 256, "MSE"
 
     def __init__(self, model_cfg, model_path, data_info, data_cfg, print_info=True, batchsize=8, num_worker=1):
         self.test_dataset = TestLoader(data_info, data_cfg)
@@ -36,6 +36,7 @@ class Tester:
         self.model = posenet.model
         self.kps = posenet.kps
         posenet.load(model_path)
+        self.criterion = Criterion().build(self.crit)
 
         self.part_test_acc, self.part_test_dist, self.part_test_auc, self.part_test_pr, self.part_test_pckh = \
             [], [], [], [], []
@@ -83,9 +84,6 @@ class Tester:
             print("Inference time is {}".format(self.infer_time))
             print("-------------------------------------------------------------------------------------------------")
 
-    def build_criterion(self, crit):
-        self.criterion = criterion.build(crit)
-
     def summarize(self):
         benchmark = [self.flops, self.params, self.infer_time]
         performance = [self.test_acc, self.test_loss, self.test_pckh, self.test_dist, self.test_auc, self.test_pr]
@@ -95,16 +93,17 @@ class Tester:
 
 
 if __name__ == '__main__':
-    data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
-                           "train_imgs": "yoga_train2",
-                           "valid_imgs": "yoga_test",
-                           "test_imgs": "yoga_test",
-                           "train_annot": "yoga_train2.json",
-                           "valid_annot": "yoga_test.json",
-                           "test_annot": "yoga_test.json"}}]
-    model_path = "exp/kps_test/seresnet18/seresnet18_best_acc.pkl"
-    model_cfg = "exp/kps_test/seresnet18/data_default.json"
-    data_cfg = "exp/kps_test/seresnet18/data_default.json"
+    data_info = [{"mpii": {"root": "data/mpii",
+                          "train_imgs": "MPIIimages",
+                          "valid_imgs": "MPIIimages",
+                          "test_imgs": "MPIIimages",
+                          "train_annot": "mpiitrain_annotonly_train.json",
+                          "valid_annot": "mpiitrain_annotonly_test.json",
+                          "test_annot": "mpiitrain_annotonly_test.json",
+                         }}]
+    model_path = "exp/test_kps/aic_13/latest.pth"
+    model_cfg = "exp/test_kps/aic_13/model_cfg.json"
+    data_cfg = "exp/test_kps/aic_13/data_cfg.json"
 
     tester = Tester(model_cfg, model_path, data_info, data_cfg)
     tester.test()
