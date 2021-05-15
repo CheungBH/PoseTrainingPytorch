@@ -7,12 +7,13 @@ import os
 class Converter:
     out_h, out_w = 256, 256
 
-    def __init__(self, model_path, model_cfg=None, onnx_path="buffer/model.onnx", libtorch_path="buffer/model.pt", onnx_sim_path="buffer/model_sim.onnx", device="cpu"):
+    def __init__(self, model_path, model_cfg, onnx_path="buffer/model.onnx", libtorch_path="buffer/model.pt",
+                 onnx_sim_path="buffer/model_sim.onnx", device="cpu"):
         self.onnx_path = onnx_path
         self.libtorch_path = libtorch_path
         self.onnx_sim_path = onnx_sim_path
 
-        posenet = PoseModel()
+        posenet = PoseModel(device=device)
         posenet.build(model_cfg)
         posenet.load(model_path)
         self.model = posenet.model
@@ -20,8 +21,8 @@ class Converter:
         option_path = get_option_path(model_path)
         if os.path.exists(option_path):
             option = torch.load(option_path)
-            self.out_h = option.inputResH
-            self.out_w = option.inputResW
+            self.out_h = option.output_height
+            self.out_w = option.output_width
 
         if device != "cpu":
             self.dummy_input = torch.rand(2, 3, self.out_w, self.out_h).cuda()
@@ -47,8 +48,8 @@ class Converter:
 
 
 if __name__ == '__main__':
-    model_path = "buffer/all_seresnet50.pth"
-    model_cfg = "buffer/cfg_all_seresnet50.json"
+    model_path = "exp/test_kps/mpii_13/latest.pth"
+    model_cfg = "exp/test_kps/mpii_13/model_cfg.json"
     convert = Converter(model_path, model_cfg)
     convert.convert()
 
