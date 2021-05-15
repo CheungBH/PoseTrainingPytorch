@@ -142,7 +142,7 @@ if __name__ == '__main__':
     option_path = ""
 
     analyser = ErrorAnalyser(model_cfg, model_path, data_info, data_cfg, option_path)
-    analyser.test()
+    analyser.analyse()
     performance = analyser.summarize()
     print(performance)
 
