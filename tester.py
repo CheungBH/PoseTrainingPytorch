@@ -16,11 +16,11 @@ class Tester:
     out_h, out_w, in_h, in_w, criterion = 64, 64, 256, 256, "MSE"
 
     def __init__(self, model_cfg, model_path, data_info, data_cfg, print_info=True, batchsize=8, num_worker=1):
-        if isinstance(data_info, dict):
+        if isinstance(data_info, list):
             self.test_dataset = TestLoader(data_info, data_cfg)
         else:
             self.test_dataset = data_info
-            self.test_loader = self.test_dataset.build_dataloader(batchsize, num_worker)
+        self.test_loader = self.test_dataset.build_dataloader(batchsize, num_worker)
         self.model_path = model_path
 
         option_file = get_option_path(model_path)

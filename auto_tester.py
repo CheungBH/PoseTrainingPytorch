@@ -6,15 +6,19 @@ import csv
 from utils.utils import init_model_list_with_kw
 from dataset.dataloader import TestLoader
 
-keyword = ["acc", "auc", "pr", "dist", "pckh"]
+keyword = ["acc", "auc", "pr", "dist", "pckh", "latest"]
+folder_keyword = ["13"]
 
 
 class AutoTester:
-    def __init__(self, model_folder, data_info, batchsize=8, num_worker=1):
+    def __init__(self, model_folder, data_info, batchsize=8, num_worker=1, same_data_cfg=False):
         self.model_folder = model_folder
-        self.data_info = data_info
         self.model_ls, self.model_cfg_ls, self.data_cfg_ls, self.option_ls = \
-            init_model_list_with_kw(model_folder, keyword)
+            init_model_list_with_kw(model_folder, keyword, fkws=folder_keyword)
+        if not same_data_cfg:
+            self.data_info = data_info
+        else:
+            self.data_info = TestLoader(data_info, self.data_cfg_ls[0])
         self.test_csv = os.path.join(self.model_folder, "test_{}.csv".format(computer))
         self.tested = os.path.exists(self.test_csv)
         self.batch_size = batchsize
@@ -60,6 +64,6 @@ if __name__ == '__main__':
                           "valid_annot": "mpiitrain_annotonly_test.json",
                           "test_annot": "mpiitrain_annotonly_test.json",
                          }}]
-    model_folder = ""
+    model_folder = "exp/test_kps"
     AT = AutoTester(model_folder, data_info)
     AT.run()

@@ -29,16 +29,26 @@ def init_model_list(folder):
     return model, model_cfg, data_cfg, option
 
 
-def init_model_list_with_kw(folder, kws):
+def init_model_list_with_kw(folder, kws, fkws=""):
     data_cfg, model_cfg, model, option = [], [], [], []
-    for sub_folder in os.listdir(folder):
-        if ".csv" in sub_folder:
-            continue
+    valid_folders = []
 
-        sub_folder_path = os.path.join(folder, sub_folder)
+    if not fkws:
+        valid_folders = [os.path.join(folder, sub_folder) for sub_folder in os.listdir(folder)
+                        if os.path.isdir(os.path.join(folder, sub_folder))]
+    else:
+        for sub_folder in os.listdir(folder):
+            sub_folder_path = os.path.join(folder, sub_folder)
+            if not os.path.isdir(sub_folder_path):
+                continue
+            for fkw in fkws:
+                if fkw in sub_folder:
+                    valid_folders.append(sub_folder_path)
+
+    for valid_folder in valid_folders:
         model_cnt = 0
-        for file_name in os.listdir(sub_folder_path):
-            file_path = os.path.join(sub_folder_path, file_name)
+        for file_name in os.listdir(valid_folder):
+            file_path = os.path.join(valid_folder, file_name)
             if "data_cfg" in file_name:
                 d_cfg = file_path
             elif "model_cfg" in file_name:
