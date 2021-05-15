@@ -12,8 +12,9 @@ posenet = PoseModel()
 class ImageVisualizer:
     out_h, out_w, in_h, in_w = 64, 64, 256, 256
 
-    def __init__(self, model_cfg, model_path, data_cfg=None, show=True):
+    def __init__(self, model_cfg, model_path, data_cfg=None, show=True, device="cuda"):
         self.show = show
+        self.device = device
         option_file = get_option_path(model_path)
         self.transform = ImageTransform()
 
@@ -37,17 +38,27 @@ class ImageVisualizer:
 
     def visualize(self, img_path, save=""):
         img = cv2.imread(img_path)
-        inp, padded_size = self.transform.process_single_img(img_path)
+        inp, padded_size = self.transform.process_single_img(img_path, self.out_h, self.out_w, self.in_h, self.in_w)
         img_meta = {
             "name": img_path,
-            "enlarged_box": [0, 0, img.size(1), img.size(0)],
+            "enlarged_box": [0, 0, img.shape[1], img.shape[0]],
             "padded_size": padded_size
         }
-        out = self.model(inp)
-        draw = self.PV.draw_kps(out, img_meta)
+        if self.device != "cpu":
+            inp = inp.cuda()
+        out = self.model(inp.unsqueeze(dim=0))
+        drawn = self.PV.draw_kps(out[0], img_meta)
         if save:
-            cv2.imwrite(save, draw)
+            cv2.imwrite(save, drawn)
         if self.show:
-            cv2.imshow("res", img)
+            cv2.imshow("res", drawn)
             cv2.waitKey(0)
 
+
+if __name__ == '__main__':
+    model_cfg = "exp/test_kps/mpii_13/model_cfg.json"
+    model_path = "exp/test_kps/aic_13/latest.pth"
+    data_cfg = "exp/test_kps/mpii_13/data_cfg.json"
+    img_path = "exp/person.jpg"
+    IV = ImageVisualizer(model_cfg, model_path, data_cfg)
+    IV.visualize(img_path)

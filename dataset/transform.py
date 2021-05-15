@@ -162,9 +162,11 @@ class ImageTransform:
                 cv2.imwrite("{}/kps_{}.jpg".format(self.save, idx), cv2.resize(hm, (640, 640)))
         return inputs, labels, enlarged_box, pad_size, kps_valid
 
-    def process_single_img(self, img_path):
+    def process_single_img(self, img_path, out_h, out_w, in_h, in_w):
+        self.SAMPLE = SampleGenerator(out_h, out_w, in_h, in_w)
         img = self.load_img(img_path)
         padded_img, padded_size = self.SAMPLE.padding(img)
+        cv2.imshow("padded", padded_img)
         inputs = self.normalize(self.img2tensor(padded_img))
         return inputs, padded_size
 
