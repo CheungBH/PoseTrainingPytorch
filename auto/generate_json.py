@@ -10,30 +10,36 @@ data_cfg_path = "../config/data_cfg/data_default.json"
 def generate_json():
     s = sys.argv
     n = len(s)
-    a,b = [],[]
+    a,b,nums = [],[],[]
     for i in range(3,n):
-        if i % 2 != 0:
-            a.append(s[i])
-        else:b.append(s[i])
+        if s[i] != '--freeze_bn':nums.append(s[i])
+        else:continue
+    for j in range(len(nums)):
+        if j % 2 == 0:a.append(nums[j])
+        else: b.append(nums[j])
     args = dict(zip(a,b))
     dest_data_path, dest_cfg_path = os.path.join("/media/hkuit155/8221f964-4062-4f55-a2f3-78a6632f7418/PoseTrainingPytorch/"+ s[1]), os.path.join("/media/hkuit155/8221f964-4062-4f55-a2f3-78a6632f7418/PoseTrainingPytorch/"+s[2])
     res,res1 = {},{}
-    model_json = select_model_cfg(args['backbone'])
+    model_json = select_model_cfg(args['--backbone'])
     data_default = json.load(open(data_cfg_path))
     model_default = json.load(open(model_json))
     for key in data_default:
-        if key in args:
-            if data_default[key] != args[key]:
-                res[key] = args[key]
+        key_y = os.path.join("--" + key)
+        if key_y in args:
+            if data_default[key] != args[key_y]:
+                res[key] = args[key_y]
         else:
             res[key] = data_default[key]
-    select_model_cfg(args['backbone'])
+    select_model_cfg(args['--backbone'])
     for keys in model_default:
-        if keys in args:
-            if model_default[keys] != args[keys]:
-                res1[keys] = args[keys]
+        key_y = os.path.join("--" + key)
+        if key_y in args:
+            if model_default[keys] != args[key_y]:
+                res1[keys] = args[key_y]
         else:
             res1[keys] = model_default[keys]
+    if len(nums) == n-4:
+        res1['--freeze_bn'] = None
     json_out = open(dest_data_path, "w")
     json_out1 = open(dest_cfg_path,'w')
     json_out.write(json.dumps(res))
@@ -56,3 +62,8 @@ def select_model_cfg(backbone):
 
 if __name__ == '__main__':
     generate_json()
+
+
+"python generate_json.py data_cfg1.json model_cfg1.json --kps 13 --backbone seresnet18 --loadModel model.pth --sigma 4 --freeze_bn"
+"python generate_json.py data_cfg2.json model_cfg2.json --LR 1E-3 --backbone seresnet101 --sigma 2  --freeze_bn --input_height 256 --input_width 256 --output_height 64 --output_width 64"
+"python generate_json.py data_cfg3.json model_cfg3.json --LR 1E-3 --backbone seresnet101 --sigma 1 --input_height 320 --input_width 320 --output_height 80 --output_width 80 --loadModel model.pth --se_ratio -1 --scale 0.3 --optMethod adam"
