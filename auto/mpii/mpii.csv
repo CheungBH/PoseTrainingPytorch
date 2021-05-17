@@ -1,0 +1,11 @@
+backbone,dataset,se_ratio,kps,input_height,input_width,output_height,output_width,validBatch,trainBatch,optMethod,freeze_bn,freeze,sparse,nEpochs,LR,sigma,momentum,weightDecay,save_interval,loadModel
+seresnet18,mpii,0,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,1,0,0,20,
+seresnet18,mpii,0,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,1,0,0,20,
+seresnet18,mpii,16,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,1,0,0,20,
+seresnet18,mpii,16,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,1,0,0,20,
+seresnet18,mpii,-16,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,1,0,0,20,
+seresnet18,mpii,-16,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,1,0,0,20,
+mobilenet,mpii,0,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,1,0,0,20,
+mobilenet,mpii,0,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,1,0,0,20,
+shufflenet,mpii,0,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,1,0,0,20,
+shufflenet,mpii,0,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,1,0,0,20,
