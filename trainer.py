@@ -8,7 +8,6 @@ import cv2
 import os
 from tensorboardX import SummaryWriter
 import time
-# from utils.draw import draw_kps, draw_hms
 from dataset.dataloader import TrainLoader
 from utils.utils import draw_graph
 import csv
@@ -72,6 +71,7 @@ class Trainer:
         self.best_epoch = self.curr_epoch
 
         posenet.init_with_opt(opt)
+        self.dataset = self.opt.dataset
         self.params_to_update, _ = posenet.get_updating_param()
         self.freeze = posenet.is_freeze
         self.model = posenet.model
@@ -179,7 +179,7 @@ class Trainer:
     def valid(self):
         drawn_kp = False
         PV, HMV = PredictionVisualizer(self.kps, self.val_batch, self.output_height, self.output_width, self.input_height,
-                                       self.input_width), \
+                                       self.input_width, dataset=self.dataset), \
                   HeatmapVisualizer(self.output_height, self.output_width)
         BatchEval = BatchEvaluator(self.kps, "Valid", self.opt.validBatch)
         EpochEval = EpochEvaluator((self.output_height, self.output_width))
