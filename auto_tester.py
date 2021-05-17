@@ -28,7 +28,7 @@ class AutoTester:
         with open(self.test_csv, "a+", newline="") as test_file:
             csv_writer = csv.writer(test_file)
             if not self.tested:
-                csv_writer.writerow(write_test_title())
+                csv_writer.writerow(write_test_title(self.kps))
                 self.tested = True
             test_row = [self.model_folder.replace("\\", "/").split("/")[-1], self.model]
             test_row += self.benchmark
@@ -51,6 +51,7 @@ class AutoTester:
                           num_worker=self.num_worker)
             test.test()
             test.get_benchmark()
+            self.kps = test.kps
             self.benchmark, self.performance, self.parts, self.thresh = test.summarize()
             self.write_result()
 
