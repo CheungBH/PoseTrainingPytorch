@@ -75,15 +75,15 @@ class MixedDataset(data.Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        try:
-            path, kps, box, i, valid = \
-                self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
-        except:
-            print(idx)
-            path, kps, box, i, valid = \
-                self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
-            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid, self.img_aug)
+        # try:
+        path, kps, box, i, valid = \
+            self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+        inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+        # except:
+        #     print(idx)
+        #     path, kps, box, i, valid = \
+        #         self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
+        #     inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid, self.img_aug)
         img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
                     "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
@@ -96,16 +96,19 @@ if __name__ == '__main__':
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
-    data_info = [{"mpii": {"root": "/media/hkuit155/Elements/data/mpii",
-                           "train_imgs": "MPIIimages",
-                           "valid_imgs": "MPIIimages",
-                           "train_annot": "mpiitrain_annotonly_train.json",
-                           "valid_annot": "mpiitrain_annotonly_test.json"}}]
-    # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
-    #                        "train_imgs": "yoga_train2",
-    #                        "valid_imgs": "yoga_test",
-    #                        "train_annot": "yoga_train2.json",
-    #                        "valid_annot": "yoga_test.json"}}]
+    # data_info = [{"mpii": {"root": "/media/hkuit155/Elements/data/mpii",
+    #                        "train_imgs": "MPIIimages",
+    #                        "valid_imgs": "MPIIimages",
+    #                        "train_annot": "mpiitrain_annotonly_train.json",
+    #                        "valid_annot": "mpiitrain_annotonly_test.json"}}]
+    data_info = [{"yoga": {"root": "../data/yoga",
+                           "train_imgs": "yoga_train2",
+                           "valid_imgs": "yoga_eval",
+                           "test_imgs": "yoga_test",
+                           "train_annot": "yoga_train2.json",
+                           "valid_annot": "yoga_eval.json",
+                           "test_annot": "yoga_test.json",
+                           }}]
     # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic",
     #                      "train_imgs": "ai_challenger_keypoint_train_20170902/keypoint_train_images_20170902",
     #                      "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
@@ -117,7 +120,7 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 1111
+    sample_idx = 18292
 
     data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = MixedDataset(data_info, data_cfg, phase="train")
