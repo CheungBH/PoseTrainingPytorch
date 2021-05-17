@@ -1,7 +1,7 @@
 from auto.config import task_folder, base_name
 
-CUDA = "0,1,2,3"
-train_begin, train_end = 1, 24
+CUDA = 0
+train_begin, train_end = 13, 16
 
 
 def customize(CUDA, file, begin, end):

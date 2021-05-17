@@ -38,10 +38,11 @@ class AutoTrainer:
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
         else:
-            if self.opt.resume:
-                pass
-            else:
-                raise FileExistsError("Target folder {} exists".format(dest_folder))
+            pass
+            # if self.opt.resume:
+            #     pass
+            # else:
+            #     raise FileExistsError("Target folder {} exists".format(dest_folder))
         dest_data_cfg = os.path.join(dest_folder, "data_cfg.json")
         dest_model_cfg = os.path.join(dest_folder, "model_cfg.json")
         cfg_cmd = "python auto/generate_json.py {} {} ".format(dest_data_cfg, dest_model_cfg) + self.cmd

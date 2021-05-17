@@ -13,7 +13,7 @@ class PoseModel:
         self.cfg = parse_cfg(cfg)
         self.backbone = self.cfg["backbone"]
         self.head = self.cfg["head_type"]
-        self.kps = self.cfg["keypoints"]
+        self.kps = self.cfg["kps"]
         self.se_ratio = self.cfg["se_ratio"]
         self.block_nums = parse_num_block(self.cfg)
         self.first_conv = self.cfg["first_conv"]

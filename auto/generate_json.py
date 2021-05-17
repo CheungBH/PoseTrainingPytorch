@@ -2,7 +2,7 @@ import json
 import sys
 import os
 
-data_cfg_path = "config/data_cfg/data_default.json"
+data_cfg_path = "../config/data_cfg/data_default.json"
 
 
 def generate_json():
@@ -33,7 +33,7 @@ def generate_json():
                     res[key] = args[key_y]
         else:
             res[key] = data_default[key]
-    select_model_cfg(args['--backbone'])
+
     for keys in model_default:
         key_y = os.path.join("--" + key)
         if key_y in args:
@@ -56,7 +56,7 @@ def generate_json():
 
 def select_model_cfg(backbone):
     if backbone == "seresnet18":
-        return "config/model_cfg/default/cfg_resnet18.json"
+        return "../config/model_cfg/default/cfg_resnet18.json"
     elif backbone == "seresnet50":
         return "config/model_cfg/default/cfg_seresnet50.json"
     elif backbone == "seresnet101":

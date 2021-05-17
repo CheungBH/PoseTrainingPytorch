@@ -83,7 +83,7 @@ class ChannelLayerPruner:
         print(channel_str, file=open("buffer/cfg_all_{}.txt".format(self.backbone), "w"))
         m_channel_cfg = {
             'backbone': self.backbone,
-            'keypoints': self.kps,
+            'kps': self.kps,
             'se_ratio': self.se_ratio,
             "first_conv": valid_filter[all_bn_id[0] - 1],
             'residual': get_residual_channel([filt for _, filt in valid_filter.items()], self.backbone),

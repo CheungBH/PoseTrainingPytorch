@@ -72,7 +72,7 @@ class LayerPruner:
 
         m_cfg = {
             'backbone': self.backbone,
-            'keypoints': self.kps,
+            'kps': self.kps,
             'se_ratio': self.se_ratio,
             "first_conv": self.first_conv,
             'residual': self.residual,

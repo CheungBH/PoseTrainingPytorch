@@ -122,7 +122,7 @@ class Pruner:
         print(channel_str, file=open("buffer/cfg_{}.txt".format(self.backbone), "w"))
         m_cfg = {
             'backbone': self.backbone,
-            'keypoints': self.kps,
+            'kps': self.kps,
             'se_ratio': self.se_ratio,
             "first_conv": CBLidx2filter[all_bn_id[0] - 1],
             'residual': get_residual_channel([filt for _, filt in valid_filter.items()], self.backbone),
