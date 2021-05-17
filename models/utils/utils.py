@@ -16,7 +16,7 @@ def parse_cfg(imgdir):
         "backbone": load_dict["backbone"],
         "residual": load_dict["residual"],
         "channels": load_dict["channels"],
-        "keypoints": load_dict["kps"],
+        "kps": load_dict["kps"],
         "se_ratio": load_dict["se_ratio"],
         "head_type": load_dict["head_type"],
         "head_channel": load_dict["head_channel"],
