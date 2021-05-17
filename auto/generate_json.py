@@ -1,10 +1,8 @@
 import json
 import sys
 import os
-from typing import List
 
-
-data_cfg_path = "../config/data_cfg/data_default.json"
+data_cfg_path = "config/data_cfg/data_default.json"
 
 
 def generate_json():
@@ -18,7 +16,7 @@ def generate_json():
         if j % 2 == 0:a.append(nums[j])
         else: b.append(nums[j])
     args = dict(zip(a,b))
-    dest_data_path, dest_cfg_path = os.path.join("/media/hkuit155/8221f964-4062-4f55-a2f3-78a6632f7418/PoseTrainingPytorch/"+ s[1]), os.path.join("/media/hkuit155/8221f964-4062-4f55-a2f3-78a6632f7418/PoseTrainingPytorch/"+s[2])
+    dest_data_path, dest_cfg_path = s[1], s[2]
     res,res1 = {},{}
     model_json = select_model_cfg(args['--backbone'])
     data_default = json.load(open(data_cfg_path))
@@ -27,7 +25,12 @@ def generate_json():
         key_y = os.path.join("--" + key)
         if key_y in args:
             if data_default[key] != args[key_y]:
-                res[key] = args[key_y]
+                if isinstance(data_default[key], int):
+                    res[key] = int(args[key_y])
+                elif isinstance(data_default[key], float):
+                    res[key] = float(args[key_y])
+                else:
+                    res[key] = args[key_y]
         else:
             res[key] = data_default[key]
     select_model_cfg(args['--backbone'])
@@ -35,7 +38,12 @@ def generate_json():
         key_y = os.path.join("--" + key)
         if key_y in args:
             if model_default[keys] != args[key_y]:
-                res1[keys] = args[key_y]
+                if isinstance(model_default[keys], int):
+                    res1[keys] = int(args[key_y])
+                elif isinstance(model_default[keys], float):
+                    res1[keys] = float(args[key_y])
+                else:
+                    res1[keys] = args[key_y]
         else:
             res1[keys] = model_default[keys]
     if len(nums) == n-4:
@@ -45,17 +53,18 @@ def generate_json():
     json_out.write(json.dumps(res))
     json_out1.write(json.dumps(res1))
 
+
 def select_model_cfg(backbone):
-    # if backbone == "mobilenet":
-    #     return "../config/model_cfg/default/cfg_mobile.json"
     if backbone == "seresnet18":
-        return "../config/model_cfg/default/cfg_resnet18.json"
+        return "config/model_cfg/default/cfg_resnet18.json"
     elif backbone == "seresnet50":
-        return "../config/model_cfg/default/cfg_seresnet50.json"
+        return "config/model_cfg/default/cfg_seresnet50.json"
     elif backbone == "seresnet101":
-        return "../config/model_cfg/default/cfg_resnet101.json"
+        return "config/model_cfg/default/cfg_resnet101.json"
     elif backbone == "shufflenet":
-        return "../config/model_cfg/default/cfg_shuffle.json"
+        return "config/model_cfg/default/cfg_shuffle.json"
+    elif backbone == "mobilenet":
+        return "config/model_cfg/default/cfg_mobile.json"
     else:
         raise NotImplementedError
 

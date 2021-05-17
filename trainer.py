@@ -425,8 +425,11 @@ class Trainer:
                 ))
 
     def process(self):
-        shutil.copy(self.opt.model_cfg, os.path.join(self.expFolder, "model_cfg.json"))
-        shutil.copy(self.opt.data_cfg, os.path.join(self.expFolder, "data_cfg.json"))
+        try:
+            shutil.copy(self.opt.model_cfg, os.path.join(self.expFolder, "model_cfg.json"))
+            shutil.copy(self.opt.data_cfg, os.path.join(self.expFolder, "data_cfg.json"))
+        except shutil.SameFileError:
+            pass
 
         begin_time = time.time()
         error_string = ""

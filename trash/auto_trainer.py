@@ -1,20 +1,13 @@
 from trainer import Trainer
 from utils.train_utils import generate_cmd
 import sys
-import os
 from config.config import bad_epochs, warm_up, train_info
-
-
-model_related = []
-data_related = []
 
 
 class AutoTrainer:
     def __init__(self, opt):
         self.opt = opt
         self.cmd = generate_cmd(sys.argv[1:])
-        self.command = sys.argv
-        self.generate_cfg_file()
         self.print()
 
     def print(self):
@@ -33,20 +26,11 @@ class AutoTrainer:
                 raise ValueError("Wrong stopping accuracy!")
         print("----------------------------------------------------------------------------------------------------")
 
-    def generate_cfg_file(self):
-        dest_folder = os.path.join("exp", self.opt.expFolder, self.opt.expID)
-        if not os.path.exists(dest_folder):
-            os.makedirs(dest_folder)
-        else:
-            if self.opt.resume:
-                pass
-            else:
-                raise FileExistsError("Target folder {} exists".format(dest_folder))
-        dest_data_cfg = os.path.join(dest_folder, "data_cfg.json")
-        dest_model_cfg = os.path.join(dest_folder, "model_cfg.json")
-        cfg_cmd = "python auto/generate_json.py {} {} ".format(dest_data_cfg, dest_model_cfg) + self.cmd
-        os.system(cfg_cmd)
-        self.opt.data_cfg, self.opt.model_cfg = dest_data_cfg, dest_model_cfg
+    # def unify_cmd(self):
+    #     if "--freeze_bn False" in self.cmd:
+    #         self.opt.freeze_bn = False
+    #     if "--addDPG False" in self.cmd:
+    #         self.opt.addDPG = False
 
     def train(self):
         trainer = Trainer(self.opt)
@@ -55,8 +39,7 @@ class AutoTrainer:
 
 if __name__ == '__main__':
     from config.opt import opt
-    AT = AutoTrainer(opt)
-    AT.train()
+    AutoTrainer(opt).train()
 
 
 
