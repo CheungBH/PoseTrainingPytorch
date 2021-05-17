@@ -4,8 +4,8 @@ from .base import *
 
 
 class COCO(BaseDataset):
-    def __init__(self, kps):
-        super().__init__(kps)
+    def __init__(self, kps, phase):
+        super().__init__(kps, phase)
         self.kps_num = 17
 
     def init_kps(self):

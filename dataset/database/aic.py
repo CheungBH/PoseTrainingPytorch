@@ -5,8 +5,8 @@ import torch
 
 
 class AIChallenger(BaseDataset):
-    def __init__(self, kps):
-        super().__init__(kps)
+    def __init__(self, kps, phase):
+        super().__init__(kps, phase)
         self.kps_num = 14
         # self.convert_13_idx = [2, 4, 6, 1, 3, 5, 8, 10, 12, 7, 9, 11, 0]
         self.convert_13_idx = [12,3,0,4,1,5,2,9,6,10,7,11,8]

@@ -5,8 +5,8 @@ import torch
 
 
 class MPII(BaseDataset):
-    def __init__(self, kps):
-        super().__init__(kps)
+    def __init__(self, kps, phase):
+        super().__init__(kps, phase)
         self.kps_num = 16
         self.convert_13_idx = [6,10,9,11,8,12,7,3,2,4,1,5,0]
 

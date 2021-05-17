@@ -4,8 +4,8 @@ from .base import *
 
 
 class YOGA(BaseDataset):
-    def __init__(self, kps):
-        super().__init__(kps)
+    def __init__(self, kps, phase):
+        super().__init__(kps, phase)
         self.kps_num = 17
 
     def init_kps(self):
@@ -30,7 +30,10 @@ class YOGA(BaseDataset):
             if not sum(kp_valid):
                 continue
             bbox.append(xywh2xyxy(entry['bbox']))
-            images.append(os.path.join(folder_name, str(entry['image_id']).zfill(12)))
+            if self.phase == "valid":
+                images.append(os.path.join(folder_name, str(entry['image_id']) + ".jpg"))
+            else:
+                images.append(os.path.join(folder_name, str(entry['image_id']).zfill(12)))
             keypoint.append(kp)
             kps_valid.append(kp_valid)
         return images, keypoint, bbox, ids, kps_valid
