@@ -17,9 +17,9 @@ def csvTransform(file):
     opt = [item for item in data[0]]
 
     if include_cuda:
-        begin = "'CUDA_VISIBLE_DEVICES= python trainer.py "
+        begin = "'CUDA_VISIBLE_DEVICES= python auto_trainer.py "
     else:
-        begin = "'python trainer.py "
+        begin = "'python auto_trainer.py "
 
     cmds = []
     for idx, mdl in enumerate(data[1:]):

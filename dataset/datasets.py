@@ -194,23 +194,23 @@ if __name__ == '__main__':
     #                        "valid_imgs": "MPIIimages",
     #                        "train_annot": "mpiitrain_annotonly_train.json",
     #                        "valid_annot": "mpiitrain_annotonly_test.json"}}]
-    # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
-    #                        "train_imgs": "yoga_train2",
-    #                        "valid_imgs": "yoga_test",
-    #                        "train_annot": "yoga_train2.json",
-    #                        "valid_annot": "yoga_test.json"}}]
-    data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic/ai_challenger",
-                           "train_imgs": "train",
-                           "valid_imgs": "valid",
-                           "train_annot": "aic_train.json",
-                           "valid_annot": "aic_val.json"}}]
+    data_info = [{"yoga": {"root": "../data/yoga",
+                           "train_imgs": "yoga_train2",
+                           "valid_imgs": "yoga_test",
+                           "train_annot": "yoga_train2.json",
+                           "valid_annot": "yoga_test.json"}}]
+    # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic/ai_challenger",
+    #                        "train_imgs": "train",
+    #                        "valid_imgs": "valid",
+    #                        "train_annot": "aic_train.json",
+    #                        "valid_annot": "aic_val.json"}}]
     # data_info = [{"ceiling": {"root": "../data/ceiling",
     #                          "train_imgs": "ceiling_train",
     #                          "valid_imgs": "ceiling_test",
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 34
+    sample_idx = 31
 
     data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
     bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(13, "coco")
+    kpv = KeyPointVisualizer(17, "coco")
     result = dataset[sample_idx][-1]
     img = cv2.imread(result["name"])
     # print(result["name"])
