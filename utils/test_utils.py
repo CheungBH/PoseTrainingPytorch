@@ -21,14 +21,14 @@ def parse_thresh(thresh):
     return [float(item) for item in thresh]
 
 
-def write_test_title():
+def write_test_title(kps):
     title = ["model ID", "model name", "flops", "params", "inf_time", "location", "test_acc", "test_loss", "test_pckh",
              "test_dist", "test_auc", "test_pr", " "]
     title += pckh_title("test")
-    title += csv_body_part("test", "acc")
-    title += csv_body_part("test", "dist")
-    title += csv_body_part("test", "AUC")
-    title += csv_body_part("test", "PR")
-    title += csv_body_part("test", "thresh")
+    title += csv_body_part("test", "acc", kps)
+    title += csv_body_part("test", "dist", kps)
+    title += csv_body_part("test", "AUC", kps)
+    title += csv_body_part("test", "PR", kps)
+    title += csv_body_part("test", "thresh", kps)
     return title
 

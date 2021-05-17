@@ -100,37 +100,37 @@ def generate_cmd(ls):
     return string[:-1] + "\n"
 
 
-def write_csv_title():
+def write_csv_title(kps):
     title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_dist", "train_auc", "train_pr", "val_loss",
              "val_acc", "val_dist", "val_auc", "val_pr", " "]
-    title += csv_body_part("train", "acc")
-    title += csv_body_part("train", "dist")
-    title += csv_body_part("train", "AUC")
-    title += csv_body_part("train", "PR")
-    title += csv_body_part("val", "acc")
-    title += csv_body_part("val", "dist")
-    title += csv_body_part("val", "AUC")
-    title += csv_body_part("val", "PR")
+    title += csv_body_part("train", "acc", kps)
+    title += csv_body_part("train", "dist", kps)
+    title += csv_body_part("train", "AUC", kps)
+    title += csv_body_part("train", "PR", kps)
+    title += csv_body_part("val", "acc", kps)
+    title += csv_body_part("val", "dist",kps)
+    title += csv_body_part("val", "AUC", kps)
+    title += csv_body_part("val", "PR", kps)
     return title
 
 
-def write_test_title():
+def write_test_title(kps):
     title = ["model ID", "model name", "params", "flops", "inf_time", "location", "test_loss", "test_acc", "test_dist",
              "test_auc", "test_pr", " "]
-    title += csv_body_part("test", "acc")
-    title += csv_body_part("test", "dist")
-    title += csv_body_part("test", "AUC")
-    title += csv_body_part("test", "PR")
-    title += csv_body_part("test", "thresh")
+    title += csv_body_part("test", "acc", kps)
+    title += csv_body_part("test", "dist", kps)
+    title += csv_body_part("test", "AUC", kps)
+    title += csv_body_part("test", "PR", kps)
+    title += csv_body_part("test", "thresh", kps)
     return title
 
 
-def csv_body_part(phase, indicator):
+def csv_body_part(phase, indicator, kps):
     ls = []
     body_parts = [item for item in config.body_parts.values()]
-    if opt.kps == 17:
+    if kps == 17:
         body_parts = body_parts
-    elif opt.kps == 13:
+    elif kps == 13:
         body_parts = [body_parts[0]] + body_parts[5:]
     for item in body_parts:
         ls.append(phase + "_" + item + "_" + indicator)

@@ -148,13 +148,13 @@ def warm_up_lr(optimizer, lr, epoch, warm_up_dict):
 
 def resume(opt):
     from .utils import get_option_path
-    print("Before resuming:")
-    print(opt)
+    # print("Before resuming:")
+    # print(opt)
     model_path = opt.loadModel
     import os
     option_path = get_option_path(model_path)
     if not os.path.exists(option_path):
-        raise ValueError("The file 'option.pkl' does not exist. Can not be resumed")
+        raise FileNotFoundError("The file 'option.pkl' does not exist. Can not resume")
     option = torch.load(option_path)
     opt.nEpochs = option.nEpochs
     opt.epoch = option.epoch
@@ -177,6 +177,6 @@ def resume(opt):
     opt.momentum = option.momentum
     opt.weightDecay = option.weightDecay
     opt.sparse_s = option.sparse_s
-    print("After resuming")
-    print(opt)
+    # print("After resuming")
+    # print(opt)
     return opt
