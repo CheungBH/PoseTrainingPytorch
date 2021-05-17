@@ -11,6 +11,8 @@ import time
 from dataset.dataloader import TrainLoader
 from utils.utils import draw_graph
 import csv
+import sys
+from utils.train_utils import generate_cmd
 import shutil
 from dataset.draw import PredictionVisualizer, HeatmapVisualizer
 
@@ -41,6 +43,7 @@ class Trainer:
         self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
+        self.cmd = generate_cmd(sys.argv[1:])
 
         os.makedirs(os.path.join(self.expFolder, "logs/images"), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
@@ -431,6 +434,7 @@ class Trainer:
         except shutil.SameFileError:
             pass
 
+        print(self.cmd, file=open(self.txt_log, "a+"))
         begin_time = time.time()
         error_string = ""
         try:

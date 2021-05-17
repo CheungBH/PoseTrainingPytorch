@@ -1,5 +1,4 @@
 from trainer import Trainer
-from utils.train_utils import generate_cmd
 import sys
 import os
 from config.config import bad_epochs, warm_up, train_info
@@ -12,7 +11,6 @@ data_related = []
 class AutoTrainer:
     def __init__(self, opt):
         self.opt = opt
-        self.cmd = generate_cmd(sys.argv[1:])
         self.command = sys.argv
         self.generate_cfg_file()
         self.print()
