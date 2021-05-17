@@ -35,22 +35,31 @@ class KeyPointsProcessor:
 
         self.coco_flip_pairs = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
         self.kps13_flip_pairs = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
-        self.mpii_flip_pairs = []
+        self.mpii_flip_pairs = [[0, 5], [1, 4], [2, 3], [10, 15], [11, 14], [12, 13]]
+        self.aic_flip_pairs = [[0, 3], [1, 4], [2, 5], [6, 9], [7, 10], [8, 11]]
 
     def init_kps(self, idx, dataset_type):
         if isinstance(idx, int):
-            assert idx == 17 or idx == 13 or idx == 14, "Wrong keypoints nums"
+            assert idx in [13, 14, 16, 17], "Wrong keypoints nums"
             if idx == 17:
                 self.body_part_idx = [i+1 for i in range(17)]
                 self.body_part_name = self.coco_parts_name
                 self.flip_pairs = self.coco_flip_pairs
+                self.not_flip_idx = [0]
             elif idx == 14:
                 self.body_part_idx = [i+1 for i in range(14)]
                 self.body_part_name = self.mpii_parts_name
+                self.flip_pairs = self.aic_flip_pairs
+                self.not_flip_idx = [12, 13]
+            elif idx == 16:
+                self.body_part_idx = [i+1 for i in range(16)]
+                self.body_part_name = self.mpii_parts_name
                 self.flip_pairs = self.mpii_flip_pairs
+                self.not_flip_idx = [6, 7, 8, 9]
             else:
                 self.body_part_name = self.kps13_parts_name
                 self.flip_pairs = self.kps13_flip_pairs
+                self.not_flip_idx = [0]
                 if dataset_type == "mpii" or dataset_type == "aic":
                     self.body_part_idx = [i+1 for i in range(13)]
                 else:
@@ -61,7 +70,7 @@ class KeyPointsProcessor:
             raise TypeError("Your key-point register is wrong! ")
 
     def get_kps_info(self):
-        return self.body_part_idx, self.body_part_name, self.flip_pairs
+        return self.body_part_idx, self.body_part_name, self.flip_pairs, self.not_flip_idx
 
     def unify_weighted(self, loss_weight):
         all_kps = [-item for item in range(len(self.body_part_idx) + 1)[1:]]

@@ -15,6 +15,7 @@ class ImageTransform:
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
         self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12), (13, 14), (15, 16)]
+        self.not_flip_idx = [0]
 
     def init_with_cfg(self, data_cfg):
         with open(data_cfg, "r") as load_f:
@@ -32,14 +33,34 @@ class ImageTransform:
         self.SAMPLE = SampleGenerator(self.output_height, self.output_width, self.input_height, self.input_width,
                                       self.sigma)
         # if self.save:
-        self.KPV = KeyPointVisualizer(self.kps, "coco")
+        self.KPV = KeyPointVisualizer(self.kps, "aic")
         self.BBV = BBoxVisualizer()
+        self.update_flip_pairs()
+
+    def update_flip_pairs(self):
+        if self.kps == 13:
+            self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]
+            self.not_flip_idx = [0]
+        elif self.kps == 16:
+            self.flip_pairs = ([0, 5], [1, 4], [2, 3], [10, 15], [11, 14], [12, 13])
+            self.not_flip_idx = [6, 7, 8, 9]
+        elif self.kps == 14:
+            self.flip_pairs = ([0, 3], [1, 4], [2, 5], [6, 9], [7, 10], [8, 11])
+            self.not_flip_idx = [12, 13]
+        elif self.kps == 17:
+            return
+        else:
+            raise NotImplementedError
 
     def load_img(self, img_path):
-    
-        img = cv2.imread(img_path)
-        if self.color == "rgb":
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        try:
+            img = cv2.imread(img_path)
+            if self.color == "rgb":
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        except:
+            import sys
+            print(img_path)
+            sys.exit()
         return img
 
     def img2tensor(self, img):
@@ -69,6 +90,8 @@ class ImageTransform:
         # box_w, box_tl, box_br = box[2] - box[0], box[0], box[2]
         new_box_tl, new_box_br = img_width - box[2] - 1, img_width - box[0] - 1
         flipped_box = [new_box_tl, box[1], new_box_br, box[3]]
+        for idx in self.not_flip_idx:
+            flipped_kps[idx] = [img_width - kps[idx][0] - 1, kps[idx][1]]
         for l, r in self.flip_pairs:
             left_kp, right_kp = kps[l], kps[r]
             flipped_x_l, flipped_x_r = img_width - kps[r][0] - 1, img_width - kps[l][0] - 1
@@ -105,25 +128,25 @@ class ImageTransform:
         img_new = cv2.warpAffine(img, R_img, dsize=new_img_size)
         return img_new, kps_new, valid
 
-    def rotate_cropped_img(self, im, degree):
+    def rotate_cropped_img(self, im, kps, kps_valid, degree):
         # rotate with center
-        return im
+        return im, kps, kps_valid
 
     def tensor2img(self, ts):
         img = np.asarray(F.to_pil_image(ts))
         return img
 
-    def process(self, img_path, box, kps, kps_valid):
+    def process(self, img_path, box, kps, kps_valid, img_aug=False):
         raw_img = self.load_img(img_path)
         enlarged_box = self.scale(raw_img, box)
-        if random.random() > 1 - self.flip_prob:
-            raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
+        if img_aug:
+            if random.random() > 1 - self.flip_prob:
+                raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
+            if random.random() > 1 - self.rotate_prob:
+                prob = random.random()
+                degree = (prob - 0.5) * 2 * self.rotate
+                raw_img, kps, kps_valid = self.rotate_cropped_img(raw_img, kps, kps_valid, degree)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
-        if random.random() > 1 - self.rotate_prob:
-            prob = random.random()
-            degree = (prob - 0.5) * 2 * self.rotate
-            img = self.rotate_cropped_img(img, degree)
-            # labels = self.rotate_hm(labels)
         inputs = self.normalize(self.img2tensor(img))
         if self.save:
             import os
@@ -139,30 +162,39 @@ class ImageTransform:
                 cv2.imwrite("{}/kps_{}.jpg".format(self.save, idx), cv2.resize(hm, (640, 640)))
         return inputs, labels, enlarged_box, pad_size, kps_valid
 
+    def process_single_img(self, img_path, out_h, out_w, in_h, in_w):
+        self.SAMPLE = SampleGenerator(out_h, out_w, in_h, in_w)
+        img = self.load_img(img_path)
+        padded_img, padded_size = self.SAMPLE.padding(img)
+        # cv2.imshow("padded", padded_img)
+        inputs = self.normalize(self.img2tensor(padded_img))
+        return inputs, padded_size
+
 
 if __name__ == '__main__':
+    import copy
     data_cfg = "../config/data_cfg/data_default.json"
     img_path = 'sample.jpg'
     # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
-    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
-    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
-    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
+    kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
+           [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
+    valid = [[0], [0], [2], [0], [2], [2], [2], [2], [2], [0], [2], [2], [2], [2], [2], [2], [2]]
 
     degree = 40
     IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
-    cv2.imshow("raw", img)
-    rotate_img = IT.rotate_cropped_img(img, degree)
+    rot_img = copy.deepcopy(img)
+    IT.KPV.visualize(img, [kps], [valid])
+
+    rot_img, kps, valid = IT.rotate_cropped_img(rot_img, kps, valid, degree)
     # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
     # IT.BBV.visualize([f_box], f_img)
-    # IT.KPV.visualize(f_img, [f_kps])
+    IT.KPV.visualize(rot_img, [kps], [valid])
     # IT.BBV.visualize([box], img)
-    # IT.KPV.visualize(img, [kps])
-
     cv2.imshow("raw", img)
-    cv2.imshow("flipped", rotate_img)
+    cv2.imshow("rot", rot_img)
     cv2.waitKey(0)
     # import copy
     # data_cfg = "../config/data_cfg/data_default.json"

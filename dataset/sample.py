@@ -4,7 +4,7 @@ import cv2
 
 
 class SampleGenerator:
-    def __init__(self, out_height, out_width, inp_height, inp_width, gaussian, dist=3):
+    def __init__(self, out_height, out_width, inp_height, inp_width, gaussian=1, dist=3):
         self.out_height = out_height
         self.out_width = out_width
         self.inp_height = inp_height

@@ -28,44 +28,40 @@ mpii_line_color = [PURPLE, BLUE, BLUE, RED, RED, BLUE, BLUE, RED, RED, PURPLE, P
 
 
 class KeyPointVisualizer:
-    def __init__(self, kps, format):
+    def __init__(self, kps, dataset):
         self.kps = kps
         if kps == 13:
-            coco_l_pair = [
+            self.l_pair = [
                 (1, 2), (1, 3), (3, 5), (2, 4), (4, 6),
                 (13, 7), (13, 8), (0, 13),  # Body
                 (7, 9), (8, 10), (9, 11), (10, 12)
             ]
-            mpii_l_pair = [
-                (8, 9), (11, 12), (11, 10), (2, 1), (1, 0),
-                (13, 14), (14, 15), (3, 4), (4, 5),
-                (8, 7), (7, 6), (6, 2), (6, 3), (8, 12), (8, 13)
-            ]
+            self.p_color = coco_p_color
+            self.line_color = coco_line_color
+
         elif kps == 17:
-            coco_l_pair = [
+            self.l_pair = [
                 (0, 1), (0, 2), (1, 3), (2, 4),  # Head
                 (5, 6), (5, 7), (7, 9), (6, 8), (8, 10),
                 (17, 11), (17, 12),  # Body
                 (11, 13), (12, 14), (13, 15), (14, 16)
             ]
-            mpii_l_pair = [
-                (8, 9), (11, 12), (11, 10), (2, 1), (1, 0),
-                (13, 14), (14, 15), (3, 4), (4, 5),
-                (8, 7), (7, 6), (6, 2), (6, 3), (8, 12), (8, 13)
-            ]
-        else:
-            raise ValueError("Wrong number")
-
-        if format == "coco":
-            self.l_pair = coco_l_pair
             self.p_color = coco_p_color
             self.line_color = coco_line_color
-        elif format == 'mpii':
-            self.l_pair = mpii_l_pair
-            self.p_color = mpii_p_color
-            self.line_color = mpii_line_color
+
         else:
-            raise NotImplementedError
+            if dataset == "mpii":
+                self.l_pair = [[0, 1], [1, 2], [2, 6], [6, 3], [3, 4], [4, 5], [6, 7], [7, 8], [8, 9], [8, 12],
+                               [12, 11], [11, 10], [8, 13], [13, 14], [14, 15]]
+                self.p_color = mpii_p_color
+                self.line_color = mpii_line_color
+            elif dataset == "aic":
+                self.l_pair = [[2, 1], [1, 0], [0, 13], [13, 3], [3, 4], [4, 5], [8, 7], [7, 6], [6, 9], [9, 10],
+                               [10, 11], [12, 13], [0, 6], [3, 9]]
+                self.p_color = mpii_p_color
+                self.line_color = mpii_line_color
+            else:
+                raise NotImplementedError("Not a suitable dataset and kps num!")
 
     def visualize(self, frame, kps, kps_confs=None):
         kps = torch.Tensor(kps)

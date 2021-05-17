@@ -19,7 +19,7 @@ class PredictionVisualizer:
         self.out_height = out_height
         self.in_width = in_width
         self.in_height = in_height
-        self.KPV = KeyPointVisualizer(self.kps, "coco")
+        self.KPV = KeyPointVisualizer(self.kps, "aic")
 
     def getPred(self, hm):
         max_val = 0

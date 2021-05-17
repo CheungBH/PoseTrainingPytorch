@@ -44,7 +44,7 @@ Video
 __pycache__
 exp
 data
-config/config.py
+*/config.py
 train_cmd.py
 tensorboard
 .tensorboard
@@ -64,4 +64,4 @@ res_collect
 *onnx
 *.pth
 *.pt
-
+img*/

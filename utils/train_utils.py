@@ -109,6 +109,7 @@ def csv_body_part(phase, indicator, kps=17):
     ls.append(" ")
     return ls
 
+
 def pckh_title(phase):
     ls = []
     for kps_name in ["left shoulder", "right shoulder", "left elbow", "right elbow", "left wrist", "right_wrist",
@@ -116,6 +117,7 @@ def pckh_title(phase):
         ls.append(phase + "_" + kps_name + "_pckh")
     ls.append(" ")
     return ls
+
 
 def write_csv_title(kps=17):
     title = ["model ID", "epoch", "lr", " ", "train_loss", "train_acc", "train_pckh", "train_dist", "train_auc",
@@ -146,13 +148,13 @@ def warm_up_lr(optimizer, lr, epoch, warm_up_dict):
 
 def resume(opt):
     from .utils import get_option_path
-    print("Before resuming:")
-    print(opt)
+    # print("Before resuming:")
+    # print(opt)
     model_path = opt.loadModel
     import os
     option_path = get_option_path(model_path)
     if not os.path.exists(option_path):
-        raise ValueError("The file 'option.pkl' does not exist. Can not be resumed")
+        raise FileNotFoundError("The file 'option.pkl' does not exist. Can not resume")
     option = torch.load(option_path)
     opt.nEpochs = option.nEpochs
     opt.epoch = option.epoch
@@ -175,6 +177,6 @@ def resume(opt):
     opt.momentum = option.momentum
     opt.weightDecay = option.weightDecay
     opt.sparse_s = option.sparse_s
-    print("After resuming")
-    print(opt)
+    # print("After resuming")
+    # print(opt)
     return opt

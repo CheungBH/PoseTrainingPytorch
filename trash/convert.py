@@ -5,29 +5,22 @@ import os
 
 
 class Converter:
-    out_h, out_w = 256, 256
+    height = 320
+    width = 256
 
-    def __init__(self, model_path, model_cfg, onnx_path="buffer/model.onnx", libtorch_path="buffer/model.pt",
-                 onnx_sim_path="buffer/model_sim.onnx", device="cpu"):
+    def __init__(self, model_path, cfg=None, onnx_path="buffer/model.onnx", libtorch_path="buffer/model.pt", onnx_sim_path="buffer/model_sim.onnx", device="cpu"):
+        self.src_model_path = model_path
         self.onnx_path = onnx_path
         self.libtorch_path = libtorch_path
         self.onnx_sim_path = onnx_sim_path
-
-        posenet = PoseModel(device=device)
-        posenet.build(model_cfg)
-        posenet.load(model_path)
-        self.model = posenet.model
-
-        option_path = get_option_path(model_path)
-        if os.path.exists(option_path):
-            option = torch.load(option_path)
-            self.out_h = option.output_height
-            self.out_w = option.output_width
-
-        if device != "cpu":
-            self.dummy_input = torch.rand(2, 3, self.out_w, self.out_h).cuda()
-        else:
-            self.dummy_input = torch.rand(2, 3, self.out_w, self.out_h)
+        self.model_cfg = cfg
+        self.device = device
+        self.superior_path = "/".join(model_path.replace("\\", "/").split("/")[:-1])
+        self.load_options()
+        self.load_model()
+        self.dummy_input = torch.rand(2, 3, self.width, self.height)
+        if self.device == "cpu":
+            self.dummy_input = torch.rand(2, 3, self.width, self.height).cuda()
 
     def onnx_convert(self):
         if self.onnx_path:
@@ -41,6 +34,19 @@ class Converter:
             traced_model = torch.jit.trace(self.model, self.dummy_input)
             traced_model.save(self.libtorch_path)
 
+    def load_model(self):
+        posenet = PoseModel()
+        posenet.build(self.model_cfg)
+        posenet.load(self.src_model_path)
+        self.model = posenet.model
+
+    def load_options(self):
+        option_path = get_option_path(self.src_model_path)
+        if os.path.exists(option_path):
+            option = torch.load(option_path)
+            self.height = option.inputResH
+            self.width = option.inputResW
+
     def convert(self):
         with torch.no_grad():
             self.onnx_convert()
@@ -48,9 +54,9 @@ class Converter:
 
 
 if __name__ == '__main__':
-    model_path = "exp/test_kps/mpii_13/latest.pth"
-    model_cfg = "exp/test_kps/mpii_13/model_cfg.json"
-    convert = Converter(model_path, model_cfg)
+    model_path = "buffer/all_seresnet50.pth"
+    model_cfg = "buffer/cfg_all_seresnet50.json"
+    convert = Converter(model_path, cfg=model_cfg)
     convert.convert()
 
 '''

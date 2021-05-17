@@ -8,11 +8,6 @@ import numpy as np
 
 tensor = torch.Tensor
 
-trans = list(zip(
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    ))
-
 
 class BaseDataset(data.Dataset):
     def __init__(self, data_info, data_cfg, save=False, phase="train"):
@@ -30,6 +25,9 @@ class BaseDataset(data.Dataset):
         self.transform.init_with_cfg(data_cfg)
         self.load_data(data_info)
 
+        self.out_h, self.out_w, self.in_h, self.in_w = self.transform.output_height, self.transform.output_width, \
+                                                       self.transform.input_height, self.transform.input_width
+        self.kps = self.transform.kps
 
     def load_data(self, data_info):
         self.images, self.keypoints, self.boxes, self.ids, self.kps_valid = [], [], [], [], []
@@ -111,23 +109,14 @@ class BaseDataset(data.Dataset):
             img_names[res["id"]] = os.path.join(folder_name, str(res['file_name']))
         for i in range(len(anno['annotations'])):
             entry = anno['annotations'][i]
-            ids.append(entry["image_id"])
+            ids.append(entry["id"])
             kp, kp_valid = kps_reshape(entry["keypoints"])
             if not sum(kp_valid):
                 continue
             bbox.append(xywh2xyxy(entry['bbox']))
             keypoint.append(kp)
             kps_valid.append(kp_valid)
-        name = list(img_names.keys())
-        value = list(img_names.values())
-        num = 0
-        # for i in range(len(ids)):
-        #     if name[num] == ids[i]:
-        #         images.append(value[i])
-        #         num += 1
-        #     else:
-        #         images.append()
-        #         num -= 1
+            images.append(img_names[entry["image_id"]])
         return images, keypoint, bbox, ids, kps_valid
 
     def load_json_ceiling(self, json_file, folder_name):
@@ -195,47 +184,43 @@ class BaseDataset(data.Dataset):
 
 
 if __name__ == '__main__':
-    # data_info = [{"coco": {"root": "E:/coco",
+    # data_info = [{"coco": {"root": "/media/hkuit155/Elements/coco",
     #                        "train_imgs": "train2017",
     #                        "valid_imgs": "val2017",
     #                        "train_annot": "annotations/person_keypoints_train2017.json",
     #                        "valid_annot": "annotations/person_keypoints_val2017.json"}}]
     # data_info = [{"mpii": {"root": "E:/data/mpii",
-    #                        "train_imgs": "images",
-    #                        "valid_imgs": "images",
-    #                        "train_annot": "img/mpiitrain_annotonly_train.json",
-    #                        "valid_annot": "img/mpiitrain_annotonly_test.json"}}]
-    data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
-                           "train_imgs": "yoga_train2",
-                           "valid_imgs": "yoga_test",
-                           "train_annot": "yoga_train2.json",
-                           "valid_annot": "yoga_test.json"}}]
-    # data_info = [{"aic": {"root": "E:/data/aic/ai_challenger",
-    #                        "train_imgs": "train",
-    #                        "valid_imgs": "valid",
-    #                        "train_annot": "aic_train.json",
-    #                        "valid_annot": "aic_val.json"}}]
+    #                        "train_imgs": "MPIIimages",
+    #                        "valid_imgs": "MPIIimages",
+    #                        "train_annot": "mpiitrain_annotonly_train.json",
+    #                        "valid_annot": "mpiitrain_annotonly_test.json"}}]
+    # data_info = [{"yoga": {"root": "../../Mobile-Pose/img",
+    #                        "train_imgs": "yoga_train2",
+    #                        "valid_imgs": "yoga_test",
+    #                        "train_annot": "yoga_train2.json",
+    #                        "valid_annot": "yoga_test.json"}}]
+    data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic/ai_challenger",
+                           "train_imgs": "train",
+                           "valid_imgs": "valid",
+                           "train_annot": "aic_train.json",
+                           "valid_annot": "aic_val.json"}}]
     # data_info = [{"ceiling": {"root": "../data/ceiling",
     #                          "train_imgs": "ceiling_train",
     #                          "valid_imgs": "ceiling_test",
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-<<<<<<< HEAD
-    sample_idx = 12328
-=======
-    sample_idx = 9834
->>>>>>> ziwei
+    sample_idx = 34
 
-    data_cfg = "../config/data_cfg/data_default.json"
+    data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")
-    dataset.transform.save = True
+    # dataset.transform.save = True
 
     # for i in range(sample_idx):
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
     bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(17, "coco")
+    kpv = KeyPointVisualizer(13, "coco")
     result = dataset[sample_idx][-1]
     img = cv2.imread(result["name"])
     # print(result["name"])

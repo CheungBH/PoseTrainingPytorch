@@ -1,39 +1,20 @@
 from sparse import SparseDetector
 import os
 import csv
+from utils.utils import init_model_list_with_kw
+
+keyword = ["latest"]
+folder_keyword = ["13"]
 
 
 class AutoSparseDetector:
-    def __init__(self, model_folder, model_kw=None, thresh_range=(50, 99), step=1, methods=["shortcut"]):
+    def __init__(self, model_folder, thresh_range=(50, 99), step=1, methods=["shortcut"]):
         self.folder = model_folder
-        self.models = []
-        self.cfg = []
-        self.model_kw = model_kw
         self.sparse_results = {}
         self.range = thresh_range
         self.step = step
         self.methods = methods
-
-    def load_models(self):
-        for folder in os.listdir(self.folder):
-            model_cnt = 0
-            if not os.path.isdir(os.path.join(self.folder, folder)):
-                continue
-            for file in os.listdir(os.path.join(self.folder, folder)):
-                file_path = os.path.join(self.folder, folder, file)
-                if "cfg" in file_path or "json" in file_path:
-                    cfg_name = file_path
-                if "option" not in file and "cfg" not in file and "pkl" in file:
-                    if self.model_kw:
-                        for kw in self.model_kw:
-                            if kw in file:
-                                model_cnt += 1
-                                self.models.append(file_path)
-                    else:
-                        self.models.append(file_path)
-
-            for _ in range(model_cnt):
-                self.cfg.append(cfg_name)
+        self.model_ls, self.model_cfg_ls, _, _ = init_model_list_with_kw(model_folder, keyword, folder_keyword)
 
     def xlsx_title(self):
         tmp = ["model name"]
@@ -49,12 +30,11 @@ class AutoSparseDetector:
                 csv_writer.writerow([model_name] + sparse_info)
 
     def run(self):
-        self.load_models()
         for method in self.methods:
             print("\n---------------------Detecting {} pruning---------------------".format(method))
             self.excel_path = os.path.join(self.folder, "sparse_{}_result.csv".format(method))
-            model_num = len(self.models)
-            for idx, (cfg, model) in enumerate(zip(self.cfg, self.models)):
+            model_num = len(self.model_ls)
+            for idx, (cfg, model) in enumerate(zip(self.model_cfg_ls, self.model_ls)):
                 print("[{}/{}] Begin processing model {}".format(idx+1, model_num, model))
                 sd = SparseDetector(model, model_cfg=cfg, print_info=False, method=method)
                 sd.detect()
@@ -63,8 +43,7 @@ class AutoSparseDetector:
 
 
 if __name__ == '__main__':
-    model_kw = ["acc", "dist", "auc", "pr"]
-    model_folder = "exp/kps_test"
+    model_folder = "exp/test_kps"
     methods = ["shortcut", "ordinary"]
-    asd = AutoSparseDetector(model_folder, model_kw, methods=methods)
+    asd = AutoSparseDetector(model_folder, methods=methods)
     asd.run()

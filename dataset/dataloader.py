@@ -1,13 +1,14 @@
 #-*-coding:utf-8-*-
 
-from .datasets import BaseDataset
+# from .datasets import BaseDataset
 import torch
+from .multi_datasets import MixedDataset
 
 
 class TrainLoader:
     def __init__(self, data_info, data_cfg, joint_weight_dict=None):
-        self.train_dataset = BaseDataset(data_info, data_cfg)
-        self.val_dataset = BaseDataset(data_info, data_cfg, phase="valid")
+        self.train_dataset = MixedDataset(data_info, data_cfg)
+        self.val_dataset = MixedDataset(data_info, data_cfg, phase="valid")
 
     def build_dataloader(self, train_batch, val_batch, train_worker, val_worker, shuffle=True, pin_memory=True):
         train_loader = torch.utils.data.DataLoader(
@@ -19,7 +20,7 @@ class TrainLoader:
 
 class TestLoader:
     def __init__(self, data_info, data_cfg):
-        self.dataset = BaseDataset(data_info, data_cfg)
+        self.dataset = MixedDataset(data_info, data_cfg)
 
     def build_dataloader(self, batch, worker, shuffle=True, pin_memory=True):
         loader = torch.utils.data.DataLoader(self.dataset, batch_size=batch, shuffle=shuffle, num_workers=worker,
