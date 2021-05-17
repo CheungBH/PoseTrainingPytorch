@@ -25,7 +25,12 @@ def generate_json():
         key_y = os.path.join("--" + key)
         if key_y in args:
             if data_default[key] != args[key_y]:
-                res[key] = args[key_y]
+                if isinstance(data_default[key], int):
+                    res[key] = int(args[key_y])
+                elif isinstance(data_default[key], float):
+                    res[key] = float(args[key_y])
+                else:
+                    res[key] = args[key_y]
             else:
                 res[key] = data_default[key]
         else:
@@ -35,13 +40,18 @@ def generate_json():
         key_y = os.path.join("--" + keys)
         if key_y in args:
             if model_default[keys] != args[key_y]:
-                res1[keys] = args[key_y]
+                if isinstance(model_default[keys], int):
+                    res1[keys] = int(args[key_y])
+                elif isinstance(model_default[keys], float):
+                    res1[keys] = float(args[key_y])
+                else:
+                    res1[keys] = args[key_y]
             else:
                 res1[keys] = model_default[keys]
         else:
             res1[keys] = model_default[keys]
-    if len(nums) == n-4:
-        res1['--freeze_bn'] = None
+    # if len(nums) == n-4:
+    #     res1['--freeze_bn'] = None
     json_out = open(dest_data_path, "w")
     json_out1 = open(dest_cfg_path,'w')
     json_out.write(json.dumps(res))
@@ -53,8 +63,8 @@ def select_model_cfg(backbone):
         return "../config/model_cfg/default/cfg_resnet18.json"
     elif backbone == "seresnet50":
         return "config/model_cfg/default/cfg_seresnet50.json"
-    # elif backbone == "seresnet101":
-    #     return "config/model_cfg/default/cfg_resnet101.json"
+    elif backbone == "seresnet101":
+        return "../config/model_cfg/default/cfg_resnet101.json"
     elif backbone == "shufflenet":
         return "config/model_cfg/default/cfg_shuffle.json"
     elif backbone == "mobilenet":
