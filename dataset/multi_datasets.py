@@ -46,15 +46,15 @@ class MixedDataset(data.Dataset):
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, info["root"])
                 elif name == "aic":
                     from dataset.database.aic import AIChallenger
-                    self.database[name] = AIChallenger(self.kps)
+                    self.database[name] = AIChallenger(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "yoga":
                     from dataset.database.yoga import YOGA
-                    self.database[name] = YOGA(self.kps)
+                    self.database[name] = YOGA(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "ceiling":
-                    from dataset.database.yoga import YOGA
-                    self.database[name] = YOGA(self.kps)
+                    from dataset.database.ceiling import CEILING
+                    self.database[name] = CEILING(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 else:
                     raise NotImplementedError
