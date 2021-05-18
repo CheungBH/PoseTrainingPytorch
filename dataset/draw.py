@@ -9,7 +9,8 @@ tensor = torch.Tensor
 
 
 class PredictionVisualizer:
-    def __init__(self, kps, bs, out_height, out_width, in_height, in_width, max_img=4, column=4, final_size=(720, 540)):
+    def __init__(self, kps, bs, out_height, out_width, in_height, in_width, max_img=4, column=4, final_size=(720, 540),
+                 dataset="coco"):
         self.kps = kps
         self.img_num = min(bs, max_img)
         self.column = column
@@ -19,7 +20,7 @@ class PredictionVisualizer:
         self.out_height = out_height
         self.in_width = in_width
         self.in_height = in_height
-        self.KPV = KeyPointVisualizer(self.kps, "aic")
+        self.KPV = KeyPointVisualizer(self.kps, dataset)
 
     def getPred(self, hm):
         max_val = 0

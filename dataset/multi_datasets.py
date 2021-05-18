@@ -10,6 +10,7 @@ tensor = torch.Tensor
 class MixedDataset(data.Dataset):
     def __init__(self, data_info, data_cfg, save=False, phase="train"):
         # self.is_train = train
+        self.phase = phase
         self.img_aug = False
         if phase == "train":
             self.annot, self.imgs = "train_annot", "train_imgs"
@@ -37,23 +38,23 @@ class MixedDataset(data.Dataset):
                 annotation_file = os.path.join(info["root"], info[self.annot])
                 if name == "coco":
                     from dataset.database.coco import COCO
-                    self.database[name] = COCO(self.kps)
+                    self.database[name] = COCO(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "mpii":
                     from dataset.database.mpii import MPII
-                    self.database[name] = MPII(self.kps)
+                    self.database[name] = MPII(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, info["root"])
                 elif name == "aic":
                     from dataset.database.aic import AIChallenger
-                    self.database[name] = AIChallenger(self.kps)
+                    self.database[name] = AIChallenger(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "yoga":
                     from dataset.database.yoga import YOGA
-                    self.database[name] = YOGA(self.kps)
+                    self.database[name] = YOGA(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "ceiling":
-                    from dataset.database.yoga import YOGA
-                    self.database[name] = YOGA(self.kps)
+                    from dataset.database.ceiling import CEILING
+                    self.database[name] = CEILING(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 else:
                     raise NotImplementedError

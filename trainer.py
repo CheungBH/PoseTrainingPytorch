@@ -8,10 +8,11 @@ import cv2
 import os
 from tensorboardX import SummaryWriter
 import time
-# from utils.draw import draw_kps, draw_hms
 from dataset.dataloader import TrainLoader
 from utils.utils import draw_graph
 import csv
+import sys
+from utils.train_utils import generate_cmd
 import shutil
 from dataset.draw import PredictionVisualizer, HeatmapVisualizer
 
@@ -42,6 +43,7 @@ class Trainer:
         self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
+        self.cmd = generate_cmd(sys.argv[1:])
 
         os.makedirs(os.path.join(self.expFolder, "logs/images"), exist_ok=True)
         self.tb_writer = SummaryWriter(self.expFolder)
@@ -72,6 +74,7 @@ class Trainer:
         self.best_epoch = self.curr_epoch
 
         posenet.init_with_opt(opt)
+        self.dataset = self.opt.dataset
         self.params_to_update, _ = posenet.get_updating_param()
         self.freeze = posenet.is_freeze
         self.model = posenet.model
@@ -179,7 +182,7 @@ class Trainer:
     def valid(self):
         drawn_kp = False
         PV, HMV = PredictionVisualizer(self.kps, self.val_batch, self.output_height, self.output_width, self.input_height,
-                                       self.input_width), \
+                                       self.input_width, dataset=self.dataset), \
                   HeatmapVisualizer(self.output_height, self.output_width)
         BatchEval = BatchEvaluator(self.kps, "Valid", self.opt.validBatch)
         EpochEval = EpochEvaluator((self.output_height, self.output_width))
@@ -255,7 +258,7 @@ class Trainer:
 
     def check_stop(self):
         for stop_epoch, stop_acc in stop_dicts.items():
-            if self.curr_epoch == stop_epoch and self.val_acc < stop_acc:
+            if self.curr_epoch == stop_epoch and self.val_acc/100 < stop_acc:
                 self.stop = True
                 print("The accuracy is too low! Stop.")
 
@@ -431,6 +434,7 @@ class Trainer:
         except shutil.SameFileError:
             pass
 
+        print(self.cmd, file=open(self.txt_log, "a+"))
         begin_time = time.time()
         error_string = ""
         try:

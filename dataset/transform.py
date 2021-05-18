@@ -5,6 +5,7 @@ from dataset.sample import SampleGenerator
 import json
 from dataset.visualize import KeyPointVisualizer, BBoxVisualizer
 import numpy as np
+from dataset.rotate import cv_rotate
 
 
 class ImageTransform:
@@ -142,12 +143,15 @@ class ImageTransform:
         if img_aug:
             if random.random() > 1 - self.flip_prob:
                 raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
+        img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
+        inputs = self.normalize(self.img2tensor(img))
+        if img_aug:
             if random.random() > 1 - self.rotate_prob:
                 prob = random.random()
                 degree = (prob - 0.5) * 2 * self.rotate
-                raw_img, kps, kps_valid = self.rotate_cropped_img(raw_img, kps, kps_valid, degree)
-        img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
-        inputs = self.normalize(self.img2tensor(img))
+                inputs = cv_rotate(inputs, degree, self.input_width, self.input_height)
+                labels = cv_rotate(labels, degree, self.output_width, self.output_height)
+                # raw_img, kps, kps_valid = self.rotate_cropped_img(raw_img, kps, kps_valid, degree)
         if self.save:
             import os
             import copy

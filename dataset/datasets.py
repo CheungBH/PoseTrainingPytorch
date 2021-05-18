@@ -196,6 +196,7 @@ if __name__ == '__main__':
                            "valid_imgs": "yoga_eval",
                            "train_annot": "yoga_train2.json",
                            "valid_annot": "yoga_eval.json"}}]
+
     # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic/ai_challenger",
     #                        "train_imgs": "train",
     #                        "valid_imgs": "valid",
@@ -207,7 +208,9 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
+
     sample_idx = 567
+
 
     data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = BaseDataset(data_info, data_cfg, phase="valid")
