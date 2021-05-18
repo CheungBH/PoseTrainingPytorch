@@ -149,10 +149,7 @@ class BaseDataset(data.Dataset):
         images = []
         bbox = []
         ids = []
-        # images_res = []
         kps_valid = []
-        # for i in range(len(anno['images'])):
-        #     images_res.append(anno['images'][i]['file_name'])
         for i in range(len(anno['annotations'])):
             entry = anno['annotations'][i]
             ids.append(entry["id"])
@@ -169,15 +166,15 @@ class BaseDataset(data.Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        try:
-            path, kps, box, i, valid = \
-                self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
-        except:
-            print(idx)
-            path, kps, box, i, valid = \
-                self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
-            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+        # try:
+        path, kps, box, i, valid = \
+            self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+        inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+        # except:
+        #     print(idx)
+        #     path, kps, box, i, valid = \
+        #         self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
+        #     inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
         img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
                     "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
@@ -196,9 +193,10 @@ if __name__ == '__main__':
     #                        "valid_annot": "mpiitrain_annotonly_test.json"}}]
     data_info = [{"yoga": {"root": "../data/yoga",
                            "train_imgs": "yoga_train2",
-                           "valid_imgs": "yoga_test",
+                           "valid_imgs": "yoga_eval",
                            "train_annot": "yoga_train2.json",
-                           "valid_annot": "yoga_test.json"}}]
+                           "valid_annot": "yoga_eval.json"}}]
+
     # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic/ai_challenger",
     #                        "train_imgs": "train",
     #                        "valid_imgs": "valid",
@@ -210,7 +208,7 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 31
+    sample_idx = 13328
 
     data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = BaseDataset(data_info, data_cfg, phase="train")

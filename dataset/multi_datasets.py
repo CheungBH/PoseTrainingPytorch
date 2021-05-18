@@ -76,15 +76,15 @@ class MixedDataset(data.Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        # try:
-        path, kps, box, i, valid = \
-            self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-        inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
-        # except:
-        #     print(idx)
-        #     path, kps, box, i, valid = \
-        #         self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
-        #     inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid, self.img_aug)
+        try:
+            path, kps, box, i, valid = \
+                self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+        except:
+            print(idx)
+            path, kps, box, i, valid = \
+                self.images[0], self.keypoints[0], self.boxes[0], self.ids[0], self.kps_valid[0]
+            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid, self.img_aug)
         img_meta = {"name": path, "kps": tensor(kps), "box": tensor(box), "id": i, "enlarged_box": tensor(enlarged_box),
                     "padded_size": tensor(pad_size), "valid": tensor(valid)}
         return inp, out, img_meta
