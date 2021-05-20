@@ -147,7 +147,7 @@ def warm_up_lr(optimizer, lr, epoch, warm_up_dict):
 
 
 def resume(opt):
-    from .utils import get_option_path
+    from .utils import get_option_path, get_superior_path
     # print("Before resuming:")
     # print(opt)
     model_path = opt.loadModel
@@ -162,8 +162,8 @@ def resume(opt):
     opt.trainIters = option.epoch * option.trainBatch
     opt.validBatch = option.validBatch
     opt.trainBatch = option.trainBatch
-    opt.data_cfg = option.data_cfg
-    opt.model_cfg = option.model_cfg
+    opt.data_cfg = os.path.join(get_superior_path(model_path), "data_cfg.json")
+    opt.model_cfg = os.path.join(get_superior_path(model_path), "model_cfg.json")
     opt.LR = option.LR
     opt.dataset = option.dataset
     opt.kps = option.kps
