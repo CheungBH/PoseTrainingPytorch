@@ -202,7 +202,7 @@ if __name__ == '__main__':
     IT.KPV.visualize(img, [kps], [valid])
     IT.BBV.visualize([box], img)
 
-    rot_img, kps, valid, new_box = IT.rotate_img(rot_img, box, kps, valid)
+    rot_img, kps, valid, new_box = IT.rotate_img(rot_img, box, kps, valid, degree)
 
     # IT.BBV.visualize([f_box], f_img)
     IT.KPV.visualize(rot_img, [kps], [valid])
