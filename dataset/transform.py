@@ -102,7 +102,7 @@ class ImageTransform:
             flipped_valid[l], flipped_valid[r] = kps_valid[r], kps_valid[l]
         return flipped_img, flipped_box, flipped_kps, flipped_valid
 
-    def rotate_img(self, img, box, kps, valid):
+    def rotate_img(self, img, box, kps, valid, degree):
         kps_new = []
         img_h, img_w = img.shape[0], img.shape[1]
         box_center = ((box[0] + box[2])/2, (box[1] + box[3])/2)
@@ -123,7 +123,7 @@ class ImageTransform:
                    new_box_center[0] + box_w/2, new_box_center[1] + box_h/2]
         for keypoint in kps:
             kps_new.append(self.rotate_point(keypoint,R_img))
-        return img_new, kps_new, valid, new_box
+        return img_new, new_box, kps_new, valid
 
     def rotate_point(self,point, R):
         return [R[0, 0] * point[0] + R[0, 1] * point[1] + R[0, 2],
@@ -147,10 +147,6 @@ class ImageTransform:
 
         return rot_bboxes
 
-    def rotate_cropped_img(self, im, kps, kps_valid, degree):
-        # rotate with center
-        return im, kps, kps_valid
-
     def tensor2img(self, ts):
         img = np.asarray(F.to_pil_image(ts))
         return img
@@ -161,15 +157,11 @@ class ImageTransform:
         if img_aug:
             if random.random() > 1 - self.flip_prob:
                 raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
+            if random.random() > 1 - self.rotate_prob:
+                degree = (random.random() - 0.5) * 2 * self.rotate
+                raw_img, enlarged_box, kps, kps_valid = self.rotate_img(raw_img, enlarged_box, kps, kps_valid, degree)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
         inputs = self.normalize(self.img2tensor(img))
-        if img_aug:
-            if random.random() > 1 - self.rotate_prob:
-                prob = random.random()
-                degree = (prob - 0.5) * 2 * self.rotate
-                inputs = cv_rotate(inputs, degree, self.input_width, self.input_height)
-                labels = cv_rotate(labels, degree, self.output_width, self.output_height)
-                # raw_img, kps, kps_valid = self.rotate_cropped_img(raw_img, kps, kps_valid, degree)
         if self.save:
             import os
             import copy
