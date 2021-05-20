@@ -75,6 +75,7 @@ class Tester:
         self.body_part_acc, self.body_part_dist, self.body_part_auc, self.body_part_pr = BatchEval.get_kps_result()
         pckh = EpochEval.eval_per_epoch()
         self.test_pckh = pckh[0]
+        print("The pckh value of current model is {}".format(self.test_pckh))
         self.body_part_pckh = pckh[1:]
         self.body_part_thresh = [Logger.get_thresh() for k, Logger in BatchEval.pts_curve_Loggers.items()]
         self.test_loss, self.test_acc, self.test_dist, self.test_auc, self.test_pr = BatchEval.get_batch_result()
