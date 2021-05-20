@@ -6,6 +6,8 @@ import json
 from dataset.visualize import KeyPointVisualizer, BBoxVisualizer
 import numpy as np
 from dataset.rotate import cv_rotate
+import math
+from PIL import Image
 
 
 class ImageTransform:
@@ -101,33 +103,63 @@ class ImageTransform:
         return flipped_img, flipped_box, flipped_kps, flipped_valid
 
     def rotate_img(self, img, box, kps, valid):
-
-        img_w, img_h = img.shape[0], img.shape[1]
-        w, h = box[2], box[3]
-        # center = (w / 2, h / 2)
+        kps_new = []
+        img_h, img_w = img.shape[0], img.shape[1]
         center_img = (img_w/2, img_h/2)
-        # R = cv2.getRotationMatrix2D(center, degree, 1)
+        Pi_angle = -degree * math.pi / 180.0
         R_img = cv2.getRotationMatrix2D(center_img, degree, 1)
-        cos, sin = abs(R_img[0, 0]), abs(R_img[0, 1])    #degrree between -40 and 40
-        kps = np.asarray(kps)
-        kps_new = np.zeros(kps.shape, dtype=kps.dtype)
-        x = kps[:, 0] - center_img[0]
-        y = kps[:, 1] - center_img[1]
-        kps_new[:, 0] = x * cos + y * sin + center_img[0]
-        kps_new[:, 1] = x * sin + y * cos + center_img[1]
-        # new_w = int(h * sin + w * cos)
-        # new_h = int(h * cos + w * sin)
-        new_img_w = int(img_h * sin + img_w * cos)
-        new_img_h = int(img_h * cos + img_w * sin)
+        cos, sin = abs(R_img[0, 0]), abs(R_img[0, 1])
+        new_img_w = int(img_w * cos + img_h * sin)
+        new_img_h = int(img_w * sin + img_h * cos)
         new_img_size = (new_img_w, new_img_h)
-        R_img[0, 2] += new_img_w/2 - center_img[0]
-        R_img[1, 2] += new_img_h/2 - center_img[1]
-        # new_size = (new_w, new_h)
-        # R[0, 2] += new_w/2 - center[0]
-        # R[1, 2] += new_h/2 - center[1]
-        # box_new = cv2.warpAffine(box, R, dsize=new_size, borderMode=cv2.BORDER_CONSTANT, borderValue=None)
-        img_new = cv2.warpAffine(img, R_img, dsize=new_img_size)
-        return img_new, kps_new, valid
+        R_img[0, 2] += new_img_w / 2 - center_img[0]
+        R_img[1, 2] += new_img_h / 2 - center_img[1]
+        img_new = cv2.warpAffine(img, R_img, dsize=new_img_size,borderMode=cv2.BORDER_CONSTANT)
+        bbox_new = self.bbox_rotate(box,R_img)
+        for keypoint in kps:
+            kps_new.append(self.rotate_point(keypoint,R_img))
+        return img_new,kps_new,valid,bbox_new
+
+
+
+    def rotate_point(self,point,R):
+        return [R[0, 0] * point[0] + R[0, 1] * point[1] + R[0, 2],
+                R[1, 0] * point[0] + R[1, 1] * point[1] + R[1, 2]]
+
+    def bbox_rotate(self,bbox,rot_mat):
+        assert len(bbox) == 4
+        bbox = [[bbox[0],bbox[1]],[bbox[2],bbox[1]],[bbox[2],bbox[3]],[bbox[0],bbox[3]]]
+        rot_bboxes = list()
+        point1 = np.dot(rot_mat, np.array([bbox[0][0], bbox[0][1], 1]).astype(np.int32))
+        point2 = np.dot(rot_mat, np.array([bbox[1][0], bbox[1][1], 1]).astype(np.int32))
+        point3 = np.dot(rot_mat, np.array([bbox[2][0], bbox[2][1], 1]).astype(np.int32))
+        point4 = np.dot(rot_mat, np.array([bbox[3][0], bbox[3][1], 1]).astype(np.int32))
+
+        # 加入list中
+        # bbox_new = [point1[0],point1[1],point4[0],point4[1]]
+        rot_bboxes.append([[point1[0], point1[1]],
+                           [point2[0], point2[1]],
+                           [point3[0], point3[1]],
+                           [point4[0], point4[1]]])
+
+        return rot_bboxes
+
+        # a = M[:, :2]  ##a.shape (2,2)
+        # b = M[:, 2:]  ###b.shape(2,1)
+        # b = np.reshape(b, newshape=(1, 2))
+        # a = np.transpose(a)
+        #
+        # [left, up, right, down] = bbox
+        # corner_point = np.array([[left, up], [right, up], [left, down], [right, down]])
+        # corner_point = np.dot(corner_point, a) + b
+        # min_left = max(int(np.min(corner_point[:, 0])), 0)
+        # max_right = min(int(np.max(corner_point[:, 0])), img_shape[1])
+        # min_up = max(int(np.min(corner_point[:, 1])), 0)
+        # max_down = min(int(np.max(corner_point[:, 1])), img_shape[0])
+        #
+        # return [min_left, max_right, min_up, max_down]
+
+
 
     def rotate_cropped_img(self, im, kps, kps_valid, degree):
         # rotate with center
@@ -184,7 +216,7 @@ if __name__ == '__main__':
            [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
     valid = [[0], [0], [2], [0], [2], [2], [2], [2], [2], [0], [2], [2], [2], [2], [2], [2], [2]]
 
-    degree = 50
+    degree = 30
     IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
@@ -192,35 +224,12 @@ if __name__ == '__main__':
     IT.KPV.visualize(img, [kps], [valid])
     IT.BBV.visualize([box], img)
 
-    rot_img, kps, valid = IT.rotate_img(rot_img, box, kps, valid)
+    rot_img, kps, valid,rot_box = IT.rotate_img(rot_img, box, kps, valid)
     # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
     # IT.BBV.visualize([f_box], f_img)
     IT.KPV.visualize(rot_img, [kps], [valid])
-    IT.BBV.visualize([box], rot_img)
+    IT.BBV.visualize1([rot_box], rot_img)
     cv2.imshow("raw", img)
     cv2.imshow("rot", rot_img)
     cv2.waitKey(0)
-    # import copy
-    # data_cfg = "../config/data_cfg/data_default.json"
-    # img_path = 'sample.jpg'
-    # box = [166.921, 85.08000000000001, 304.42900000000003, 479]
-    # kps = [[0, 0], [0, 0], [252, 156], [0, 0], [248, 153], [198, 193], [243, 196], [182, 245], [244, 263], [0, 0],
-    #        [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
-    # valid = [0, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]
-    #
-    # max_rotate = 40
-    # IT = ImageTransform()
-    # IT.init_with_cfg(data_cfg)
-    # img = IT.load_img(img_path)
-    # cropped = IT.SAMPLE.crop(box, img)
-    # cv2.imshow("raw", copy.deepcopy(cropped))
-    # rotated = IT.rotate_cropped_img(cropped)
-    #
-    # # f_img, f_kps, f_valid = IT.rotate_img(img, box, kps, valid)
-    #
-    # # IT.KPV.visualize(f_img, [f_kps])
-    # # IT.KPV.visualize(img, [kps])
-    #
-    # cv2.imshow("rotated", rotated)
-    # cv2.waitKey(0)

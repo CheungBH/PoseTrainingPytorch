@@ -2,6 +2,7 @@
 
 import torch
 import cv2
+import numpy as np
 
 RED = (0, 0, 255)
 GREEN = (0, 255, 0)
@@ -109,4 +110,8 @@ class BBoxVisualizer:
         for bbox in bboxes:
             img = cv2.rectangle(img, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), self.color, 4)
         return img
+    def visualize1(self,bboxes,img):
+        for bbox in bboxes:
+            plot_im = cv2.polylines(img, np.array(bboxes).astype(np.int32), True, (255, 0, 0), 2)
+        return plot_im
 
