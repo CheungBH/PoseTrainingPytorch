@@ -446,7 +446,7 @@ class Trainer:
                 self.lr_ls.append(curr_lr)
                 self.sparse_s = self.sparse_scheduler.update(epoch)
 
-                # self.train()
+                self.train()
                 self.valid()
                 self.record_bn()
                 self.write_log()
@@ -458,10 +458,10 @@ class Trainer:
                     break
                 self.curr_epoch += 1
                 self.opt.epoch = self.curr_epoch
-        except IOError:
-            error_string = ",Some file is closed"
-        except ZeroDivisionError:
-            error_string = ",Gradient flow"
+        # except IOError:
+        #     error_string = ",Some file is closed"
+        # except ZeroDivisionError:
+        #     error_string = ",Gradient flow"
         except KeyboardInterrupt:
             error_string = ",Process was killed"
 
