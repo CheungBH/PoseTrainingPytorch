@@ -258,7 +258,7 @@ class Trainer:
 
     def check_stop(self):
         for stop_epoch, stop_acc in stop_dicts.items():
-            if self.curr_epoch == stop_epoch and self.val_acc/100 < stop_acc:
+            if self.curr_epoch == stop_epoch and self.val_acc_ls[-1]/100 < stop_acc:
                 self.stop = True
                 print("The accuracy is too low! Stop.")
 
