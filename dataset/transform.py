@@ -118,8 +118,7 @@ class ImageTransform:
         bbox_new = self.bbox_rotate(box,R_img)
         for keypoint in kps:
             kps_new.append(self.rotate_point(keypoint,R_img))
-        return img_new,kps_new,valid,bbox_new
-
+        return img_new, kps_new, valid, bbox_new
 
 
     def rotate_point(self,point,R):
@@ -216,7 +215,7 @@ if __name__ == '__main__':
            [276, 285], [197, 298], [228, 297], [208, 398], [266, 399], [205, 475], [215, 453]]
     valid = [[0], [0], [2], [0], [2], [2], [2], [2], [2], [0], [2], [2], [2], [2], [2], [2], [2]]
 
-    degree = 30
+    degree = 50
     IT = ImageTransform()
     IT.init_with_cfg(data_cfg)
     img = IT.load_img(img_path)
@@ -224,12 +223,12 @@ if __name__ == '__main__':
     IT.KPV.visualize(img, [kps], [valid])
     IT.BBV.visualize([box], img)
 
-    rot_img, kps, valid,rot_box = IT.rotate_img(rot_img, box, kps, valid)
+    rot_img, kps, valid, _ = IT.rotate_img(rot_img, box, kps, valid)
     # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
 
     # IT.BBV.visualize([f_box], f_img)
     IT.KPV.visualize(rot_img, [kps], [valid])
-    IT.BBV.visualize1([rot_box], rot_img)
+    IT.BBV.visualize([box], rot_img)
     cv2.imshow("raw", img)
     cv2.imshow("rot", rot_img)
     cv2.waitKey(0)
