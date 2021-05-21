@@ -446,7 +446,7 @@ class Trainer:
                 self.lr_ls.append(curr_lr)
                 self.sparse_s = self.sparse_scheduler.update(epoch)
 
-                # self.train()
+                self.train()
                 self.valid()
                 self.record_bn()
                 self.write_log()
