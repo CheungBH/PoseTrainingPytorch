@@ -76,6 +76,8 @@ patience_decay = {1: 0.75, 2: 0.5, 3: 0.5}
 lr_decay_dict = {0.7: 0.1, 0.9: 0.01}
 sparse_decay_dict = {0.5: 0.1}
 warm_up = {1: 0.1, 2: 0.5}
+sparse_begin_update_epoch = 10
+
 
 if __name__ == '__main__':
     opt.loss_allocate = 1

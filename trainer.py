@@ -31,6 +31,7 @@ sparse_decay_dict = config.sparse_decay_dict
 dataset_info = config.train_info
 computer = config.computer
 loss_weight = config.loss_weight
+sparse_update_begin = config.sparse_begin_update_epoch
 
 criterion = Criterion()
 optimizer = Optimizer()
@@ -320,31 +321,34 @@ class Trainer:
             self.val_auc_ls.append(auc)
             self.val_pr_ls.append(pr)
             self.val_pckh_ls.append(pckh)
-            if acc > self.val_acc:
-                self.val_acc = acc
-                torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_acc.pth".format(self.opt.expID)))
-                self.best_epoch = self.curr_epoch
-            if pckh > self.val_pckh:
-                self.val_pckh = pckh
-                torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_pckh.pth".format(self.opt.expID)))
-            if auc > self.val_auc:
-                torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_auc.pth".format(self.opt.expID)))
-                self.val_auc = auc
-            if pr > self.val_pr:
-                torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_pr.pth".format(self.opt.expID)))
-                self.val_pr = pr
-            if loss < self.val_loss:
-                self.val_loss = loss
-            if dist < self.val_dist:
-                torch.save(self.model.module.state_dict(),
-                           os.path.join(self.expFolder, "{}_best_dist.pth".format(self.opt.expID)))
-                self.val_dist = dist
-            self.opt.valAcc, self.opt.valLoss, self.opt.valPCKh, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
-                self.opt.valIters = acc, loss, pckh, dist, auc, pr, iter
+            if self.sparse_s > 0 and self.curr_epoch < sparse_update_begin:
+                if acc > self.val_acc:
+                    self.val_acc = acc
+                    torch.save(self.model.module.state_dict(),
+                               os.path.join(self.expFolder, "{}_best_acc.pth".format(self.opt.expID)))
+                    self.best_epoch = self.curr_epoch
+                if pckh > self.val_pckh:
+                    self.val_pckh = pckh
+                    torch.save(self.model.module.state_dict(),
+                               os.path.join(self.expFolder, "{}_best_pckh.pth".format(self.opt.expID)))
+                if auc > self.val_auc:
+                    torch.save(self.model.module.state_dict(),
+                               os.path.join(self.expFolder, "{}_best_auc.pth".format(self.opt.expID)))
+                    self.val_auc = auc
+                if pr > self.val_pr:
+                    torch.save(self.model.module.state_dict(),
+                               os.path.join(self.expFolder, "{}_best_pr.pth".format(self.opt.expID)))
+                    self.val_pr = pr
+                if loss < self.val_loss:
+                    self.val_loss = loss
+                if dist < self.val_dist:
+                    torch.save(self.model.module.state_dict(),
+                               os.path.join(self.expFolder, "{}_best_dist.pth".format(self.opt.expID)))
+                    self.val_dist = dist
+                self.opt.valAcc, self.opt.valLoss, self.opt.valPCKh, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
+                    self.opt.valIters = acc, loss, pckh, dist, auc, pr, iter
+            else:
+                pass
         else:
             raise ValueError("The code is wrong!")
 
