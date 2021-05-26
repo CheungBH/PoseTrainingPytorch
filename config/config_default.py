@@ -8,7 +8,7 @@ body_parts = {1: "nose", 2: "left eye", 3: "right eye", 4: "left ear", 5: "right
               12: "left hip", 13: "right hip", 14: "left knee", 15: "right knee", 16: "left ankle", 17: "right ankle"}
 
 
-datasets_info = {"coco": {"root": "/media/hkuit155/Elements/coco",
+datasets_info = {"coco": {"root": "data/coco",
                           "train_imgs": "train2017",
                           "valid_imgs": "val2017",
                           "test_imgs": "val2017",
@@ -16,7 +16,7 @@ datasets_info = {"coco": {"root": "/media/hkuit155/Elements/coco",
                           "valid_annot": "annotations/person_keypoints_val2017.json",
                           "test_annot": "annotations/person_keypoints_val2017.json"
                           },
-                 "aic": {"root": "/media/hkuit155/Elements/data/aic",
+                 "aic": {"root": "data/aic",
                          "train_imgs": "ai_challenger_keypoint_train_20170902/keypoint_train_images_20170902",
                          "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
                          "test_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
