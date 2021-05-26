@@ -103,10 +103,10 @@ if __name__ == '__main__':
     #                        "train_annot": "mpiitrain_annotonly_train.json",
     #                        "valid_annot": "mpiitrain_annotonly_test.json"}}]
     data_info = [{"yoga": {"root": "../data/yoga",
-                           "train_imgs": "yoga_train2",
+                           "train_imgs": "yoga_train",
                            "valid_imgs": "yoga_eval",
                            "test_imgs": "yoga_test",
-                           "train_annot": "yoga_train2.json",
+                           "train_annot": "yoga_train.json",
                            "valid_annot": "yoga_eval.json",
                            "test_annot": "yoga_test.json",
                            }}]
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     #                          "train_annot": "ceiling_train.json",
     #                          "valid_annot": "ceiling_test.json"}}]
 
-    sample_idx = 18292
+    sample_ls = 100
 
     data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = MixedDataset(data_info, data_cfg, phase="train")
@@ -130,21 +130,22 @@ if __name__ == '__main__':
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
     bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(dataset.kps, "mpii")
-    result = dataset[sample_idx][-1]
-    img = cv2.imread(result["name"])
-    f_img, f_box, f_kps, f_valid = dataset.transform.flip(copy.deepcopy(img), copy.deepcopy(result["box"].tolist()),
-                                                          copy.deepcopy(result["kps"].tolist()),
-                                                          copy.deepcopy(result["valid"].tolist()))
+    kpv = KeyPointVisualizer(dataset.kps, "coco")
+    for sample_idx in range(sample_ls):
+        result = dataset[sample_idx][-1]
+        img = cv2.imread(result["name"])
+        # f_img, f_box, f_kps, f_valid = dataset.transform.flip(copy.deepcopy(img), copy.deepcopy(result["box"].tolist()),
+        #                                                       copy.deepcopy(result["kps"].tolist()),
+        #                                                       copy.deepcopy(result["valid"].tolist()))
 
-    bbv.visualize([result["box"]], img)
-    kpv.visualize(img, result["kps"].unsqueeze(dim=0))
-    bbv.visualize([f_box], f_img)
-    kpv.visualize(f_img, [f_kps])
+        bbv.visualize([result["box"]], img)
+        kpv.visualize(img, result["kps"].unsqueeze(dim=0))
+        # bbv.visualize([f_box], f_img)
+        # kpv.visualize(f_img, [f_kps])
 
-    cv2.imshow("img", cv2.resize(img, (720, 540)))
-    cv2.imshow("flipped", cv2.resize(f_img, (720, 540)))
+        cv2.imshow("img", cv2.resize(img, (720, 540)))
+        # cv2.imshow("flipped", cv2.resize(f_img, (720, 540)))
 
-    cv2.waitKey(0)
+        cv2.waitKey(0)
 
 

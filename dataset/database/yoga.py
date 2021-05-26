@@ -23,6 +23,7 @@ class YOGA(BaseDataset):
             entry = anno['annotations'][i]
             ids.append(entry["id"])
             kp, kp_valid = kps_reshape(entry["keypoints"])
+            kp, kp_valid = select_kps(kp, kp_valid, self.body_part_idx, self.kps_num)
             if not sum(kp_valid):
                 continue
             bbox.append(xywh2xyxy(entry['bbox']))
