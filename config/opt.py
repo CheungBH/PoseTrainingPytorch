@@ -63,7 +63,7 @@ parser.add_argument('--valIters', default=0, type=int,
                     help='Total valid iters')
 parser.add_argument('--train_worker', default=5, type=int,
                     help='num worker of train')
-parser.add_argument('--val_worker', default=1, type=int,
+parser.add_argument('--val_worker', default=2, type=int,
                     help='num worker of val')
 parser.add_argument('--save_interval', default=20, type=int,
                     help='interval')
