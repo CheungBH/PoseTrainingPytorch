@@ -22,11 +22,11 @@ class AutoTrainer:
         print(self.opt)
         print("This is the model with id {}".format(self.opt.expID))
         # print("Training backbone is: {}".format(self.opt.backbone))
-        # dataset_str = ""
-        # for k, v in train_info.items():
-        #     dataset_str += k
-        #     dataset_str += ", "
-        # print("Training data is: {}".format(dataset_str[:-1]))
+        dataset_str = ""
+        for k, v in train_info[0].items():
+            dataset_str += k
+            dataset_str += ", "
+        print("Training data is: {}".format(dataset_str[:-1]))
         print("Warm up end at {}".format(warm_up))
         for k, v in bad_epochs.items():
             if v > 1:

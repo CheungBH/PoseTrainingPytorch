@@ -1,0 +1,9 @@
+backbone,dataset,se_ratio,kps,input_height,input_width,output_height,output_width,validBatch,trainBatch,optMethod,freeze_bn,freeze,sparse,nEpochs,LR,sigma,momentum,weightDecay,save_interval,loadModel
+shufflenet,coco,0,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,1,0,0,20,
+shufflenet,coco,0,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,1,0,0,20,
+shufflenet,coco,0,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,2,0,0,20,
+shufflenet,coco,0,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,2,0,0,20,
+shufflenet,coco,0,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,1,0.97,0,20,
+shufflenet,coco,0,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,1,0.97,0,20,
+shufflenet,coco,0,17,256,256,64,64,64,64,rmsprop,FALSE,0,0,120,0.001,2,0.97,0,20,
+shufflenet,coco,0,17,256,256,64,64,64,64,adam,FALSE,0,0,120,0.001,2,0.96,0,20,

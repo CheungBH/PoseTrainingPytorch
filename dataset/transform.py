@@ -102,11 +102,13 @@ class ImageTransform:
             flipped_valid[l], flipped_valid[r] = kps_valid[r], kps_valid[l]
         return flipped_img, flipped_box, flipped_kps, flipped_valid
 
-    def rotate_img(self, img, box, kps, valid):
+    def rotate_img(self, img, box, kps, valid, degree):
         kps_new = []
         img_h, img_w = img.shape[0], img.shape[1]
+        box_center = ((box[0] + box[2])/2, (box[1] + box[3])/2)
+        box_h, box_w = box[3] - box[1], box[2] - box[0]
+
         center_img = (img_w/2, img_h/2)
-        Pi_angle = -degree * math.pi / 180.0
         R_img = cv2.getRotationMatrix2D(center_img, degree, 1)
         cos, sin = abs(R_img[0, 0]), abs(R_img[0, 1])
         new_img_w = int(img_w * cos + img_h * sin)
@@ -115,14 +117,15 @@ class ImageTransform:
         R_img[0, 2] += new_img_w / 2 - center_img[0]
         R_img[1, 2] += new_img_h / 2 - center_img[1]
         img_new = cv2.warpAffine(img, R_img, dsize=new_img_size,borderMode=cv2.BORDER_CONSTANT)
-        bbox_new = self.bbox_rotate(box,R_img)
+        # bbox_center = self.bbox_rotate(box, R_img)
+        new_box_center = self.rotate_point(box_center, R_img)
+        new_box = [new_box_center[0] - box_w/2, new_box_center[1] - box_h/2,
+                   new_box_center[0] + box_w/2, new_box_center[1] + box_h/2]
         for keypoint in kps:
             kps_new.append(self.rotate_point(keypoint,R_img))
-        return img_new,kps_new,valid,bbox_new
+        return img_new, new_box, kps_new, valid
 
-
-
-    def rotate_point(self,point,R):
+    def rotate_point(self,point, R):
         return [R[0, 0] * point[0] + R[0, 1] * point[1] + R[0, 2],
                 R[1, 0] * point[0] + R[1, 1] * point[1] + R[1, 2]]
 
@@ -144,27 +147,6 @@ class ImageTransform:
 
         return rot_bboxes
 
-        # a = M[:, :2]  ##a.shape (2,2)
-        # b = M[:, 2:]  ###b.shape(2,1)
-        # b = np.reshape(b, newshape=(1, 2))
-        # a = np.transpose(a)
-        #
-        # [left, up, right, down] = bbox
-        # corner_point = np.array([[left, up], [right, up], [left, down], [right, down]])
-        # corner_point = np.dot(corner_point, a) + b
-        # min_left = max(int(np.min(corner_point[:, 0])), 0)
-        # max_right = min(int(np.max(corner_point[:, 0])), img_shape[1])
-        # min_up = max(int(np.min(corner_point[:, 1])), 0)
-        # max_down = min(int(np.max(corner_point[:, 1])), img_shape[0])
-        #
-        # return [min_left, max_right, min_up, max_down]
-
-
-
-    def rotate_cropped_img(self, im, kps, kps_valid, degree):
-        # rotate with center
-        return im, kps, kps_valid
-
     def tensor2img(self, ts):
         img = np.asarray(F.to_pil_image(ts))
         return img
@@ -175,15 +157,11 @@ class ImageTransform:
         if img_aug:
             if random.random() > 1 - self.flip_prob:
                 raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
+            if random.random() > 1 - self.rotate_prob:
+                degree = (random.random() - 0.5) * 2 * self.rotate
+                raw_img, enlarged_box, kps, kps_valid = self.rotate_img(raw_img, enlarged_box, kps, kps_valid, degree)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
         inputs = self.normalize(self.img2tensor(img))
-        if img_aug:
-            if random.random() > 1 - self.rotate_prob:
-                prob = random.random()
-                degree = (prob - 0.5) * 2 * self.rotate
-                inputs = cv_rotate(inputs, degree, self.input_width, self.input_height)
-                labels = cv_rotate(labels, degree, self.output_width, self.output_height)
-                # raw_img, kps, kps_valid = self.rotate_cropped_img(raw_img, kps, kps_valid, degree)
         if self.save:
             import os
             import copy
@@ -224,12 +202,11 @@ if __name__ == '__main__':
     IT.KPV.visualize(img, [kps], [valid])
     IT.BBV.visualize([box], img)
 
-    rot_img, kps, valid,rot_box = IT.rotate_img(rot_img, box, kps, valid)
-    # f_img, f_box, f_kps, f_valid = IT.flip(img, box, kps, valid)
+    rot_img, kps, valid, new_box = IT.rotate_img(rot_img, box, kps, valid, degree)
 
     # IT.BBV.visualize([f_box], f_img)
     IT.KPV.visualize(rot_img, [kps], [valid])
-    IT.BBV.visualize1([rot_box], rot_img)
+    IT.BBV.visualize([new_box], rot_img)
     cv2.imshow("raw", img)
     cv2.imshow("rot", rot_img)
     cv2.waitKey(0)
