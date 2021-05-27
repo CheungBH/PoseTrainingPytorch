@@ -322,6 +322,8 @@ class Trainer:
             self.val_pr_ls.append(pr)
             self.val_pckh_ls.append(pckh)
             if self.sparse_s > 0 and self.curr_epoch < sparse_update_begin:
+                pass
+            else:
                 if acc > self.val_acc:
                     self.val_acc = acc
                     torch.save(self.model.module.state_dict(),
@@ -347,8 +349,6 @@ class Trainer:
                     self.val_dist = dist
                 self.opt.valAcc, self.opt.valLoss, self.opt.valPCKh, self.opt.valDist, self.opt.valAuc, self.opt.valPR, \
                     self.opt.valIters = acc, loss, pckh, dist, auc, pr, iter
-            else:
-                pass
         else:
             raise ValueError("The code is wrong!")
 
