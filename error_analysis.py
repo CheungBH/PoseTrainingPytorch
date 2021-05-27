@@ -15,7 +15,7 @@ posenet = PoseModel()
 class ErrorAnalyser:
     out_h, out_w, in_h, in_w, criterion = 64, 64, 256, 256, "MSE"
 
-    def __init__(self, model_cfg, model_path, data_info, data_cfg, print_info=True, batchsize=8, num_worker=1):
+    def __init__(self, model_path, model_cfg, data_cfg, data_info, print_info=True, batchsize=8, num_worker=1):
         if isinstance(data_info, list):
             self.test_dataset = TestLoader(data_info, data_cfg)
         else:
@@ -41,8 +41,7 @@ class ErrorAnalyser:
         posenet.load(model_path)
         self.criterion = Criterion().build(self.crit)
 
-        self.part_test_acc, self.part_test_dist, self.part_test_auc, self.part_test_pr, self.part_test_pckh = \
-            [], [], [], [], []
+        self.part_acc, self.part_dist, self.part_auc, self.part_pr, self.part_pckh = [], [], [], [], []
         self.print = print_info
         self.batch_size = batchsize
 
@@ -88,17 +87,17 @@ class ErrorAnalyser:
             print("Inference time is {}".format(self.infer_time))
             print("-------------------------------------------------------------------------------------------------")
 
-    def summarize(self):
-        benchmark = [self.flops, self.params, self.infer_time]
-        performance = [self.test_acc, self.test_loss, self.test_pckh, self.test_dist, self.test_auc, self.test_pr]
-        parts_performance = [self.body_part_pckh, self.body_part_acc, self.body_part_dist, self.body_part_auc,
-                             self.body_part_pr]
-        return benchmark, performance, parts_performance, self.body_part_thresh
+    # def summarize(self):
+    #     benchmark = [self.flops, self.params, self.infer_time]
+    #     performance = [self.test_acc, self.test_loss, self.test_pckh, self.test_dist, self.test_auc, self.test_pr]
+    #     parts_performance = [self.body_part_pckh, self.body_part_acc, self.body_part_dist, self.body_part_auc,
+    #                          self.body_part_pr]
+    #     return benchmark, performance, parts_performance, self.body_part_thresh
 
-    def save_thresh_to_option(self):
-        thresh_str = list_to_str(self.customized_thresholds)
-        self.option.thresh = thresh_str
-        torch.save(self.option, self.option_file)
+    # def save_thresh_to_option(self):
+    #     thresh_str = list_to_str(self.customized_thresholds)
+    #     self.option.thresh = thresh_str
+    #     torch.save(self.option, self.option_file)
 
     def get_valid_percent(self, values, thresholds):
         valid = 0
@@ -107,26 +106,22 @@ class ErrorAnalyser:
                 valid += 1
         return valid/self.kps
 
-    def add_customized_thresh(self):
-        for img_name, max_val in self.max_val_dict.items():
-            customized_valid = self.get_valid_percent(max_val, self.customized_thresholds)
-            self.performance[img_name].append(customized_valid)
+    # def add_customized_thresh(self):
+    #     for img_name, max_val in self.max_val_dict.items():
+    #         customized_valid = self.get_valid_percent(max_val, self.customized_thresholds)
+    #         self.performance[img_name].append(customized_valid)
 
 
 if __name__ == '__main__':
-    data_info = [{"mpii": {"root": "data/mpii",
-                          "train_imgs": "MPIIimages",
-                          "valid_imgs": "MPIIimages",
-                          "test_imgs": "MPIIimages",
-                          "train_annot": "mpiitrain_annotonly_train.json",
-                          "valid_annot": "mpiitrain_annotonly_test.json",
-                          "test_annot": "mpiitrain_annotonly_test.json",
-                         }}]
-    model_path = "exp/test_kps/aic_13/latest.pth"
-    model_cfg = "exp/test_kps/aic_13/model_cfg.json"
-    data_cfg = "exp/test_kps/aic_13/data_cfg.json"
+    dataset = "mpii"
+    model_path = "exp/pretrain_13kps-mixed_13kps/9/latest.pth"
+    data_cfg = "exp/pretrain_13kps-mixed_13kps/9/data_cfg.json"
+    model_cfg = "exp/pretrain_13kps-mixed_13kps/9/model_cfg.json"
 
-    analyser = ErrorAnalyser(model_cfg, model_path, data_info, data_cfg)
+    from config.config import datasets_info
+    data_info = [{dataset: datasets_info[dataset]}]
+
+    analyser = ErrorAnalyser(model_path, model_cfg, data_cfg, data_info)
     analyser.analyse()
     analyser.get_benchmark()
     benchmark, performance, parts, thresh = analyser.summarize()
