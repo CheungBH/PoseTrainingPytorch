@@ -97,18 +97,13 @@ class Tester:
 
 
 if __name__ == '__main__':
-    data_info = [{"mpii": {"root": "data/mpii",
-                          "train_imgs": "MPIIimages",
-                          "valid_imgs": "MPIIimages",
-                          "test_imgs": "MPIIimages",
-                          "train_annot": "mpiitrain_annotonly_train.json",
-                          "valid_annot": "mpiitrain_annotonly_test.json",
-                          "test_annot": "mpiitrain_annotonly_test.json",
-                         }}]
+    dataset = "mpii"
     model_path = "exp/test_kps/aic_13/latest.pth"
     model_cfg = "exp/test_kps/aic_13/model_cfg.json"
     data_cfg = "exp/test_kps/aic_13/data_cfg.json"
 
+    from config.config import datasets_info
+    data_info = [{dataset: datasets_info[dataset]}]
     tester = Tester(model_cfg, model_path, data_info, data_cfg)
     tester.test()
     tester.get_benchmark()
