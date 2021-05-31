@@ -13,7 +13,7 @@ posenet = PoseModel()
 
 
 class Tester:
-    out_h, out_w, in_h, in_w, criterion = 64, 64, 256, 256, "MSE"
+    out_h, out_w, in_h, in_w, crit = 64, 64, 256, 256, "MSE"
 
     def __init__(self, model_cfg, model_path, data_info, data_cfg, print_info=True, batchsize=8, num_worker=1):
         if isinstance(data_info, list):

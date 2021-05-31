@@ -1,40 +1,24 @@
 from error_analysis import ErrorAnalyser
 import os
-from trash.dataset.dataloader import TestDataset
+from dataset.dataloader import TestLoader
 from collections import defaultdict
+from utils.utils import init_model_list
 
 
 class AutoErrorAnalyser:
-    def __init__(self, model_folder, data_info, num_worker=1):
+    def __init__(self, model_folder, data_info, same_data_cfg=True):
         self.model_folder = model_folder
-        self.cfg_ls = []
-        self.model_ls = []
-        self.test_loader = TestDataset(data_info).build_dataloader(1, num_worker)
+        self.model_ls, self.model_cfg_ls, self.data_cfg_ls, _ = init_model_list(self.model_folder)
         self.performance = defaultdict(list)
         self.result_file = os.path.join(model_folder, "analyse_result.csv")
-
-    def load_model(self):
-        for folder in os.listdir(self.model_folder):
-            if not os.path.isdir(os.path.join(self.model_folder, folder)):
-                continue
-
-            sub_folder = os.path.join(self.model_folder, folder)
-            cfg = None
-            for file in os.listdir(sub_folder):
-                if "cfg" in file:
-                    cfg = os.path.join(sub_folder, file)
-                elif "option" not in file and "pkl" in file:
-                    model = os.path.join(sub_folder, file)
-                else:
-                    continue
-
-            try:
-                self.model_ls.append(model)
-            except:
-                raise FileNotFoundError("Model doesn't exist! Please check")
-            self.cfg_ls.append(cfg)
+        self.target_ind = ["loss", "acc", "dist", "valid(default)", "valid(customized)"]
+        if same_data_cfg:
+            self.test_data = TestLoader(data_info, self.data_cfg_ls[0])
+        else:
+            self.test_data = data_info
 
     def write_result(self):
+        print(self.performance)
         '''
         sample:
         models---JQK
@@ -49,19 +33,23 @@ class AutoErrorAnalyser:
         }
 
     def analyse(self):
-        self.load_model()
-        for idx, (cfg, model) in enumerate(zip(self.cfg_ls, self.model_ls)):
-            analyser = ErrorAnalyser(self.test_loader, model, model_cfg=cfg)
-            analyser.build_with_opt()
+        model_nums = len(self.model_ls)
+        for idx, (model_cfg, model_path, data_cfg) in enumerate(zip(self.model_cfg_ls, self.model_ls, self.data_cfg_ls)):
+            print("-------------------[{}/{}]: Begin Analysing {}--------------".format(idx+1, model_nums, model_path))
+            analyser = ErrorAnalyser(model_cfg, model_path, self.test_data, data_cfg)
             analyser.analyse()
             performance = analyser.summarize()
-            for img_name, perf in performance.items():
-                self.performance[img_name].append(perf)
+            for i in range(len(performance[0])):
+                self.performance[(performance[0][i], performance[1][i])].append([performance[2][i], performance[3][i],
+                                                                                 performance[4][i], performance[5][i],
+                                                                                 performance[6][i]])
         self.write_result()
 
 
 if __name__ == '__main__':
-    model_folder = "exp/test_selected"
-    analyse_data = {"ceiling": ["data/ceiling/ceiling_test", "data/ceiling/ceiling_test.h5", 0]}
-    AEA = AutoErrorAnalyser(model_folder, analyse_data)
+    dataset = "ceiling"
+    model_folder = "exp/error_test"
+    from config.config import datasets_info
+    data_info = [{dataset: datasets_info[dataset]}]
+    AEA = AutoErrorAnalyser(model_folder, data_info)
     AEA.analyse()

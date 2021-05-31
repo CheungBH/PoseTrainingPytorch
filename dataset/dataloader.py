@@ -22,7 +22,7 @@ class TestLoader:
     def __init__(self, data_info, data_cfg):
         self.dataset = MixedDataset(data_info, data_cfg, phase="test")
 
-    def build_dataloader(self, batch, worker, shuffle=True, pin_memory=True):
+    def build_dataloader(self, batch, worker, shuffle=False, pin_memory=True):
         loader = torch.utils.data.DataLoader(self.dataset, batch_size=batch, shuffle=shuffle, num_workers=worker,
                                              pin_memory=pin_memory)
         return loader
