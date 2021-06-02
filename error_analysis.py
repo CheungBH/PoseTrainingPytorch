@@ -106,7 +106,6 @@ class ErrorAnalyser:
             print("FLOPs of current model is {}".format(self.flops))
             print("Parameters of current model is {}".format(self.params))
             print("Inference time is {}".format(self.infer_time))
-            print("-------------------------------------------------------------------------------------------------")
 
     def save_thresh_to_option(self):
         thresh_str = list_to_str(self.customized_thresholds)
@@ -132,6 +131,13 @@ class ErrorAnalyser:
     def summarize(self):
         return self.imgs, self.ids, self.sample_acc, self.sample_loss, self.sample_dist, self.sample_valid_default,\
             self.sample_valid_customized
+
+    def summarize_test(self):
+        benchmark = [self.flops, self.params, self.infer_time]
+        performance = [self.acc, self.loss, self.pckh, self.dist, self.auc, self.pr]
+        parts_performance = [self.body_part_pckh, self.body_part_acc, self.body_part_dist, self.body_part_auc,
+                             self.body_part_pr]
+        return benchmark, performance, parts_performance, self.customized_thresholds
 
 
 if __name__ == '__main__':
