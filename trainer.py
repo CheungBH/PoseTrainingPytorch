@@ -145,7 +145,7 @@ class Trainer:
             else:
                 loss.backward()
 
-            if not self.freeze:
+            if self.sparse_s > 0:
                 for mod in self.model.modules():
                     if isinstance(mod, torch.nn.BatchNorm2d):
                        mod.weight.grad.data.add_(self.sparse_s * torch.sign(mod.weight.data))
