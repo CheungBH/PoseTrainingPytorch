@@ -41,7 +41,9 @@ posenet = PoseModel(device=device)
 class Trainer:
     def __init__(self, opt, vis_in_training=False):
         #print(opt)
-        self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
+        self.build_with_opt(opt)
+
+
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
         self.cmd = generate_cmd(sys.argv[1:])
@@ -53,7 +55,6 @@ class Trainer:
         self.xlsx_log = os.path.join(self.expFolder, "logs/train_xlsx.csv")
         self.summary_log = os.path.join("exp", opt.expFolder, "train_{}-{}.csv".format(opt.expFolder, computer))
 
-        self.build_with_opt(opt)
         self.freeze = False
         self.stop = False
 
@@ -69,6 +70,8 @@ class Trainer:
         self.opt = opt
         if opt.resume:
             self.opt = resume(self.opt)
+
+        self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.total_epochs = self.opt.nEpochs
         self.lr = opt.LR
         self.curr_epoch = self.opt.epoch
