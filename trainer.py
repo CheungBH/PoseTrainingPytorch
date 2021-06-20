@@ -41,9 +41,11 @@ posenet = PoseModel(device=device)
 class Trainer:
     def __init__(self, opt, vis_in_training=False):
         #print(opt)
-        self.build_with_opt(opt)
+        self.opt = opt
+        if opt.resume:
+            self.opt = resume(self.opt)
 
-
+        self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
         self.cmd = generate_cmd(sys.argv[1:])
@@ -58,6 +60,8 @@ class Trainer:
         self.freeze = False
         self.stop = False
 
+        self.build_with_opt(opt)
+
         self.epoch_ls, self.lr_ls, self.bn_mean_ls = [], [], []
         self.train_pckh, self.val_pckh, self.train_pckh_ls, self.val_pckh_ls, self.part_train_pckh, self.part_val_pckh = 0, 0, [], [], [], []
         self.train_acc, self.val_acc, self.train_acc_ls, self.val_acc_ls, self.part_train_acc, self.part_val_acc = 0, 0, [], [], [], []
@@ -67,11 +71,7 @@ class Trainer:
         self.train_loss, self.val_loss, self.train_loss_ls, self.val_loss_ls, self.part_train_loss, self.part_val_loss = float("inf"), float("inf"), [], [], [], []
         
     def build_with_opt(self, opt):
-        self.opt = opt
-        if opt.resume:
-            self.opt = resume(self.opt)
 
-        self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.total_epochs = self.opt.nEpochs
         self.lr = opt.LR
         self.curr_epoch = self.opt.epoch
