@@ -153,6 +153,7 @@ class ImageTransform:
 
     def process(self, img_path, box, kps, kps_valid, img_aug=False):
         raw_img = self.load_img(img_path)
+        # cv2.imshow("load", raw_img)
         enlarged_box = self.scale(raw_img, box)
         if img_aug:
             if random.random() > 1 - self.flip_prob:
@@ -161,6 +162,8 @@ class ImageTransform:
                 degree = (random.random() - 0.5) * 2 * self.rotate
                 raw_img, enlarged_box, kps, kps_valid = self.rotate_img(raw_img, enlarged_box, kps, kps_valid, degree)
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
+        # cv2.imshow("padded", img)
+        # cv2.waitKey(0)
         inputs = self.normalize(self.img2tensor(img))
         if self.save:
             import os
@@ -179,8 +182,10 @@ class ImageTransform:
     def process_single_img(self, img_path, out_h, out_w, in_h, in_w):
         self.SAMPLE = SampleGenerator(out_h, out_w, in_h, in_w)
         img = self.load_img(img_path)
+        # cv2.imshow("load", img)
         padded_img, padded_size = self.SAMPLE.padding(img)
         # cv2.imshow("padded", padded_img)
+        # cv2.waitKey(0)
         inputs = self.normalize(self.img2tensor(padded_img))
         return inputs, padded_size
 

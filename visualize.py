@@ -34,6 +34,7 @@ class ImageVisualizer:
         posenet.build(model_cfg)
         self.model = posenet.model
         self.kps = posenet.kps
+        self.model.eval()
         posenet.load(model_path)
         self.PV = PredictionVisualizer(posenet.kps, 1, self.out_h, self.out_w, self.in_h, self.in_w, max_img=1, column=1)
 

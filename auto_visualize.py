@@ -26,7 +26,7 @@ class AutoVisualizer:
 
 
 if __name__ == '__main__':
-    model_folder = "exp/test_init"
+    model_folder = "onnx/0622"
     src_img_folder = "img"
     dest_img_folder = "img_result"
     AV = AutoVisualizer(model_folder, src_img_folder, dest_img_folder)

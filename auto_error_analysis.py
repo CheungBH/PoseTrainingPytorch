@@ -77,7 +77,7 @@ class AutoErrorAnalyser:
 
 if __name__ == '__main__':
     dataset = "yoga"
-    model_folder = r"C:\Users\hkuit164\Downloads\0622"
+    model_folder = "onnx/0622"
     from config.config import datasets_info
     data_info = [{dataset: datasets_info[dataset]}]
     AEA = AutoErrorAnalyser(model_folder, data_info)
