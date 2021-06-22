@@ -23,7 +23,7 @@ class AutoErrorAnalyser:
             self.test_data = data_info
 
     def write_analysis_result(self):
-        print(self.performance)
+        # print(self.performance)
         '''
         sample:
         models---JQK
@@ -59,7 +59,7 @@ class AutoErrorAnalyser:
         for idx, (model_cfg, model_path, data_cfg) in enumerate(zip(self.model_cfg_ls, self.model_ls, self.data_cfg_ls)):
             print("-------------------[{}/{}]: Begin Analysing {}--------------".format(idx+1, model_nums, model_path))
             self.model_path = model_path
-            analyser = ErrorAnalyser(model_cfg, model_path, self.test_data, data_cfg)
+            analyser = ErrorAnalyser(model_cfg, model_path, self.test_data, data_cfg, dataset)
             analyser.analyse()
             analyser.get_benchmark()
             self.kps = analyser.kps
@@ -76,8 +76,8 @@ class AutoErrorAnalyser:
 
 
 if __name__ == '__main__':
-    dataset = "ceiling"
-    model_folder = "exp/error_test"
+    dataset = "yoga"
+    model_folder = r"C:\Users\hkuit164\Downloads\0622"
     from config.config import datasets_info
     data_info = [{dataset: datasets_info[dataset]}]
     AEA = AutoErrorAnalyser(model_folder, data_info)
