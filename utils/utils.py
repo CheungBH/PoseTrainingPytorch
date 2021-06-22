@@ -10,6 +10,9 @@ def init_model_list(folder):
     for sub_folder in os.listdir(folder):
         sub_folder_path = os.path.join(folder, sub_folder)
         model_cnt = 0
+        if "csv" in sub_folder_path:
+            continue
+
         for file_name in os.listdir(sub_folder_path):
             file_path = os.path.join(sub_folder_path, file_name)
             if "data_cfg" in file_name:
