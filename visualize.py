@@ -4,6 +4,7 @@ from dataset.draw import PredictionVisualizer
 from utils.utils import get_option_path
 import cv2
 import os
+from utils.utils import get_corresponding_cfg
 import torch
 
 posenet = PoseModel()
@@ -56,9 +57,13 @@ class ImageVisualizer:
 
 
 if __name__ == '__main__':
-    model_cfg = "exp/test_kps/mpii_13/model_cfg.json"
     model_path = "exp/test_kps/aic_13/latest.pth"
-    data_cfg = "exp/test_kps/mpii_13/data_cfg.json"
     img_path = "exp/person.jpg"
+
+    model_cfg = ""
+    data_cfg = ""
+
+    if not model_path or not data_cfg:
+        model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
     IV = ImageVisualizer(model_cfg, model_path, data_cfg)
     IV.visualize(img_path)

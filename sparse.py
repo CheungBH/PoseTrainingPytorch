@@ -2,7 +2,7 @@ import os
 from models.pose_model import PoseModel
 from utils.utils import get_option_path
 from utils.prune_utils import obtain_prune_idx2, obtain_prune_idx_50, sort_bn, obtain_bn_threshold, write_filters_mask
-from utils.utils import get_superior_path
+from utils.utils import get_superior_path, get_corresponding_cfg
 
 
 class SparseDetector:
@@ -70,6 +70,10 @@ class SparseDetector:
 if __name__ == '__main__':
     model_path = "exp/test_structure/seres18_17kps/seres18_17kps_best_acc.pkl"
     model_cfg = "exp/test_structure/seres18_17kps/data_default.json"
+
+    if not model_path:
+        model_cfg, _, _ = get_corresponding_cfg(model_path, check_exist=["model"])
+
     sd = SparseDetector(model_path, model_cfg)
     res = sd.detect()
     print(res)

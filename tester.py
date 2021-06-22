@@ -5,7 +5,7 @@ from config.config import device
 from dataset.dataloader import TestLoader
 from utils.train_utils import Criterion
 from models.pose_model import PoseModel
-from utils.utils import get_option_path
+from utils.utils import get_option_path, get_corresponding_cfg
 from eval.evaluator import BatchEvaluator, EpochEvaluator
 
 
@@ -105,6 +105,9 @@ if __name__ == '__main__':
     model_path = "exp/test_kps/aic_13/latest.pth"
     model_cfg = "exp/test_kps/aic_13/model_cfg.json"
     data_cfg = "exp/test_kps/aic_13/data_cfg.json"
+
+    if not model_path or not data_cfg:
+        model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
 
     from config.config import datasets_info
     data_info = [{dataset: datasets_info[dataset]}]

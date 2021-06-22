@@ -5,10 +5,10 @@ from config.config import device
 from dataset.dataloader import TestLoader
 from utils.train_utils import Criterion
 from models.pose_model import PoseModel
-from utils.utils import get_option_path
+from utils.utils import get_option_path, get_corresponding_cfg
 from eval.evaluator import BatchEvaluator, EpochEvaluator
 from utils.test_utils import list_to_str
-from dataset.draw import PredictionVisualizer, HeatmapVisualizer
+from dataset.draw import PredictionVisualizer
 import cv2
 
 posenet = PoseModel()
@@ -162,6 +162,9 @@ if __name__ == '__main__':
     model_path = "exp/test/default/80.pkl"
     model_cfg = "exp/test/default/model_cfg.json"
     data_cfg = "exp/test/default/data_cfg.json"
+
+    if not model_path or not data_cfg:
+        model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
 
     from config.config import datasets_info
     data_info = [{dataset: datasets_info[dataset]}]

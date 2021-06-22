@@ -1,5 +1,5 @@
 from models.pose_model import PoseModel
-from utils.utils import get_option_path
+from utils.utils import get_option_path, get_corresponding_cfg
 import torch
 import os
 
@@ -50,6 +50,10 @@ class Converter:
 if __name__ == '__main__':
     model_path = "exp/test_kps/mpii_13/latest.pth"
     model_cfg = "exp/test_kps/mpii_13/model_cfg.json"
+
+    if not model_path:
+        model_cfg, _, _ = get_corresponding_cfg(model_path, check_exist=["model"])
+
     convert = Converter(model_path, model_cfg)
     convert.convert()
 
