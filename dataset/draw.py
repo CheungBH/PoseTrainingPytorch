@@ -57,6 +57,9 @@ class PredictionVisualizer:
                 break
 
             img_ls.append(self.draw_kps(hm, self.extract_current_meta(i, img_metas)))
+        if self.img_num == 1:
+            return img_ls[0]
+
         prediction_1 = np.concatenate((img_ls[0], img_ls[1]), axis=0)
         prediction_2 = np.concatenate((img_ls[2], img_ls[3]), axis=0)
         predictions = np.concatenate((prediction_1, prediction_2), axis=1)

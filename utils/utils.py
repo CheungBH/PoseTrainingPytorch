@@ -18,7 +18,7 @@ def init_model_list(folder):
                 model_cfg.append(file_path)
             elif "option" in file_name:
                 option.append(file_path)
-            elif ".pth" in file_name:
+            elif ".pth" in file_path or "pkl" in file_name:
                 model.append(file_path)
                 model_cnt += 1
                 if model_cnt > 1:

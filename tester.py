@@ -53,6 +53,10 @@ class Tester:
         test_loader_desc = tqdm(self.test_loader)
 
         for i, (inps, labels, meta) in enumerate(test_loader_desc):
+
+            if True not in (labels > 0):
+                continue
+
             if device != "cpu":
                 inps = inps.cuda()
                 labels = labels.cuda()

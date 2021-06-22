@@ -8,6 +8,8 @@ from models.pose_model import PoseModel
 from utils.utils import get_option_path
 from eval.evaluator import BatchEvaluator, EpochEvaluator
 from utils.test_utils import list_to_str
+from dataset.draw import PredictionVisualizer, HeatmapVisualizer
+import cv2
 
 posenet = PoseModel()
 
@@ -15,13 +17,16 @@ posenet = PoseModel()
 class ErrorAnalyser:
     out_h, out_w, in_h, in_w, crit = 64, 64, 256, 256, "MSE"
 
-    def __init__(self, model_cfg, model_path, data_info, data_cfg, default_threshold=0.05, print_info=True, batchsize=1, num_worker=1):
+    def __init__(self, model_cfg, model_path, data_info, data_cfg, dataset_name="coco", default_threshold=0.05,
+                 print_info=True, batchsize=1, num_worker=1, draw_preds_img=False):
         if isinstance(data_info, list):
             self.test_dataset = TestLoader(data_info, data_cfg)
         else:
             self.test_dataset = data_info
         self.test_loader = self.test_dataset.build_dataloader(batchsize, num_worker)
         self.model_path = model_path
+        self.dataset_name = dataset_name
+        self.draw_img = draw_preds_img
 
         self.option_file = get_option_path(model_path)
         if os.path.exists(self.option_file):
@@ -57,7 +62,14 @@ class ErrorAnalyser:
         self.model.eval()
         test_loader_desc = tqdm(self.test_loader)
 
+        PV = PredictionVisualizer(self.kps, self.batch_size, self.out_h, self.out_w, self.in_h,
+                                       self.in_w, dataset=self.dataset_name, max_img=1)
+
         for i, (inps, labels, meta) in enumerate(test_loader_desc):
+
+            if True not in (labels > 0):
+                continue
+
             if device != "cpu":
                 inps = inps.cuda()
                 labels = labels.cuda()
@@ -65,6 +77,11 @@ class ErrorAnalyser:
             with torch.no_grad():
                 out = self.model(inps)
                 loss = self.criterion(out, labels)
+
+            if self.draw_img:
+                preds_img = PV.process(out, meta)
+                cv2.imshow("pred", preds_img)
+                cv2.waitKey(0)
 
             acc, dist, exists, (maxval, valid), (preds, gts) = \
                 BatchEval.eval_per_batch(out.data, labels.data, self.out_h)
@@ -148,7 +165,7 @@ if __name__ == '__main__':
 
     from config.config import datasets_info
     data_info = [{dataset: datasets_info[dataset]}]
-    analyser = ErrorAnalyser(model_cfg, model_path, data_info, data_cfg)
+    analyser = ErrorAnalyser(model_cfg, model_path, data_info, data_cfg, dataset, draw_preds_img=True)
     analyser.analyse()
     item = analyser.summarize()
     print(item)
