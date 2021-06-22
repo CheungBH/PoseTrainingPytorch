@@ -41,6 +41,10 @@ posenet = PoseModel(device=device)
 class Trainer:
     def __init__(self, opt, vis_in_training=False):
         #print(opt)
+        self.opt = opt
+        if opt.resume:
+            self.opt = resume(self.opt)
+
         self.expFolder = os.path.join("exp", opt.expFolder, opt.expID)
         self.opt_path = os.path.join(self.expFolder, "option.pkl")
         self.vis = vis_in_training
@@ -53,9 +57,10 @@ class Trainer:
         self.xlsx_log = os.path.join(self.expFolder, "logs/train_xlsx.csv")
         self.summary_log = os.path.join("exp", opt.expFolder, "train_{}-{}.csv".format(opt.expFolder, computer))
 
-        self.build_with_opt(opt)
         self.freeze = False
         self.stop = False
+
+        self.build_with_opt(opt)
 
         self.epoch_ls, self.lr_ls, self.bn_mean_ls = [], [], []
         self.train_pckh, self.val_pckh, self.train_pckh_ls, self.val_pckh_ls, self.part_train_pckh, self.part_val_pckh = 0, 0, [], [], [], []
@@ -66,9 +71,7 @@ class Trainer:
         self.train_loss, self.val_loss, self.train_loss_ls, self.val_loss_ls, self.part_train_loss, self.part_val_loss = float("inf"), float("inf"), [], [], [], []
         
     def build_with_opt(self, opt):
-        self.opt = opt
-        if opt.resume:
-            self.opt = resume(self.opt)
+
         self.total_epochs = self.opt.nEpochs
         self.lr = opt.LR
         self.curr_epoch = self.opt.epoch
@@ -145,7 +148,7 @@ class Trainer:
             else:
                 loss.backward()
 
-            if not self.freeze:
+            if self.sparse_s > 0:
                 for mod in self.model.modules():
                     if isinstance(mod, torch.nn.BatchNorm2d):
                        mod.weight.grad.data.add_(self.sparse_s * torch.sign(mod.weight.data))

@@ -14,7 +14,8 @@ class AutoTrainer:
         self.opt = opt
         self.cmd = generate_cmd(sys.argv[1:])
         self.command = sys.argv
-        self.generate_cfg_file()
+        if not opt.resume:
+            self.generate_cfg_file()
         self.print()
 
     def print(self):
