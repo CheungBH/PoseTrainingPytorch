@@ -17,6 +17,7 @@ class Converter:
         posenet.build(model_cfg)
         posenet.load(model_path)
         self.model = posenet.model
+        self.model.eval()
 
         option_path = get_option_path(model_path)
         if os.path.exists(option_path):
@@ -51,7 +52,7 @@ if __name__ == '__main__':
     model_path = "exp/test_kps/mpii_13/latest.pth"
     model_cfg = "exp/test_kps/mpii_13/model_cfg.json"
 
-    if not model_path:
+    if not model_cfg:
         model_cfg, _, _ = get_corresponding_cfg(model_path, check_exist=["model"])
 
     convert = Converter(model_path, model_cfg)
