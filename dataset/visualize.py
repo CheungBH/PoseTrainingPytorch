@@ -64,9 +64,9 @@ class KeyPointVisualizer:
             else:
                 raise NotImplementedError("Not a suitable dataset and kps num!")
 
-    def visualize(self, frame, kps, kps_confs=None):
+    def visualize(self, frame, kps, kps_confs=[]):
         kps = torch.Tensor(kps)
-        if not kps_confs:
+        if len(kps_confs) <= 0:
             kps_confs = torch.Tensor([[[1 for _ in range(kps.shape[0])] for j in range(kps.shape[1])]])
         else:
             kps_confs = torch.Tensor(kps_confs)

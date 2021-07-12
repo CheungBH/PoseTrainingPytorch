@@ -49,7 +49,9 @@ class ImageVisualizer:
         if self.device != "cpu":
             inp = inp.cuda()
         out = self.model(inp.unsqueeze(dim=0))
-        drawn = self.PV.draw_kps(out[0], img_meta)
+        # drawn = self.PV.draw_kps(out[0], img_meta)
+        drawn = self.PV.draw_kps_opt(out, img_meta)
+
         if save:
             cv2.imwrite(save, drawn)
         if self.show:
@@ -59,7 +61,7 @@ class ImageVisualizer:
 
 if __name__ == '__main__':
     model_path = "exp/test_kps/aic_13/latest.pth"
-    img_path = "exp/person.jpg"
+    img_path = "img/1.jpg"
 
     model_cfg = ""
     data_cfg = ""

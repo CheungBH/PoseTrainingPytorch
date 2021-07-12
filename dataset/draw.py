@@ -22,6 +22,30 @@ class PredictionVisualizer:
         self.in_height = in_height
         self.KPV = KeyPointVisualizer(self.kps, dataset)
 
+    def getPrediction(self, hms):
+        '''
+        Get keypoint location from heatmaps
+        '''
+
+        assert hms.dim() == 4, 'Score maps should be 4-dim'
+        maxval, idx = torch.max(hms.view(hms.size(0), hms.size(1), -1), 2)
+
+        maxval = maxval.view(hms.size(0), hms.size(1), 1)
+        idx = idx.view(hms.size(0), hms.size(1), 1) + 1
+
+        preds = idx.repeat(1, 1, 2).float()
+
+        preds[:, :, 0] = (preds[:, :, 0] - 1) % hms.size(3)
+        preds[:, :, 1] = torch.floor((preds[:, :, 1] - 1) / hms.size(3))
+        return preds, maxval
+
+    def revert_locations(self, locations, padded_size, resize_ratio, box):
+        resumed_locations = torch.zeros_like(locations)
+        for idx in range(len(locations[0])):
+            resumed_locations[0][idx][0] = (locations[0][idx][0]/self.out_width * self.in_width - padded_size[0])/resize_ratio + box[0]
+            resumed_locations[0][idx][1] = (locations[0][idx][1]/self.out_height * self.in_height - padded_size[1])/resize_ratio + box[1]
+        return resumed_locations
+
     def getPred(self, hm):
         max_val = 0
         pred = [0, 0]
@@ -48,6 +72,22 @@ class PredictionVisualizer:
             y_coord = (max_location[1]/self.out_height * self.in_height - padded_size[1])/resize_ratio + box[1]
             kps.append([x_coord, y_coord])
         self.KPV.visualize(img, [kps], [kps_score])
+        return cv2.resize(img, self.final_size)
+
+    def draw_kps_opt(self, hms, meta_data):
+        img_path = meta_data["name"]
+        padded_size = meta_data["padded_size"]
+        box = meta_data["enlarged_box"]
+        if isinstance(img_path, str):
+            img = cv2.imread(img_path)
+        else:
+            img = img_path
+        # img_h, img_w = img.shape[0], img.shape[1]
+        img_h, img_w = box[3] - box[1], box[2] - box[0]
+        resize_ratio = min(self.in_width / img_w, self.in_height / img_h)
+        location, max_val = self.getPrediction(hms)
+        location = self.revert_locations(location, padded_size, resize_ratio, box)
+        self.KPV.visualize(img, location.cpu(), max_val.cpu())
         return cv2.resize(img, self.final_size)
 
     def process(self, hms, img_metas):
