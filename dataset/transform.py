@@ -66,6 +66,10 @@ class ImageTransform:
             sys.exit()
         return img
 
+    def convert(self, img, src="bgr", dest="rgb"):
+        if src == "bgr" and dest == "rgb":
+            return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
     def img2tensor(self, img):
         ts = F.to_tensor(img)
         return ts
@@ -186,6 +190,13 @@ class ImageTransform:
         padded_img, padded_size = self.SAMPLE.padding(img)
         # cv2.imshow("padded", padded_img)
         # cv2.waitKey(0)
+        inputs = self.normalize(self.img2tensor(padded_img))
+        return inputs, padded_size
+
+    def process_frame(self, img, out_h, out_w, in_h, in_w):
+        self.SAMPLE = SampleGenerator(out_h, out_w, in_h, in_w)
+        img = self.convert(img)
+        padded_img, padded_size = self.SAMPLE.padding(img)
         inputs = self.normalize(self.img2tensor(padded_img))
         return inputs, padded_size
 

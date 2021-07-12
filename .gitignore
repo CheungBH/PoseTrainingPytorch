@@ -64,4 +64,5 @@ res_collect
 *onnx
 *.pth
 *.pt
+demo/
 img*/
