@@ -5,7 +5,7 @@ import os
 
 
 class Converter:
-    out_h, out_w = 256, 256
+    in_h, in_w = 256, 256
 
     def __init__(self, model_path, model_cfg, onnx_path="buffer/model.onnx", libtorch_path="buffer/model.pt",
                  onnx_sim_path="buffer/model_sim.onnx", device="cpu"):
@@ -22,13 +22,13 @@ class Converter:
         option_path = get_option_path(model_path)
         if os.path.exists(option_path):
             option = torch.load(option_path)
-            self.out_h = option.output_height
-            self.out_w = option.output_width
+            self.in_h = option.input_height
+            self.in_w = option.input_height
 
         if device != "cpu":
-            self.dummy_input = torch.rand(2, 3, self.out_w, self.out_h).cuda()
+            self.dummy_input = torch.rand(2, 3, self.in_w, self.in_h).cuda()
         else:
-            self.dummy_input = torch.rand(2, 3, self.out_w, self.out_h)
+            self.dummy_input = torch.rand(2, 3, self.in_w, self.in_h)
 
     def onnx_convert(self):
         if self.onnx_path:
