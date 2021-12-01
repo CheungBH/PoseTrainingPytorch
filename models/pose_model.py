@@ -1,7 +1,7 @@
 import torch
 from models.utils.benchmark import print_model_param_flops, print_model_param_nums, get_inference_time
 from models.build import PoseNet
-from .utils.utils import parse_cfg, parse_num_block
+from models.utils.utils import parse_cfg, parse_num_block
 
 
 class PoseModel:
@@ -86,8 +86,8 @@ class PoseModel:
 
 if __name__ == '__main__':
     PM = PoseModel(device="cpu")
-    cfg = "./cfg/test/cfg_seresnet50.json"
+    cfg = "../config/model_cfg/default/cfg_resnet18_3DUC.json"
     PM.build(cfg)
     net = PM.model
-    y = net(torch.randn(1, 3, 320, 256))
+    y = net(torch.randn(1, 3, 256, 256))
     print(y.size())

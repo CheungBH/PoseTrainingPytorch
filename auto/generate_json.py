@@ -60,15 +60,15 @@ def generate_json():
 
 def select_model_cfg(backbone):
     if backbone == "seresnet18":
-        return "config/model_cfg/default/cfg_resnet18.json"
+        return "config/model_cfg/default/cfg_resnet18_3DUC.json"
     elif backbone == "seresnet50":
         return "config/model_cfg/default/cfg_resnet50.json"
     elif backbone == "seresnet101":
         return "config/model_cfg/default/cfg_resnet101.json"
     elif backbone == "shufflenet":
-        return "config/model_cfg/default/cfg_shuffle.json"
+        return "config/model_cfg/default/cfg_shuffle_3DUC.json"
     elif backbone == "mobilenet":
-        return "config/model_cfg/default/cfg_mobile.json"
+        return "config/model_cfg/default/cfg_mobile_3DUC.json"
     else:
         raise NotImplementedError("The backbone {} doesn't exist".format(backbone))
 
