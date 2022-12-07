@@ -27,7 +27,9 @@ class COCO(BaseDataset):
             kp, kp_valid = select_kps(kp, kp_valid, self.body_part_idx, self.kps_num)
             if not sum(kp_valid):
                 continue
-            images.append(os.path.join(folder_name, str(img_info['image_id']).zfill(12) + ".jpg"))
+
+            #images.append(os.path.join(folder_name, str(img_info['image_id']).zfill(12) + ".jpg"))
+            images.append(os.path.join(folder_name, anno['images'][img_info['image_id']]['file_name']))
             keypoint.append(kp)
             kps_valid.append(kp_valid)
             ids.append(img_info["id"])

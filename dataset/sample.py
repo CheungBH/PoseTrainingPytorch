@@ -107,7 +107,7 @@ if __name__ == '__main__':
     loc = SG.locate_kp((100, 200), (300, 500), (150, 250))
     print(loc)
     hm = SG.draw_gaussian(loc)
-    im_path = "../trash/675px-Poster-sized_portrait_of_Barack_Obama.jpg"
+    im_path = '/media/hkuit164/Backup/pose_thermal/84.jpg'
     im = cv2.imread(im_path)
     padded_img, pad_size = SG.padding(im)
     test_box = [100, 200, 300, 400]

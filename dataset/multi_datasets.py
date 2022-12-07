@@ -56,6 +56,14 @@ class MixedDataset(data.Dataset):
                     from dataset.database.ceiling import CEILING
                     self.database[name] = CEILING(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                elif name == "thermal":
+                    from dataset.database.thermal import Thermal
+                    self.database[name] = Thermal(self.kps, self.phase)
+                    imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                elif name == "thermal_2022-11-03":
+                    from dataset.database.thermal_2022_11_03 import Thermal
+                    self.database[name] = Thermal(self.kps, self.phase)
+                    imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 else:
                     raise NotImplementedError
                 self.images += imgs
@@ -77,8 +85,7 @@ class MixedDataset(data.Dataset):
 
     def __getitem__(self, idx):
         try:
-            path, kps, box, i, valid = \
-                self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
+            path, kps, box, i, valid = self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
             inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
         except:
             print(idx)
@@ -102,14 +109,22 @@ if __name__ == '__main__':
     #                        "valid_imgs": "MPIIimages",
     #                        "train_annot": "mpiitrain_annotonly_train.json",
     #                        "valid_annot": "mpiitrain_annotonly_test.json"}}]
-    data_info = [{"yoga": {"root": "../data/yoga",
-                           "train_imgs": "yoga_train",
-                           "valid_imgs": "yoga_eval",
-                           "test_imgs": "yoga_test",
-                           "train_annot": "yoga_train.json",
-                           "valid_annot": "yoga_eval.json",
-                           "test_annot": "yoga_test.json",
-                           }}]
+    # data_info = [{"coco": {"root": "/media/hkuit164/Backup/coco",
+    #                       "train_imgs": "images/train2017",
+    #                       "valid_imgs": "images/val2017",
+    #                       "test_imgs": "images/val2017",
+    #                       "train_annot": "annotations/person_keypoints_train2017.json",
+    #                       "valid_annot": "annotations/person_keypoints_val2017.json",
+    #                       "test_annot": "annotations/person_keypoints_val2017.json"
+    #                       }}]
+    data_info = [{"thermal": {"root": "/media/hkuit164/Backup/pose_thermal",
+                          "train_imgs": "",
+                          "valid_imgs": "",
+                          "test_imgs": "",
+                          "train_annot": "annotation.json",
+                          "valid_annot": "annotation.json",
+                          "test_annot": "annotation.json"
+                          }}]
     # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic",
     #                      "train_imgs": "ai_challenger_keypoint_train_20170902/keypoint_train_images_20170902",
     #                      "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
@@ -125,27 +140,27 @@ if __name__ == '__main__':
 
     data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = MixedDataset(data_info, data_cfg, phase="train")
-
-    # for i in range(sample_idx):
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer
-    bbv = BBoxVisualizer()
-    kpv = KeyPointVisualizer(dataset.kps, "coco")
-    # for sample_idx in range(sample_ls):
-    result = dataset[sample_idx][-1]
-    img = cv2.imread(result["name"])
-    # f_img, f_box, f_kps, f_valid = dataset.transform.flip(copy.deepcopy(img), copy.deepcopy(result["box"].tolist()),
-    #                                                       copy.deepcopy(result["kps"].tolist()),
-    #                                                       copy.deepcopy(result["valid"].tolist()))
 
-    bbv.visualize([result["box"]], img)
-    kpv.visualize(img, result["kps"].unsqueeze(dim=0))
-    # bbv.visualize([f_box], f_img)
-    # kpv.visualize(f_img, [f_kps])
+    for i in range(sample_idx):
+        bbv = BBoxVisualizer()
+        kpv = KeyPointVisualizer(dataset.kps, "coco")
+        # for sample_idx in range(sample_ls):
+        result = dataset[i][-1]
+        img = cv2.imread(result["name"])
+        # f_img, f_box, f_kps, f_valid = dataset.transform.flip(copy.deepcopy(img), copy.deepcopy(result["box"].tolist()),
+        #                                                       copy.deepcopy(result["kps"].tolist()),
+        #                                                       copy.deepcopy(result["valid"].tolist()))
 
-    cv2.imshow("img", cv2.resize(img, (720, 540)))
-    # cv2.imshow("flipped", cv2.resize(f_img, (720, 540)))
+        bbv.visualize([result["box"]], img)
+        kpv.visualize(img, result["kps"].unsqueeze(dim=0))
+        # bbv.visualize([f_box], f_img)
+        # kpv.visualize(f_img, [f_kps])
 
-    cv2.waitKey(0)
+        cv2.imshow("img", cv2.resize(img, (720, 540)))
+        # cv2.imshow("flipped", cv2.resize(f_img, (720, 540)))
+
+        cv2.waitKey(0)
 
 

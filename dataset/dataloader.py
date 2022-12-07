@@ -7,7 +7,7 @@ from .multi_datasets import MixedDataset
 
 class TrainLoader:
     def __init__(self, data_info, data_cfg, joint_weight_dict=None):
-        self.train_dataset = MixedDataset(data_info, data_cfg)
+        self.train_dataset = MixedDataset(data_info, data_cfg, save="tmp")
         self.val_dataset = MixedDataset(data_info, data_cfg, phase="valid")
 
     def build_dataloader(self, train_batch, val_batch, train_worker, val_worker, shuffle=True, pin_memory=True):
