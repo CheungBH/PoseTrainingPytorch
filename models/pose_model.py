@@ -30,7 +30,15 @@ class PoseModel:
         if duc:
             out_dim = self.model.conv_out.out_channels
             self.model.conv_out = torch.nn.Conv2d(self.model.DIM, out_dim, kernel_size=3, stride=1, padding=1)
-        self.model.load_state_dict(torch.load(model_path))
+        # self.model.load_state_dict(torch.load(model_path))
+        checkpoint_dict = torch.load(model_path, map_location=self.device)
+
+        model_dict = self.model.state_dict()
+        # update_dict = {k: v for k, v in model_dict.items() if k in checkpoint_dict.keys()}
+        update_keys = [k for k, v in model_dict.items() if k in checkpoint_dict.keys() and "head" not in k]
+        update_dict = {k: v for k, v in checkpoint_dict.items() if k in update_keys}
+        model_dict.update(update_dict)
+        self.model.load_state_dict(model_dict)
 
     def freeze(self, percent):
         if percent != 0:
