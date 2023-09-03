@@ -2,6 +2,7 @@ import torch
 from models.utils.benchmark import print_model_param_flops, print_model_param_nums, get_inference_time
 from models.build import PoseNet
 from models.utils.utils import parse_cfg, parse_num_block
+from models.utils.imagenet_pretrain import load_pretrain
 
 
 class PoseModel:
@@ -31,13 +32,15 @@ class PoseModel:
             out_dim = self.model.conv_out.out_channels
             self.model.conv_out = torch.nn.Conv2d(self.model.DIM, out_dim, kernel_size=3, stride=1, padding=1)
         # self.model.load_state_dict(torch.load(model_path))
-        checkpoint_dict = torch.load(model_path, map_location=self.device)
-
         model_dict = self.model.state_dict()
-        # update_dict = {k: v for k, v in model_dict.items() if k in checkpoint_dict.keys()}
-        update_keys = [k for k, v in model_dict.items() if k in checkpoint_dict.keys() and "head" not in k]
-        update_dict = {k: v for k, v in checkpoint_dict.items() if k in update_keys}
-        model_dict.update(update_dict)
+        if model_path == "imagenet":
+            model_dict = load_pretrain(model_dict, self.backbone)
+        else:
+            checkpoint_dict = torch.load(model_path, map_location=self.device)
+            # update_dict = {k: v for k, v in model_dict.items() if k in checkpoint_dict.keys()}
+            update_keys = [k for k, v in model_dict.items() if k in checkpoint_dict.keys() and "head" not in k]
+            update_dict = {k: v for k, v in checkpoint_dict.items() if k in update_keys}
+            model_dict.update(update_dict)
         self.model.load_state_dict(model_dict)
 
     def freeze(self, percent):
@@ -96,6 +99,7 @@ if __name__ == '__main__':
     PM = PoseModel(device="cpu")
     cfg = "../config/model_cfg/default/cfg_resnet18_3DUC.json"
     PM.build(cfg)
+    PM.load("imagenet")
     net = PM.model
     y = net(torch.randn(1, 3, 256, 256))
     print(y.size())
