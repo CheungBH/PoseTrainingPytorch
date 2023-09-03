@@ -13,9 +13,10 @@ def load_pretrain(src_dict, backbone):
         return load_pretrain_shufflenet(src_dict, target_dict)
     elif backbone == "seresnet50":
         target_dict = torch.load("../weights/pretrain/resnet50.pth")
-        return load_pretrain_seresnet50(src_dict, target_dict)
+        return load_pretrain_bottleneck(src_dict, target_dict)
     elif backbone == "seresnet101":
-        return
+        target_dict = torch.load("../weights/pretrain/resnet101.pth")
+        return load_pretrain_bottleneck(src_dict, target_dict)
     else:
         print("Current backbone doesn't support loading imagenet pretrain model")
         return src_dict
@@ -54,7 +55,10 @@ def load_pretrain_shufflenet(src, target):
     return src
 
 
-def load_pretrain_seresnet50(src, target):
+def load_pretrain_bottleneck(src, target):
     for idx, (name, param) in enumerate(target.items()):
         if "fc" in name:
             continue
+        name = "backbone." + name
+        src[name] = param
+    return src
