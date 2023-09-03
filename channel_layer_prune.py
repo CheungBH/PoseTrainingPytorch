@@ -1,7 +1,7 @@
 from models.pose_model import PoseModel
 from utils.prune_utils import *
 from models.utils.utils import write_cfg
-import numpy as np
+from tester import Tester
 import torch
 
 posenet = PoseModel(device="cpu")
@@ -143,6 +143,13 @@ class ChannelLayerPruner:
 
         torch.save(compact_layer_model.state_dict(), self.compact_model_path)
 
+    def test(self, data_cfg, dataset_name):
+        print("Testing with dataset {}".format(dataset_name))
+        tester = Tester(self.compact_model_cfg, self.compact_model_path, data_cfg, dataset_name)
+        tester.test()
+        tester.get_benchmark()
+        return tester.summarize()
+
 
 if __name__ == '__main__':
     model_path = "exp/test_structure/seres50_17kps/seres50_17kps_best_acc.pkl"
@@ -151,3 +158,10 @@ if __name__ == '__main__':
     layer_num = 2
     CLP = ChannelLayerPruner(model_path, model_cfg)
     CLP.run(thresh, layer_num)
+
+    data_cfg = ""
+    dataset_name = "coco"
+
+    if data_cfg:
+        CLP.test(data_cfg, dataset_name)
+
