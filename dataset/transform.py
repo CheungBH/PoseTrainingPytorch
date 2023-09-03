@@ -52,6 +52,9 @@ class ImageTransform:
             self.not_flip_idx = [12, 13]
         elif self.kps == 17:
             return
+        elif self.kps == 1:
+            self.flip_pairs = ()
+            self.not_flip_idx = [0]
         else:
             raise NotImplementedError
 

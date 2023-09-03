@@ -60,6 +60,10 @@ class MixedDataset(data.Dataset):
                     from dataset.database.thermal import Thermal
                     self.database[name] = Thermal(self.kps, self.phase)
                     imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
+                elif name == "ball":
+                    from dataset.database.ball import Ball
+                    self.database[name] = Ball(self.kps, self.phase)
+                    imgs, kps, boxes, ids, valid = self.database[name].load_data(annotation_file, os.path.join(info["root"], info[self.imgs]))
                 elif name == "thermal_2022-11-03":
                     from dataset.database.thermal_2022_11_03 import Thermal
                     self.database[name] = Thermal(self.kps, self.phase)
@@ -117,14 +121,14 @@ if __name__ == '__main__':
     #                       "valid_annot": "annotations/person_keypoints_val2017.json",
     #                       "test_annot": "annotations/person_keypoints_val2017.json"
     #                       }}]
-    data_info = [{"thermal": {"root": "/media/hkuit164/Backup/pose_thermal",
-                          "train_imgs": "",
-                          "valid_imgs": "",
-                          "test_imgs": "",
-                          "train_annot": "annotation.json",
-                          "valid_annot": "annotation.json",
-                          "test_annot": "annotation.json"
-                          }}]
+    data_info = [{"ball": {"root": "../data/1103_thermal",
+                          "train_imgs": "images",
+                          "valid_imgs": "images",
+                          "test_imgs": "images",
+                          "train_annot": "xjlModified_CocoFormat.json",
+                          "valid_annot": "xjlModified_CocoFormat.json",
+                          "test_annot": "xjlModified_CocoFormat.json"
+                          },}]
     # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic",
     #                      "train_imgs": "ai_challenger_keypoint_train_20170902/keypoint_train_images_20170902",
     #                      "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
@@ -138,7 +142,7 @@ if __name__ == '__main__':
 
     sample_idx = 569
 
-    data_cfg = "../config/data_cfg/data_13kps.json"
+    data_cfg = "../config/data_cfg/data_1kp.json"
     dataset = MixedDataset(data_info, data_cfg, phase="train")
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer

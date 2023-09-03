@@ -19,6 +19,8 @@ class KeyPointsRegister:
         elif num == 14:
             return ['top head', 'neck', 'left shoulder', 'right shoulder', 'left elbow', 'right elbow', 'left wrist',
                     'right wrist', 'left hip', 'right hip', 'left knee', 'right knee', 'left ankle', 'right ankle']
+        elif num == 1:
+            return ["Ball"]
 
 
 class KeyPointsProcessor:
@@ -32,6 +34,7 @@ class KeyPointsProcessor:
         self.kps13_parts_name = ['nose', 'left shoulder', 'right shoulder', 'left elbow', 'right elbow', 'left wrist',
                                  'right wrist', 'left hip', 'right hip', 'left knee', 'right knee', 'left ankle',
                                  'right ankle']
+        self.ball_names = ["Ball"]
 
         self.coco_flip_pairs = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
         self.kps13_flip_pairs = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
@@ -40,7 +43,7 @@ class KeyPointsProcessor:
 
     def init_kps(self, idx, dataset_type):
         if isinstance(idx, int):
-            assert idx in [13, 14, 16, 17], "Wrong keypoints nums"
+            assert idx in [1, 13, 14, 16, 17], "Wrong keypoints nums"
             if idx == 17:
                 self.body_part_idx = [i+1 for i in range(17)]
                 self.body_part_name = self.coco_parts_name
@@ -56,7 +59,7 @@ class KeyPointsProcessor:
                 self.body_part_name = self.mpii_parts_name
                 self.flip_pairs = self.mpii_flip_pairs
                 self.not_flip_idx = [6, 7, 8, 9]
-            else:
+            elif idx == 13:
                 self.body_part_name = self.kps13_parts_name
                 self.flip_pairs = self.kps13_flip_pairs
                 self.not_flip_idx = [0]
@@ -64,6 +67,11 @@ class KeyPointsProcessor:
                     self.body_part_idx = [i+1 for i in range(13)]
                 else:
                     self.body_part_idx = [1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+            elif idx == 1:
+                self.body_part_idx = [1]
+                self.body_part_name = []
+                self.flip_pairs = []
+                self.not_flip_idx = [0]
         elif isinstance(idx, list):
             raise NotImplementedError
         else:

@@ -97,7 +97,7 @@ class PoseModel:
 
 if __name__ == '__main__':
     PM = PoseModel(device="cpu")
-    cfg = "../config/model_cfg/default/cfg_resnet18_3DUC.json"
+    cfg = "../config/model_cfg/default/cfg_mobile.json"
     PM.build(cfg)
     PM.load("imagenet")
     net = PM.model
