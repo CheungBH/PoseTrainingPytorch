@@ -49,6 +49,9 @@ def load_pretrain_shufflenet(src, target):
     for idx, (name, param) in enumerate(target.items()):
         if "fc" in name:
             continue
+        name = "backbone." + name
+        src[name] = param
+    return src
 
 
 def load_pretrain_seresnet50(src, target):
