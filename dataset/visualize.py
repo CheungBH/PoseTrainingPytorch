@@ -31,6 +31,7 @@ mpii_line_color = [PURPLE, BLUE, BLUE, RED, RED, BLUE, BLUE, RED, RED, PURPLE, P
 class KeyPointVisualizer:
     def __init__(self, kps, dataset):
         self.kps = kps
+        self.dot_size = 4
         if kps == 13:
             self.l_pair = [
                 (1, 2), (1, 3), (3, 5), (2, 4), (4, 6),
@@ -50,6 +51,11 @@ class KeyPointVisualizer:
             self.p_color = coco_p_color
             self.line_color = coco_line_color
 
+        elif kps == 1 or dataset == "ball":
+            self.l_pair = []
+            self.p_color = RED
+            self.line_color = []
+            self.dot_size = 20
         else:
             if dataset == "mpii":
                 self.l_pair = [[0, 1], [1, 2], [2, 6], [6, 3], [3, 4], [4, 5], [6, 7], [7, 8], [8, 9], [8, 12],
@@ -92,7 +98,7 @@ class KeyPointVisualizer:
                     continue
 
                 part_line[n] = (cor_x, cor_y)
-                cv2.circle(frame, (cor_x, cor_y), 4, self.p_color[n], -1)
+                cv2.circle(frame, (cor_x, cor_y), self.dot_size, self.p_color[n], -1)
             # Draw limbs
             for i, (start_p, end_p) in enumerate(self.l_pair):
                 if start_p in part_line and end_p in part_line:

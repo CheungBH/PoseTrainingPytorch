@@ -203,8 +203,11 @@ class Trainer:
 
                 if not drawn_kp:
                     preds_img = PV.process(out, meta)
-                    hm_img = HMV.draw_hms(out[0])
-                    self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm_img)
+                    try:
+                        hm_img = HMV.draw_hms(out[0])
+                        self.tb_writer.add_image("result of epoch {} --> heatmap".format(self.curr_epoch), hm_img)
+                    except:
+                        pass
 
                     cv2.imwrite(os.path.join(self.expFolder, "logs/images/img_{}.jpg".format(self.curr_epoch)), preds_img)
                     self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch), preds_img[:,:,::-1], dataformats='HWC')
