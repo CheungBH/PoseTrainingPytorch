@@ -38,8 +38,11 @@ def load_pretrain_seresnet18(src, target):
 
 def load_pretrain_mobilenet(src, target):
     for idx, (name, param) in enumerate(target.items()):
-        if "fc" in name:
+        if "classifier" in name:
             continue
+        name = "backbone." + name
+        src[name] = param
+    return src
 
 
 def load_pretrain_shufflenet(src, target):
