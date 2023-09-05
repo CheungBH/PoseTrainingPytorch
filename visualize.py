@@ -40,24 +40,25 @@ class ImageVisualizer:
         self.PV = PredictionVisualizer(posenet.kps, 1, self.out_h, self.out_w, self.in_h, self.in_w, max_img=1, column=1)
 
     def visualize(self, img_path, save=""):
-        img = cv2.imread(img_path)
-        inp, padded_size = self.transform.process_single_img(img_path, self.out_h, self.out_w, self.in_h, self.in_w)
-        img_meta = {
-            "name": img_path,
-            "enlarged_box": [0, 0, img.shape[1], img.shape[0]],
-            "padded_size": padded_size
-        }
-        if self.device != "cpu":
-            inp = inp.cuda()
-        out = self.model(inp.unsqueeze(dim=0))
-        # drawn = self.PV.draw_kps(out[0], img_meta)
-        drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
+        with torch.no_grad():
+            img = cv2.imread(img_path)
+            inp, padded_size = self.transform.process_single_img(img_path, self.out_h, self.out_w, self.in_h, self.in_w)
+            img_meta = {
+                "name": img_path,
+                "enlarged_box": [0, 0, img.shape[1], img.shape[0]],
+                "padded_size": padded_size
+            }
+            if self.device != "cpu":
+                inp = inp.cuda()
+            out = self.model(inp.unsqueeze(dim=0))
+            # drawn = self.PV.draw_kps(out[0], img_meta)
+            drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
 
-        if save:
-            cv2.imwrite(save, drawn)
-        if self.show:
-            cv2.imshow("res", drawn)
-            cv2.waitKey(0)
+            if save:
+                cv2.imwrite(save, drawn)
+            if self.show:
+                cv2.imshow("res", drawn)
+                cv2.waitKey(0)
 
 
 if __name__ == '__main__':

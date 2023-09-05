@@ -46,31 +46,32 @@ class VideoVisualizer:
         if save:
             out = cv2.VideoWriter(video_path[:-4] + "_processed.avi", cv2.VideoWriter_fourcc(*'XVID'), 12,
                                   (height, width))
-        while True:
-            ret, frame = cap.read()
-            if ret:
-                inp, padded_size = self.transform.process_frame(copy.deepcopy(frame), self.out_h, self.out_w, self.in_h, self.in_w)
-                img_meta = {
-                    "name": frame,
-                    "enlarged_box": [0, 0, frame.shape[1], frame.shape[0]],
-                    "padded_size": padded_size
-                }
-                if self.device != "cpu":
-                    inp = inp.cuda()
-                out = self.model(inp.unsqueeze(dim=0))
-                drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
+        with torch.no_grad():
+            while True:
+                ret, frame = cap.read()
+                if ret:
+                    inp, padded_size = self.transform.process_frame(copy.deepcopy(frame), self.out_h, self.out_w, self.in_h, self.in_w)
+                    img_meta = {
+                        "name": frame,
+                        "enlarged_box": [0, 0, frame.shape[1], frame.shape[0]],
+                        "padded_size": padded_size
+                    }
+                    if self.device != "cpu":
+                        inp = inp.cuda()
+                    out = self.model(inp.unsqueeze(dim=0))
+                    drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
 
-                if save:
-                    out.write(frame)
-                if self.show:
-                    cv2.imshow("output", drawn)
-                    cv2.waitKey(wait_key)
+                    if save:
+                        out.write(frame)
+                    if self.show:
+                        cv2.imshow("output", drawn)
+                        cv2.waitKey(wait_key)
 
-            else:
-                if save:
-                    out.release()
-                cap.release()
-                break
+                else:
+                    if save:
+                        out.release()
+                    cap.release()
+                    break
 
 
 if __name__ == '__main__':
