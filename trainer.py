@@ -462,7 +462,7 @@ class Trainer:
                 self.write_log()
                 self.save()
 
-                self.check_stop()
+                # self.check_stop()
                 if self.stop:
                     error_string = ", The accuracy is too low"
                     break
