@@ -53,9 +53,9 @@ class KeyPointVisualizer:
 
         elif kps == 1 or dataset == "ball":
             self.l_pair = []
-            self.p_color = RED
+            self.p_color = GREEN
             self.line_color = []
-            self.dot_size = 20
+            self.dot_size = 10
         else:
             if dataset == "mpii":
                 self.l_pair = [[0, 1], [1, 2], [2, 6], [6, 3], [3, 4], [4, 5], [6, 7], [7, 8], [8, 9], [8, 12],

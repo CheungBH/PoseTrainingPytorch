@@ -13,7 +13,7 @@ posenet = PoseModel()
 class ImageVisualizer:
     out_h, out_w, in_h, in_w = 64, 64, 256, 256
 
-    def __init__(self, model_cfg, model_path, data_cfg=None, show=True, device="cuda"):
+    def __init__(self, model_cfg, model_path, data_cfg=None, show=True, device="cuda", conf=0.05):
         self.show = show
         self.device = device
         option_file = get_option_path(model_path)
@@ -35,6 +35,7 @@ class ImageVisualizer:
         self.model = posenet.model
         self.kps = posenet.kps
         self.model.eval()
+        self.conf = conf
         posenet.load(model_path)
         self.PV = PredictionVisualizer(posenet.kps, 1, self.out_h, self.out_w, self.in_h, self.in_w, max_img=1, column=1)
 
@@ -50,7 +51,7 @@ class ImageVisualizer:
             inp = inp.cuda()
         out = self.model(inp.unsqueeze(dim=0))
         # drawn = self.PV.draw_kps(out[0], img_meta)
-        drawn = self.PV.draw_kps_opt(out, img_meta)
+        drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
 
         if save:
             cv2.imwrite(save, drawn)
@@ -62,11 +63,12 @@ class ImageVisualizer:
 if __name__ == '__main__':
     model_path = "exp/test_kps/aic_13/latest.pth"
     img_path = "img/1.jpg"
+    conf = 0.05
 
     model_cfg = ""
     data_cfg = ""
 
     if not model_path or not data_cfg:
         model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
-    IV = ImageVisualizer(model_cfg, model_path, data_cfg)
+    IV = ImageVisualizer(model_cfg, model_path, data_cfg, conf)
     IV.visualize(img_path)
