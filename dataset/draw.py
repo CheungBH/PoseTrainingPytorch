@@ -74,7 +74,7 @@ class PredictionVisualizer:
         self.KPV.visualize(img, [kps], [kps_score])
         return cv2.resize(img, self.final_size)
 
-    def draw_kps_opt(self, hms, meta_data):
+    def draw_kps_opt(self, hms, meta_data, conf=0.05):
         img_path = meta_data["name"]
         padded_size = meta_data["padded_size"]
         box = meta_data["enlarged_box"]
@@ -87,7 +87,7 @@ class PredictionVisualizer:
         resize_ratio = min(self.in_width / img_w, self.in_height / img_h)
         location, max_val = self.getPrediction(hms)
         location = self.revert_locations(location, padded_size, resize_ratio, box)
-        self.KPV.visualize(img, location.cpu(), max_val.cpu())
+        self.KPV.visualize(img, location.cpu(), max_val.cpu(), conf)
         return cv2.resize(img, self.final_size)
 
     def process(self, hms, img_metas):

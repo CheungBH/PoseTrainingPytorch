@@ -18,7 +18,7 @@ from dataset.draw import PredictionVisualizer, HeatmapVisualizer
 
 try:
     from apex import amp
-    mix_precision = True
+    mix_precision = False
 except ImportError:
     mix_precision = False
 torch.backends.cudnn.benchmark = True
