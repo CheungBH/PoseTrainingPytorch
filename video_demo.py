@@ -44,7 +44,7 @@ class VideoVisualizer:
         cap = cv2.VideoCapture(video_path)
         height, width = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         if save:
-            out = cv2.VideoWriter(video_path[:-4] + "_processed.avi", cv2.VideoWriter_fourcc(*'XVID'), 12,
+            out_video = cv2.VideoWriter(video_path[:-4] + "_processed.avi", cv2.VideoWriter_fourcc(*'XVID'), 12,
                                   (height, width))
         with torch.no_grad():
             while True:
@@ -62,22 +62,23 @@ class VideoVisualizer:
                     drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
 
                     if save:
-                        out.write(frame)
+                        out_video.write(frame)
                     if self.show:
                         cv2.imshow("output", drawn)
                         cv2.waitKey(wait_key)
 
                 else:
                     if save:
-                        out.release()
+                        out_video.release()
                     cap.release()
                     break
 
 
+
 if __name__ == '__main__':
-    model_path = "exp/test_kps/aic_13/latest.pth"
-    video_path = "demo/video/passive lateral trunk elongation_processed.mp4"
-    conf = 0.05
+    model_path = "exp/tennis_ball/mob_rms_f0.5/mob_rms_f0.5_best_acc.pth"
+    video_path = "/media/hkuit164/Backup/xjl/Highlight2/TOP_100_SHOTS_&_RALLIES_2022_ATP_SEASON_86.mp4"
+    conf = -1
 
     model_cfg = ""
     data_cfg = ""
@@ -85,4 +86,4 @@ if __name__ == '__main__':
     if not model_path or not data_cfg:
         model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
     vv = VideoVisualizer(model_cfg, model_path, data_cfg, conf=conf)
-    vv.visualize(video_path)
+    vv.visualize(video_path, save="result.mp4")
