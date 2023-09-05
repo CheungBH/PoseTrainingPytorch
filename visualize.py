@@ -70,5 +70,5 @@ if __name__ == '__main__':
 
     if not model_path or not data_cfg:
         model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
-    IV = ImageVisualizer(model_cfg, model_path, data_cfg, conf)
+    IV = ImageVisualizer(model_cfg, model_path, data_cfg, conf=conf)
     IV.visualize(img_path)
