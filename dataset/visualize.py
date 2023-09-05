@@ -55,7 +55,7 @@ class KeyPointVisualizer:
             self.l_pair = []
             self.p_color = RED
             self.line_color = []
-            self.dot_size = 40
+            self.dot_size = 10
         else:
             if dataset == "mpii":
                 self.l_pair = [[0, 1], [1, 2], [2, 6], [6, 3], [3, 4], [4, 5], [6, 7], [7, 8], [8, 9], [8, 12],

@@ -20,7 +20,7 @@ class SampleGenerator:
         x = np.arange(0, size, 1, float)
         y = x[:, np.newaxis]
         x0 = y0 = size // 2
-        sigma = size / 4.0
+        sigma = self.gaussian
         # The gaussian is not normalized, we want the center value to equal 1
         g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * sigma ** 2))
 

@@ -15,9 +15,11 @@ posenet = PoseModel()
 class Tester:
     out_h, out_w, in_h, in_w, crit = 64, 64, 256, 256, "MSE"
 
-    def __init__(self, model_cfg, model_path, data_info, data_cfg, print_info=True, batchsize=8, num_worker=1):
+    def __init__(self, model_cfg, model_path, data_info, data_cfg, print_info=True, batchsize=8, num_worker=1,
+                 phase="test"):
         if isinstance(data_info, list):
-            self.test_dataset = TestLoader(data_info, data_cfg)
+            # self.test_dataset = TrainLoader(data_info, data_cfg)
+            self.test_dataset = TestLoader(data_info, data_cfg, phase=phase)
         else:
             self.test_dataset = data_info
         self.test_loader = self.test_dataset.build_dataloader(batchsize, num_worker)
@@ -52,32 +54,36 @@ class Tester:
         self.model.eval()
         test_loader_desc = tqdm(self.test_loader)
 
-        for i, (inps, labels, meta) in enumerate(test_loader_desc):
+        with torch.no_grad():
 
-            if True not in (labels > 0):
-                continue
+            for i, (inps, labels, meta) in enumerate(test_loader_desc):
+                if True not in (labels > 0):
+                    continue
 
-            if device != "cpu":
-                inps = inps.cuda()
-                labels = labels.cuda()
+                if device != "cpu":
+                    inps = inps.cuda()
+                    labels = labels.cuda()
 
-            with torch.no_grad():
-                out = self.model(inps)
-                loss = self.criterion(out, labels)
+                with torch.no_grad():
+                    out = self.model(inps)
+                    loss = self.criterion(out, labels)
 
-            acc, dist, exists, (maxval, valid), (preds, gts) = \
-                BatchEval.eval_per_batch(out.data, labels.data, self.out_h)
-            BatchEval.update(acc, dist, exists, maxval, valid, loss)
-            EpochEval.update(preds, gts, valid.t())
+                acc, dist, exists, (maxval, valid), (preds, gts) = \
+                    BatchEval.eval_per_batch(out.data, labels.data, self.out_h)
+                BatchEval.update(acc, dist, exists, maxval, valid, loss)
+                EpochEval.update(preds, gts, valid.t())
 
-            loss, acc, dist, auc, pr = BatchEval.get_batch_result()
-            test_loader_desc.set_description(
-                'Test: {epoch} | loss: {loss:.4f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
-                    format(epoch=0, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
-            )
+                loss, acc, dist, auc, pr = BatchEval.get_batch_result()
+                test_loader_desc.set_description(
+                    'Test: {epoch} | loss: {loss:.4f} | acc: {acc:.2f} | dist: {dist:.4f} | AUC: {AUC:.4f} | PR: {PR:.4f}'.
+                        format(epoch=0, loss=loss, acc=acc, dist=dist, AUC=auc, PR=pr)
+                )
 
         self.body_part_acc, self.body_part_dist, self.body_part_auc, self.body_part_pr = BatchEval.get_kps_result()
-        pckh = EpochEval.eval_per_epoch()
+        try:
+            pckh = EpochEval.eval_per_epoch()
+        except:
+            pckh = [-1, -1]
         self.test_pckh = pckh[0]
         print("The pckh value of current model is {}".format(self.test_pckh))
         self.body_part_pckh = pckh[1:]
@@ -101,17 +107,18 @@ class Tester:
 
 
 if __name__ == '__main__':
-    dataset = "mpii"
-    model_path = "exp/test_kps/aic_13/latest.pth"
-    model_cfg = "exp/test_kps/aic_13/model_cfg.json"
-    data_cfg = "exp/test_kps/aic_13/data_cfg.json"
+    dataset = "ball"
+    model_path = "/media/hkuit164/Backup/PoseTrainingPytorch/tmp.pth"
+    model_cfg = "config/mob3/model_1kp.json"
+    data_cfg = "config/data_cfg/data_1kp_noAug.json"
+    phase = "test"
 
     if not model_path or not data_cfg:
         model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
 
     from config.config import datasets_info
     data_info = [{dataset: datasets_info[dataset]}]
-    tester = Tester(model_cfg, model_path, data_info, data_cfg)
+    tester = Tester(model_cfg, model_path, data_info, data_cfg, phase=phase)
     tester.test()
     tester.get_benchmark()
     benchmark, performance, parts, thresh = tester.summarize()

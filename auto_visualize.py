@@ -26,9 +26,9 @@ class AutoVisualizer:
 
 
 if __name__ == '__main__':
-    model_folder = "onnx/0622"
-    src_img_folder = "img"
-    dest_img_folder = "img_result"
+    model_folder = "/home/hkuit164/Desktop/newpose/vis_folder/tennis_ball_val"
+    src_img_folder = "data/tennis_ball/val"
+    dest_img_folder = "vis_folder/tennis_ball/val"
     AV = AutoVisualizer(model_folder, src_img_folder, dest_img_folder)
     AV.run()
 

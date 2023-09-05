@@ -6,12 +6,12 @@ import csv
 from utils.utils import init_model_list_with_kw
 from dataset.dataloader import TestLoader
 
-keyword = ["acc", "auc", "pr", "dist", "pckh", "latest"]
-folder_keyword = ["13"]
+keyword = ["latest"]
+folder_keyword = []
 
 
 class AutoTester:
-    def __init__(self, model_folder, data_info, batchsize=8, num_worker=1, same_data_cfg=False):
+    def __init__(self, model_folder, data_info, batchsize=8, num_worker=0, same_data_cfg=False):
         self.model_folder = model_folder
         self.model_ls, self.model_cfg_ls, self.data_cfg_ls, self.option_ls = \
             init_model_list_with_kw(model_folder, keyword, fkws=folder_keyword)
@@ -41,14 +41,14 @@ class AutoTester:
             test_row += self.thresh
             csv_writer.writerow(test_row)
 
-    def run(self):
+    def run(self, phase="test"):
         model_nums = len(self.model_ls)
         for idx, (model, model_cfg, data_cfg, option) in enumerate(zip(
                 self.model_ls, self.model_cfg_ls, self.data_cfg_ls, self.option_ls)):
             self.model = model
             print("[{}/{}] Processing model: {}".format(idx+1, model_nums, self.model))
             test = Tester(model_cfg, self.model, self.data_info, data_cfg, batchsize=self.batch_size,
-                          num_worker=self.num_worker)
+                          num_worker=self.num_worker, phase=phase)
             test.test()
             test.get_benchmark()
             self.kps = test.kps
@@ -57,9 +57,9 @@ class AutoTester:
 
 
 if __name__ == '__main__':
-    dataset = "mpii"
-    model_folder = "exp/test_kps"
+    dataset = "ball"
+    model_folder = "/home/hkuit164/Desktop/newpose/exp/tennis_ball"
     from config.config import datasets_info
     data_info = [{dataset: datasets_info[dataset]}]
     AT = AutoTester(model_folder, data_info)
-    AT.run()
+    AT.run(phase="test")

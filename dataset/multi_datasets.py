@@ -90,7 +90,7 @@ class MixedDataset(data.Dataset):
     def __getitem__(self, idx):
         try:
             path, kps, box, i, valid = self.images[idx], self.keypoints[idx], self.boxes[idx], self.ids[idx], self.kps_valid[idx]
-            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid)
+            inp, out, enlarged_box, pad_size, valid = self.transform.process(path, box, kps, valid, self.img_aug)
         except:
             print(idx)
             path, kps, box, i, valid = \

@@ -38,7 +38,7 @@ class PoseModel:
         else:
             checkpoint_dict = torch.load(model_path, map_location=self.device)
             # update_dict = {k: v for k, v in model_dict.items() if k in checkpoint_dict.keys()}
-            update_keys = [k for k, v in model_dict.items() if k in checkpoint_dict.keys() and "head" not in k]
+            update_keys = [k for k, v in model_dict.items() if k in checkpoint_dict.keys()]
             update_dict = {k: v for k, v in checkpoint_dict.items() if k in update_keys}
             model_dict.update(update_dict)
         self.model.load_state_dict(model_dict)
