@@ -3,19 +3,19 @@ import torch
 
 def load_pretrain(src_dict, backbone):
     if backbone == "seresnet18":
-        target_dict = torch.load("../weights/pretrain/resnet18.pth")
+        target_dict = torch.load("weights/pretrain/resnet18.pth")
         return load_pretrain_seresnet18(src_dict, target_dict)
     elif backbone == "mobilenet":
-        target_dict = torch.load("../weights/pretrain/mobilenet.pth")
+        target_dict = torch.load("weights/pretrain/mobilenet.pth")
         return load_pretrain_mobilenet(src_dict, target_dict)
     elif backbone == "shufflenet":
-        target_dict = torch.load("../weights/pretrain/shufflenet.pth")
+        target_dict = torch.load("weights/pretrain/shufflenet.pth")
         return load_pretrain_shufflenet(src_dict, target_dict)
     elif backbone == "seresnet50":
-        target_dict = torch.load("../weights/pretrain/resnet50.pth")
+        target_dict = torch.load("weights/pretrain/resnet50.pth")
         return load_pretrain_bottleneck(src_dict, target_dict)
     elif backbone == "seresnet101":
-        target_dict = torch.load("../weights/pretrain/resnet101.pth")
+        target_dict = torch.load("weights/pretrain/resnet101.pth")
         return load_pretrain_bottleneck(src_dict, target_dict)
     else:
         print("Current backbone doesn't support loading imagenet pretrain model")
