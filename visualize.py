@@ -64,7 +64,7 @@ class ImageVisualizer:
 if __name__ == '__main__':
     model_path = "exp/test_kps/aic_13/latest.pth"
     img_path = "img/1.jpg"
-    conf = 0.05
+    conf = -1
 
     model_cfg = ""
     data_cfg = ""
