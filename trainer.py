@@ -164,7 +164,10 @@ class Trainer:
             )
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
-        pckh = EpochEval.eval_per_epoch()
+        try:
+            pckh = EpochEval.eval_per_epoch()
+        except:
+            pckh = [-1, -1]
         print(pckh)
         self.tb_writer.add_scalar('Train/pckh', pckh[0], self.curr_epoch)
 
@@ -231,7 +234,10 @@ class Trainer:
             )
 
         body_part_acc, body_part_dist, body_part_auc, body_part_pr = BatchEval.get_kps_result()
-        pckh = EpochEval.eval_per_epoch()
+        try:
+            pckh = EpochEval.eval_per_epoch()
+        except:
+            pckh = [-1, -1]
         print(pckh)
         self.tb_writer.add_scalar('Valid/pckh', pckh[0], self.curr_epoch)
 
