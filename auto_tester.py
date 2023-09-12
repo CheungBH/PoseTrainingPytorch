@@ -57,8 +57,8 @@ class AutoTester:
 
 
 if __name__ == '__main__':
-    dataset = "ball"
-    model_folder = "/home/hkuit164/Desktop/newpose/exp/tennis_ball"
+    dataset = "coco"
+    model_folder = "weights/players"
     from config.config import datasets_info
     data_info = [{dataset: datasets_info[dataset]}]
     AT = AutoTester(model_folder, data_info)

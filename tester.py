@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import torch
+import config.config as config
 import os
 from config.config import device
 from dataset.dataloader import TestLoader
@@ -9,7 +10,7 @@ from utils.utils import get_option_path, get_corresponding_cfg
 from eval.evaluator import BatchEvaluator, EpochEvaluator
 
 
-posenet = PoseModel()
+posenet = PoseModel(device=config.device)
 
 
 class Tester:
@@ -107,7 +108,7 @@ class Tester:
 
 
 if __name__ == '__main__':
-    dataset = "ball"
+    dataset = "coco"
     model_path = "/media/hkuit164/Backup/PoseTrainingPytorch/tmp.pth"
     model_cfg = "config/mob3/model_1kp.json"
     data_cfg = "config/data_cfg/data_1kp_noAug.json"

@@ -3,11 +3,12 @@ from dataset.transform import ImageTransform
 from dataset.draw import PredictionVisualizer
 from utils.utils import get_option_path
 import cv2
+import config.config as config
 import os
 from utils.utils import get_corresponding_cfg
 import torch
 
-posenet = PoseModel()
+posenet = PoseModel(device=config.device)
 
 
 class VideoVisualizer:

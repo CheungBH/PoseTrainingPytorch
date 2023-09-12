@@ -6,8 +6,9 @@ import cv2
 import os
 from utils.utils import get_corresponding_cfg
 import torch
+from config.config import device
 
-posenet = PoseModel()
+posenet = PoseModel(device=device)
 
 
 class ImageVisualizer:
