@@ -1,1 +1,1 @@
-{"input_height": 256, "input_width": 256, "output_height": 64, "output_width": 64, "sigma": 1, "rotate": 40, "rotate_prob": 40, "flip_prob": 0.5, "scale": 0.2, "kps": 13}
+{"input_height": 256, "input_width": 256, "output_height": 64, "output_width": 64, "sigma": 1, "rotate": 40, "rotate_prob": 40, "flip_prob": 0.5, "scale": 0.2, "kps": 13, "scale_float": 0.1, "scale_prob": 0.5,  "bright_range": 50, "bright_prob": 0.5}

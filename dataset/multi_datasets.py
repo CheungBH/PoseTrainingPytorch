@@ -121,14 +121,14 @@ if __name__ == '__main__':
     #                       "valid_annot": "annotations/person_keypoints_val2017.json",
     #                       "test_annot": "annotations/person_keypoints_val2017.json"
     #                       }}]
-    data_info = [{"ball": {"root": "../data/1103_thermal",
-                          "train_imgs": "images",
-                          "valid_imgs": "images",
-                          "test_imgs": "images",
-                          "train_annot": "xjlModified_CocoFormat.json",
-                          "valid_annot": "xjlModified_CocoFormat.json",
-                          "test_annot": "xjlModified_CocoFormat.json"
-                          },}]
+    data_info = [{"coco": {"root": "../data/tennis_player",
+                          "train_imgs": "train",
+                          "valid_imgs": "val",
+                          "test_imgs": "val",
+                          "train_annot": "train.json",
+                          "valid_annot": "val.json",
+                          "test_annot": "val.json"
+                          }}]
     # data_info = [{"aic": {"root": "/media/hkuit155/Elements/data/aic",
     #                      "train_imgs": "ai_challenger_keypoint_train_20170902/keypoint_train_images_20170902",
     #                      "valid_imgs": "ai_challenger_keypoint_validation_20170911/keypoint_validation_images_20170911",
@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
     sample_idx = 569
 
-    data_cfg = "../config/data_cfg/data_1kp.json"
+    data_cfg = "../config/data_cfg/data_13kps.json"
     dataset = MixedDataset(data_info, data_cfg, phase="train")
     import cv2
     from dataset.visualize import BBoxVisualizer, KeyPointVisualizer

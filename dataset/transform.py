@@ -40,6 +40,18 @@ class ImageTransform:
         self.BBV = BBoxVisualizer()
         self.update_flip_pairs()
 
+        try:
+            self.bright = load_dict["bright_range"]
+            self.bright_prob = load_dict["bright_prob"]
+            self.scale_prob = load_dict["scale_prob"]
+            self.scale_float = load_dict["scale_float"]
+        except:
+            print("Your data_cfg is old. Pls modify in the next time")
+            self.bright = 0
+            self.bright_prob = 0
+            self.scale_prob = 0
+            self.scale_float = 0
+
     def update_flip_pairs(self):
         if self.kps == 13:
             self.flip_pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]
@@ -72,6 +84,8 @@ class ImageTransform:
     def convert(self, img, src="bgr", dest="rgb"):
         if src == "bgr" and dest == "rgb":
             return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        else:
+            raise NotImplementedError
 
     def img2tensor(self, img):
         ts = F.to_tensor(img)
@@ -81,15 +95,16 @@ class ImageTransform:
         img = F.normalize(img, mean=self.mean, std=self.std)
         return img
 
-    def scale(self, img, bbox):
+    def scale(self, img, bbox, sf):
+        assert len(sf) == 4, "You should assign 4 different factors value"
         x_min, y_min, x_max, y_max = bbox[0], bbox[1], bbox[2], bbox[3]
         width, height = x_max - x_min, y_max - y_min
         imgheight = img.shape[0]
         imgwidth = img.shape[1]
-        x_enlarged_min = max(0, x_min - width * self.scale_factor / 2)
-        y_enlarged_min = max(0, y_min - height * self.scale_factor / 2)
-        x_enlarged_max = min(imgwidth - 1, x_max + width * self.scale_factor / 2)
-        y_enlarged_max = min(imgheight - 1, y_max + height * self.scale_factor / 2)
+        x_enlarged_min = max(0, x_min - width * sf[0] / 2)
+        y_enlarged_min = max(0, y_min - height * sf[1] / 2)
+        x_enlarged_max = min(imgwidth - 1, x_max + width * sf[2] / 2)
+        y_enlarged_max = min(imgheight - 1, y_max + height * sf[3] / 2)
         return [x_enlarged_min, y_enlarged_min, x_enlarged_max, y_enlarged_max]
 
     def flip(self, img, box, kps, kps_valid):
@@ -154,6 +169,14 @@ class ImageTransform:
 
         return rot_bboxes
 
+    def adjust_brightness(self, image, brightness):
+
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        hsv[:, :, 2] = np.clip(hsv[:, :, 2] + float(brightness), 0, 255)
+        adjusted_image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+        return adjusted_image
+
     def tensor2img(self, ts):
         img = np.asarray(F.to_pil_image(ts))
         return img
@@ -161,13 +184,22 @@ class ImageTransform:
     def process(self, img_path, box, kps, kps_valid, img_aug=False):
         raw_img = self.load_img(img_path)
         # cv2.imshow("load", raw_img)
-        enlarged_box = self.scale(raw_img, box)
+        enlarged_box = self.scale(raw_img, box, [self.scale_factor for _ in range(4)])
+
         if img_aug:
+            if random.random() > 1 - self.scale_prob:
+                scale_factor = [self.scale_factor - random.uniform(-self.scale_float, self.scale_float)]
+                enlarged_box = self.scale(raw_img, box, scale_factor)
+            if random.random() > 1 - self.bright_prob:
+                bright_factor = random.uniform(-self.bright, self.bright)
+                raw_img = self.adjust_brightness(raw_img, bright_factor)
+                pass
             if random.random() > 1 - self.flip_prob:
                 raw_img, enlarged_box, kps, kps_valid = self.flip(raw_img, enlarged_box, kps, kps_valid)
             if random.random() > 1 - self.rotate_prob:
                 degree = (random.random() - 0.5) * 2 * self.rotate
                 raw_img, enlarged_box, kps, kps_valid = self.rotate_img(raw_img, enlarged_box, kps, kps_valid, degree)
+
         img, pad_size, labels = self.SAMPLE.process(raw_img, enlarged_box, kps)
         # cv2.imshow("padded", img)
         # cv2.waitKey(0)
