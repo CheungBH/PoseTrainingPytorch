@@ -4,6 +4,7 @@ from utils.test_utils import write_test_title
 from config.config import computer
 import csv
 from utils.utils import init_model_list_with_kw
+import torch
 from dataset.dataloader import TestLoader
 
 keyword = ["latest"]
@@ -54,6 +55,12 @@ class AutoTester:
             self.kps = test.kps
             self.benchmark, self.performance, self.parts, self.thresh = test.summarize()
             self.write_result()
+            self.write_threshold(option)
+
+    def write_threshold(self, option_path):
+        info = torch.load(option_path)
+        info.thresh = torch.tensor(self.thresh)
+        torch.save(info, option_path)
 
 
 if __name__ == '__main__':
