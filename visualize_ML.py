@@ -6,9 +6,10 @@ import cv2
 import os
 from utils.utils import get_corresponding_cfg
 import torch
-from config.config import device
+import numpy as np
+from sklearn.externals import joblib
 
-posenet = PoseModel(device=device)
+posenet = PoseModel()
 
 
 class ImageVisualizer:
@@ -40,7 +41,7 @@ class ImageVisualizer:
         posenet.load(model_path)
         self.PV = PredictionVisualizer(posenet.kps, 1, self.out_h, self.out_w, self.in_h, self.in_w, max_img=1, column=1)
 
-    def visualize(self, img_path, save=""):
+    def visualize(self, img_path):
         with torch.no_grad():
             img = cv2.imread(img_path)
             inp, padded_size = self.transform.process_single_img(img_path, self.out_h, self.out_w, self.in_h, self.in_w)
@@ -52,15 +53,21 @@ class ImageVisualizer:
             if self.device != "cpu":
                 inp = inp.cuda()
             out = self.model(inp.unsqueeze(dim=0))
-            # drawn = self.PV.draw_kps(out[0], img_meta)
-            drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
-            if save:
-                cv2.imwrite(save, drawn)
+            location, img_h, img_w = self.PV.draw_kps_csv(out, img_meta, self.conf)
 
-            if self.show:
-                cv2.imshow("res", drawn)
-                cv2.waitKey(0)
+            float_numbers = [float(i) for i in location.flatten().tolist()]
+            modified_array = []
+            for index, num in enumerate(float_numbers):
+                if index % 2 == 0:
+                    modified_array.append(num / img_w)
+                else:
+                    modified_array.append(num / img_h)
+            np_array = np.array(modified_array)
+            prediction_array = np_array.reshape(1, -1)
 
+            ML_model = joblib.load('/media/hkuit164/Backup/KpsActionClassification/MLsrc/exp/Decision_Tree/test/dt_test.joblib')
+            prediction = ML_model.predict(prediction_array)
+            print(prediction)
 
 
 if __name__ == '__main__':

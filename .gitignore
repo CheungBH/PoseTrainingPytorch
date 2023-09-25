@@ -1,4 +1,5 @@
-S.DS_Store
+vis_folder/
+*.DS_Store
 debug*
 datasets/
 checkpoints/

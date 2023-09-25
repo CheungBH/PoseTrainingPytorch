@@ -77,8 +77,8 @@ class VideoVisualizer:
 
 
 if __name__ == '__main__':
-    model_path = "exp/tennis_ball/mob_rms_f0.5/mob_rms_f0.5_best_acc.pth"
-    video_path = "/media/hkuit164/Backup/xjl/Highlight2/TOP_100_SHOTS_&_RALLIES_2022_ATP_SEASON_86.mp4"
+    model_path = "exp/tennis_ball/mob_rms_f0.8/mob_rms_f0.8_best_acc.pth"
+    video_path = "/media/hkuit164/Backup/xjl/Highlight2/TOP_100_SHOTS_&_RALLIES_2022_ATP_SEASON_87.mp4"
     conf = -1
 
     model_cfg = ""

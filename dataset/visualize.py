@@ -98,7 +98,7 @@ class KeyPointVisualizer:
                     continue
 
                 part_line[n] = (cor_x, cor_y)
-                cv2.circle(frame, (cor_x, cor_y), self.dot_size, self.p_color, -1)
+                cv2.circle(frame, (cor_x, cor_y), self.dot_size, self.p_color[n], -1)
             # Draw limbs
             for i, (start_p, end_p) in enumerate(self.l_pair):
                 if start_p in part_line and end_p in part_line:

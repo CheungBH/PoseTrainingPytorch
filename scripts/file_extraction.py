@@ -35,6 +35,6 @@ def extract_specific_files_from_folders(source_folder, destination_folder, file_
 source_folder = 'exp/traffic_thermal_yellow_64'
 destination_folder = '/media/hkuit164/Backup/xjl/train_data/traffic_thermal_yellow_64'
 file_names = ['model_cfg.json', 'data_cfg.json', 'option.pkl']
-folder_names = ['logs']
+folder_names = []
 
 extract_specific_files_from_folders(source_folder, destination_folder, file_names, folder_names)

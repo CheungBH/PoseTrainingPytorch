@@ -6,9 +6,9 @@ import cv2
 import os
 from utils.utils import get_corresponding_cfg
 import torch
-from config.config import device
+import csv
 
-posenet = PoseModel(device=device)
+posenet = PoseModel()
 
 
 class ImageVisualizer:
@@ -39,8 +39,11 @@ class ImageVisualizer:
         self.conf = conf
         posenet.load(model_path)
         self.PV = PredictionVisualizer(posenet.kps, 1, self.out_h, self.out_w, self.in_h, self.in_w, max_img=1, column=1)
+        self.black_id = 0
 
-    def visualize(self, img_path, save=""):
+    def visualize(self, img_path, save=None):
+        if save is None:
+            save = f"/media/hkuit164/Backup/ImageClassifier/data/tennis_player_bbg/others/others_{self.black_id}.jpg"
         with torch.no_grad():
             img = cv2.imread(img_path)
             inp, padded_size = self.transform.process_single_img(img_path, self.out_h, self.out_w, self.in_h, self.in_w)
@@ -53,20 +56,23 @@ class ImageVisualizer:
                 inp = inp.cuda()
             out = self.model(inp.unsqueeze(dim=0))
             # drawn = self.PV.draw_kps(out[0], img_meta)
-            drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
+            # drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
+            drawn = self.PV.draw_kps_opt_black(out, img_meta, self.conf)
             if save:
                 cv2.imwrite(save, drawn)
-
-            if self.show:
-                cv2.imshow("res", drawn)
-                cv2.waitKey(0)
+                self.black_id += 1
+                print(f"{self.black_id} images saved")
+            # if self.show:
+            #     cv2.imshow("res", drawn)
+            #     cv2.waitKey(0)
 
 
 
 if __name__ == '__main__':
     model_path = "/media/hkuit164/Backup/PortableTennis/assets/pose/mob3/mob_bs4_0.001/latest.pth"
-
-    img_path = "/media/hkuit164/Backup/ImageClassifier/data/tennis_player/train/backhand/backhand_1.jpg"
+    folder_path = "/media/hkuit164/Backup/xjl/tennis_player_totalcrop/others"
+    csv_path = ""
+    # img_path = "/media/hkuit164/Backup/ImageClassifier/data/tennis_player/train/backhand/backhand_2.jpg"
     conf = 0.05
 
     model_cfg = ""
@@ -75,4 +81,7 @@ if __name__ == '__main__':
     if not model_path or not data_cfg:
         model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
     IV = ImageVisualizer(model_cfg, model_path, data_cfg, conf=conf)
-    IV.visualize(img_path)
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".jpg"):
+            img_path = os.path.join(folder_path, filename)
+            IV.visualize(img_path)

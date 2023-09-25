@@ -14,7 +14,7 @@ class TrainLoader:
         train_loader = torch.utils.data.DataLoader(
             self.train_dataset, batch_size=train_batch, shuffle=shuffle, num_workers=train_worker, pin_memory=pin_memory)
         val_loader = torch.utils.data.DataLoader(
-            self.val_dataset, batch_size=val_batch, shuffle=False, num_workers=val_worker, pin_memory=pin_memory)
+            self.val_dataset, batch_size=val_batch, shuffle=shuffle, num_workers=val_worker, pin_memory=pin_memory)
         return train_loader, val_loader
 
 

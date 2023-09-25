@@ -1,3 +1,5 @@
+import sys
+
 from models.pose_model import PoseModel
 from dataset.transform import ImageTransform
 from dataset.draw import PredictionVisualizer
@@ -6,10 +8,10 @@ import cv2
 import os
 from utils.utils import get_corresponding_cfg
 import torch
-from config.config import device
+import csv
+import re
 
-posenet = PoseModel(device=device)
-
+posenet = PoseModel()
 
 class ImageVisualizer:
     out_h, out_w, in_h, in_w = 64, 64, 256, 256
@@ -40,7 +42,7 @@ class ImageVisualizer:
         posenet.load(model_path)
         self.PV = PredictionVisualizer(posenet.kps, 1, self.out_h, self.out_w, self.in_h, self.in_w, max_img=1, column=1)
 
-    def visualize(self, img_path, save=""):
+    def visualize(self, img_path):
         with torch.no_grad():
             img = cv2.imread(img_path)
             inp, padded_size = self.transform.process_single_img(img_path, self.out_h, self.out_w, self.in_h, self.in_w)
@@ -49,24 +51,31 @@ class ImageVisualizer:
                 "enlarged_box": [0, 0, img.shape[1], img.shape[0]],
                 "padded_size": padded_size
             }
+
             if self.device != "cpu":
                 inp = inp.cuda()
             out = self.model(inp.unsqueeze(dim=0))
-            # drawn = self.PV.draw_kps(out[0], img_meta)
-            drawn = self.PV.draw_kps_opt(out, img_meta, self.conf)
-            if save:
-                cv2.imwrite(save, drawn)
+            location, img_h, img_w = self.PV.draw_kps_csv(out, img_meta, self.conf)
+            # flatten_array = location.flatten()
+            # processed_string = str(flatten_array).replace("tensor([", "").replace("], device='cuda:0')", "").replace("\n", "").replace("       ", "")
+            float_numbers = [float(i)  for i in location.flatten().tolist()]#[float(num) for num in processed_string.split(",")]
+            modified_array = []
+            for index, num in enumerate(float_numbers):
+                if index % 2 == 0:
+                    modified_array.append(num / img_w)
+                else:
+                    modified_array.append(num / img_h)
 
-            if self.show:
-                cv2.imshow("res", drawn)
-                cv2.waitKey(0)
-
-
+            modified_array.extend([3, "others"])
+            # print(modified_array)
+            csv_path = '/media/hkuit164/Backup/xjl/tennis_player_csv/others.csv'
+            with open(csv_path, 'a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(modified_array)
 
 if __name__ == '__main__':
     model_path = "/media/hkuit164/Backup/PortableTennis/assets/pose/mob3/mob_bs4_0.001/latest.pth"
-
-    img_path = "/media/hkuit164/Backup/ImageClassifier/data/tennis_player/train/backhand/backhand_1.jpg"
+    folder_path = "/media/hkuit164/Backup/xjl/tennis_player_totalcrop/others"
     conf = 0.05
 
     model_cfg = ""
@@ -75,4 +84,11 @@ if __name__ == '__main__':
     if not model_path or not data_cfg:
         model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
     IV = ImageVisualizer(model_cfg, model_path, data_cfg, conf=conf)
-    IV.visualize(img_path)
+    for idx, filename in enumerate(os.listdir(folder_path)):
+        if filename.endswith(".jpg"):
+            img_path = os.path.join(folder_path, filename)
+            try:
+                IV.visualize(img_path)
+            except:
+                print(idx)
+                sys.exit(1)

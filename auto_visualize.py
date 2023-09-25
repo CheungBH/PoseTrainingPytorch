@@ -1,6 +1,6 @@
 import os
 
-from visualize import ImageVisualizer
+from visualize_blackbg import ImageVisualizer
 from utils.utils import init_model_list
 
 

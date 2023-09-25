@@ -90,6 +90,40 @@ class PredictionVisualizer:
         self.KPV.visualize(img, location.cpu(), max_val.cpu(), conf)
         return cv2.resize(img, self.final_size)
 
+    def draw_kps_csv(self, hms, meta_data, conf=0.05):
+
+        img_path = meta_data["name"]
+        padded_size = meta_data["padded_size"]
+        box = meta_data["enlarged_box"]
+        if isinstance(img_path, str):
+            img = cv2.imread(img_path)
+        else:
+            img = img_path
+        # img_h, img_w = img.shape[0], img.shape[1]
+        img_h, img_w = box[3] - box[1], box[2] - box[0]
+        resize_ratio = min(self.in_width / img_w, self.in_height / img_h)
+        location, max_val = self.getPrediction(hms)
+        location = self.revert_locations(location, padded_size, resize_ratio, box)
+        self.KPV.visualize(img, location.cpu(), max_val.cpu(), conf)
+        return location, img_h, img_w
+
+    def draw_kps_opt_black(self, hms, meta_data, conf=0.05):
+        img_path = meta_data["name"]
+        padded_size = meta_data["padded_size"]
+        box = meta_data["enlarged_box"]
+        if isinstance(img_path, str):
+            img = cv2.imread(img_path)
+        else:
+            img = img_path
+        # img_h, img_w = img.shape[0], img.shape[1]
+        img_h, img_w = box[3] - box[1], box[2] - box[0]
+        resize_ratio = min(self.in_width / img_w, self.in_height / img_h)
+        location, max_val = self.getPrediction(hms)
+        location = self.revert_locations(location, padded_size, resize_ratio, box)
+        black_bg = np.zeros((img_h, img_w, 3), dtype=np.uint8)
+        self.KPV.visualize(black_bg, location.cpu(), max_val.cpu(), conf)
+        return cv2.resize(black_bg, self.final_size)
+
     def process(self, hms, img_metas):
         img_ls = []
         for i, hm in enumerate(hms):
