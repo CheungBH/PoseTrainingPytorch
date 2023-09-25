@@ -42,6 +42,9 @@ class Trainer:
     def __init__(self, opt, vis_in_training=False):
         #print(opt)
         self.opt = opt
+        if opt.auto_resume:
+            opt.resume = True
+            opt.loadModel = os.path.join("exp", opt.expFolder, opt.expID, "latest.pth")
         if opt.resume:
             self.opt = resume(self.opt)
 

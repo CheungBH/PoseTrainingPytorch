@@ -23,6 +23,8 @@ parser.add_argument('--model_cfg', default="config/model_cfg/test/cfg_resnet18.j
 "----------------------------- Hyperparameter options -----------------------------"
 parser.add_argument('--resume', action='store_true',
                     help='resume training')
+parser.add_argument('--auto_resume', action='store_true',
+                    help='resume training automatically')
 parser.add_argument('--LR', default=1e-3, type=float,
                     help='Learning rate')
 parser.add_argument('--momentum', default=0, type=float,

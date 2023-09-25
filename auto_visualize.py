@@ -1,6 +1,6 @@
 import os
 
-from visualize_blackbg import ImageVisualizer
+from visualize import ImageVisualizer
 from utils.utils import init_model_list
 
 
@@ -26,9 +26,9 @@ class AutoVisualizer:
 
 
 if __name__ == '__main__':
-    model_folder = "/home/hkuit164/Desktop/newpose/vis_folder/tennis_ball_val"
-    src_img_folder = "data/tennis_ball/val"
-    dest_img_folder = "vis_folder/tennis_ball/val"
+    model_folder = "weights/ball_modified"
+    src_img_folder = "data/tennis_ball/train"
+    dest_img_folder = "vis_folder/tennis_ball/train"
     AV = AutoVisualizer(model_folder, src_img_folder, dest_img_folder)
     AV.run()
 
