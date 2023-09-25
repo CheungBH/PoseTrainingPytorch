@@ -130,7 +130,7 @@ class Trainer:
                 inps = inps.requires_grad_()
             out = self.model(inps)
 
-            loss = torch.zeros(1).cuda()
+            loss = torch.zeros(1).to(out.device)
             for cons, idx_ls in self.loss_weight.items():
                 loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 
@@ -216,7 +216,7 @@ class Trainer:
                     self.tb_writer.add_image("result of epoch {}".format(self.curr_epoch), preds_img[:,:,::-1], dataformats='HWC')
                     drawn_kp = True
 
-                loss = torch.zeros(1).cuda()
+                loss = torch.zeros(1).to(out.device)
                 for cons, idx_ls in self.loss_weight.items():
                     loss += cons * self.criterion(out[:, idx_ls, :, :], labels[:, idx_ls, :, :])
 

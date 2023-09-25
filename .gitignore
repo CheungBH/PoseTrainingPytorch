@@ -1,6 +1,7 @@
 vis_folder/
 *.DS_Store
 debug*
+weights/
 datasets/
 checkpoints/
 result/

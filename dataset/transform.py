@@ -188,7 +188,7 @@ class ImageTransform:
 
         if img_aug:
             if random.random() > 1 - self.scale_prob:
-                scale_factor = [self.scale_factor - random.uniform(-self.scale_float, self.scale_float)]
+                scale_factor = [self.scale_factor - random.uniform(-self.scale_float, self.scale_float) for _ in range(4)]
                 enlarged_box = self.scale(raw_img, box, scale_factor)
             if random.random() > 1 - self.bright_prob:
                 bright_factor = random.uniform(-self.bright, self.bright)
