@@ -9,7 +9,7 @@ import os
 from utils.utils import get_corresponding_cfg
 import torch
 import csv
-import re
+
 
 posenet = PoseModel()
 
@@ -58,7 +58,7 @@ class ImageVisualizer:
             location, img_h, img_w = self.PV.draw_kps_csv(out, img_meta, self.conf)
             # flatten_array = location.flatten()
             # processed_string = str(flatten_array).replace("tensor([", "").replace("], device='cuda:0')", "").replace("\n", "").replace("       ", "")
-            float_numbers = [float(i)  for i in location.flatten().tolist()]#[float(num) for num in processed_string.split(",")]
+            float_numbers = [float(i) for i in location.flatten().tolist()]#[float(num) for num in processed_string.split(",")]
             modified_array = []
             for index, num in enumerate(float_numbers):
                 if index % 2 == 0:
@@ -66,16 +66,16 @@ class ImageVisualizer:
                 else:
                     modified_array.append(num / img_h)
 
-            modified_array.extend([3, "others"])
+            modified_array.extend([2, "Fall", filename])
             # print(modified_array)
-            csv_path = '/media/hkuit164/Backup/xjl/tennis_player_csv/others.csv'
+            csv_path = '/media/hkuit164/Backup/xjl/ML_data_process/ML/0206far/fall/1_Fall.csv'
             with open(csv_path, 'a', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerow(modified_array)
 
 if __name__ == '__main__':
-    model_path = "/media/hkuit164/Backup/PortableTennis/assets/pose/mob3/mob_bs4_0.001/latest.pth"
-    folder_path = "/media/hkuit164/Backup/xjl/tennis_player_totalcrop/others"
+    model_path = "/home/hkuit164/Desktop/xjl/1025+1103+1121/alphapose/latest.pth"
+    folder_path = "/media/hkuit164/Backup/xjl/ML_data_process/ML/0206far/fall/project-40-at-2023-10-24-09-20-7576869d/Fall"
     conf = 0.05
 
     model_cfg = ""

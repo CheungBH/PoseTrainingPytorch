@@ -122,7 +122,7 @@ class PredictionVisualizer:
         location = self.revert_locations(location, padded_size, resize_ratio, box)
         black_bg = np.zeros((img_h, img_w, 3), dtype=np.uint8)
         self.KPV.visualize(black_bg, location.cpu(), max_val.cpu(), conf)
-        return cv2.resize(black_bg, self.final_size)
+        return cv2.resize(black_bg, (img_w, img_h))
 
     def process(self, hms, img_metas):
         img_ls = []
