@@ -6,7 +6,6 @@ import cv2
 import os
 from utils.utils import get_corresponding_cfg
 import torch
-import csv
 
 posenet = PoseModel()
 
@@ -41,9 +40,9 @@ class ImageVisualizer:
         self.PV = PredictionVisualizer(posenet.kps, 1, self.out_h, self.out_w, self.in_h, self.in_w, max_img=1, column=1)
         self.black_id = 0
 
-    def visualize(self, img_path, save=None):
-        if save is None:
-            save = f"/media/hkuit164/Backup/ImageClassifier/data/tennis_player_bbg/others/others_{self.black_id}.jpg"
+    def visualize(self, img_path, save):
+        img_name = os.path.splitext(os.path.basename(img_path))[0]
+        save = os.path.join(save, f"{img_name}_bbg_{self.black_id}.jpg")
         with torch.no_grad():
             img = cv2.imread(img_path)
             inp, padded_size = self.transform.process_single_img(img_path, self.out_h, self.out_w, self.in_h, self.in_w)
@@ -69,9 +68,9 @@ class ImageVisualizer:
 
 
 if __name__ == '__main__':
-    model_path = "/media/hkuit164/Backup/PortableTennis/assets/pose/mob3/mob_bs4_0.001/latest.pth"
-    folder_path = "/media/hkuit164/Backup/xjl/tennis_player_totalcrop/others"
-    csv_path = ""
+    model_path = "/home/hkuit164/Desktop/xjl/1025+1103+1121/alphapose/latest.pth"
+    folder_path = "/media/hkuit164/Backup/xjl/ML_data_process/ML/0206far/crop_image/train/Normal"
+    save_folder = "/media/hkuit164/Backup/xjl/ML_data_process/ML/0206far/crop_image/test"
     # img_path = "/media/hkuit164/Backup/ImageClassifier/data/tennis_player/train/backhand/backhand_2.jpg"
     conf = 0.05
 
@@ -84,4 +83,4 @@ if __name__ == '__main__':
     for filename in os.listdir(folder_path):
         if filename.endswith(".jpg"):
             img_path = os.path.join(folder_path, filename)
-            IV.visualize(img_path)
+            IV.visualize(img_path, save_folder)
