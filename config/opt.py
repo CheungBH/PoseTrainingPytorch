@@ -27,9 +27,9 @@ parser.add_argument('--auto_resume', action='store_true',
                     help='resume training automatically')
 parser.add_argument('--LR', default=1e-3, type=float,
                     help='Learning rate')
-parser.add_argument('--momentum', default=0, type=float,
+parser.add_argument('--momentum', default=0.9, type=float,
                     help='Momentum')
-parser.add_argument('--weightDecay', default=0, type=float,
+parser.add_argument('--weightDecay', default=5e-4, type=float,
                     help='Weight decay')
 parser.add_argument('--eps', default=1e-8, type=float,
                     help='epsilon')
