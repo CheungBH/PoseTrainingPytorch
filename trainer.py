@@ -257,6 +257,8 @@ class Trainer:
         self.part_val_pckh.append(pckh[1:])
 
         loss, acc, dist, auc, pr = BatchEval.get_batch_result()
+        body_part_thresh = [Logger.get_thresh() for k, Logger in BatchEval.pts_curve_Loggers.items()]
+        self.opt.thresh = torch.tensor(body_part_thresh)
         self.update_indicators(acc, loss, dist, pckh[0], auc, pr, self.trainIter, "val")
 
     def build_criterion(self, crit):
