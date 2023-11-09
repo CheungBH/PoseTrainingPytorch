@@ -102,8 +102,8 @@ if __name__ == '__main__':
             for idx, filename in enumerate(os.listdir(img_folder_path)):
                 if filename.endswith(".jpg"):
                     img_path = os.path.join(img_folder_path, filename)
-                    try:
-                        IV.visualize(img_path, label_path, csv_path, img_folder_path)
-                    except:
-                        print(idx)
-                        sys.exit(1)
+                    # try:
+                    IV.visualize(img_path, label_path, csv_path, img_folder_path)
+                    # except:
+                    #     print(idx)
+                    #     sys.exit(1)
