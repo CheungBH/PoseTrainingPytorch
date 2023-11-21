@@ -38,7 +38,10 @@ class ImageVisualizer:
         self.model = posenet.model
         self.kps = posenet.kps
         self.model.eval()
-        self.conf = conf
+        if isinstance(conf, float):
+            self.conf = torch.tensor([conf for _ in range(self.kps)])
+        else:
+            self.conf = torch.tensor([float(i) for i in conf.split(",")])
         posenet.load(model_path)
         self.PV = PredictionVisualizer(posenet.kps, 1, self.out_h, self.out_w, self.in_h, self.in_w, max_img=1, column=1)
 
@@ -56,14 +59,19 @@ class ImageVisualizer:
                 inp = inp.cuda()
             out = self.model(inp.unsqueeze(dim=0))
             location, img_h, img_w = self.PV.draw_kps_csv(out, img_meta, self.conf)
+            max_value = self.PV.getPrediction(out)[1]
+            if_exist = [(v>c).tolist() for c, v in zip(self.conf, max_value.squeeze())]
 
             float_numbers = [float(i) for i in location.flatten().tolist()]
             modified_array = []
             for index, num in enumerate(float_numbers):
-                if index % 2 == 0:
-                    modified_array.append(num / img_w)
+                if if_exist[int(index/2)] is True:
+                    if index % 2 == 0:
+                        modified_array.append(num / img_w)
+                    else:
+                        modified_array.append(num / img_h)
                 else:
-                    modified_array.append(num / img_h)
+                    modified_array.append(-1)
 
             with open(label_file, 'r') as label:
                 cate_array = label.readlines()
@@ -80,20 +88,27 @@ class ImageVisualizer:
 
 if __name__ == '__main__':
     # Pose model path
-    model_path = "/home/hkuit164/Desktop/xjl/1025+1103+1121/alphapose/latest.pth"
+    model_path = "/media/hkuit164/Backup/assets/weights/pose/out_64/resnet18/pytorch/6_best_acc.pth"
     # folder path (contains the image category folders)
-    folder_path = "/media/hkuit164/Backup/xjl/ML_data_process/ML/csv/test_code"
+    folder_path = "/media/hkuit164/Backup/xjl/hh_video_data/cut_video_selected/crop_images/cor_normal"
     # label path (category info) !!! Note the order of the categories in the label file
-    label_path = "/media/hkuit164/Backup/xjl/ML_data_process/ML/csv/label"
+    label_path = "/media/hkuit164/Backup/xjl/hh_video_data/cut_video_selected/crop_images/label"
     # output csv path
-    csv_path = "/media/hkuit164/Backup/xjl/ML_data_process/ML/csv/test.csv"
+    csv_path = "/media/hkuit164/Backup/xjl/hh_video_data/cut_video_selected/crop_images/test1.csv"
     conf = 0.05
 
     model_cfg = ""
     data_cfg = ""
+    option_path = ""
 
     if not model_path or not data_cfg:
-        model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
+        model_cfg, data_cfg, option_path = get_corresponding_cfg(model_path, check_exist=["data", "model"])
+
+    if os.path.exists(option_path):
+        info = torch.load(option_path)
+        if "thresh" in info:
+            conf = info.thresh
+
     IV = ImageVisualizer(model_cfg, model_path, data_cfg, conf=conf)
 
     for img_folder_name in os.listdir(folder_path):
