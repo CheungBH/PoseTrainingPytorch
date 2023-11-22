@@ -77,6 +77,9 @@ class KeyPointVisualizer:
         else:
             kps_confs = torch.Tensor(kps_confs)
 
+        if isinstance(conf, float):
+            conf = torch.tensor([conf for _ in range(self.kps)])
+
         for idx in range(len(kps)):
             part_line = {}
             kp_preds = kps[idx]
@@ -85,16 +88,19 @@ class KeyPointVisualizer:
             if self.kps == 17:
                 kp_preds = torch.cat((kp_preds, torch.unsqueeze((kp_preds[5, :] + kp_preds[6, :]) / 2, 0)))
                 kp_confs = torch.cat((kp_confs, torch.unsqueeze((kp_confs[5, :] + kp_confs[6, :]) / 2, 0)))
+                conf = torch.cat((conf, torch.unsqueeze((conf[5] + conf[6]) / 2, 0)))
+
             elif self.kps == 13:
                 kp_preds = torch.cat((kp_preds, torch.unsqueeze((kp_preds[1, :] + kp_preds[2, :]) / 2, 0)))
                 kp_confs = torch.cat((kp_confs, torch.unsqueeze((kp_confs[1, :] + kp_confs[2, :]) / 2, 0)))
+                conf = torch.cat((conf, torch.unsqueeze((conf[1] + conf[2]) / 2, 0)))
 
             # Draw keypoints
             for n in range(kp_preds.shape[0]):
                 cor_x, cor_y = int(kp_preds[n, 0]), int(kp_preds[n, 1])
                 cor_conf = kp_confs[n, 0]
 
-                if cor_x == 0 or cor_y == 0 or cor_conf < conf:
+                if cor_x == 0 or cor_y == 0 or cor_conf < conf[n]:
                     continue
 
                 part_line[n] = (cor_x, cor_y)
