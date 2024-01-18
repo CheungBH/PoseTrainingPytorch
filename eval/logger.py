@@ -36,6 +36,9 @@ class CurveLogger:
             self.gt = gt
             self.preds = preds
         else:
+            if len(gt.shape) == 0:
+                gt = gt.unsqueeze(dim=0)
+                preds = preds.unsqueeze(dim=0)
             self.gt = torch.cat((self.gt, gt))
             self.preds = torch.cat((self.preds, preds))
 
