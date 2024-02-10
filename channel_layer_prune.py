@@ -3,6 +3,7 @@ from utils.prune_utils import *
 from models.utils.utils import write_cfg
 from tester import Tester
 import torch
+from utils.utils import get_option_path, get_corresponding_cfg
 
 posenet = PoseModel(device="cpu")
 
@@ -124,7 +125,7 @@ class ChannelLayerPruner:
 
         m_layer_cfg = {
             'backbone': self.backbone,
-            'keypoints': self.kps,
+            'kps': self.kps,
             'se_ratio': self.se_ratio,
             "first_conv": m_channel_cfg["first_conv"],
             'residual': m_channel_cfg["residual"],
@@ -144,24 +145,30 @@ class ChannelLayerPruner:
         torch.save(compact_layer_model.state_dict(), self.compact_model_path)
 
     def test(self, data_cfg, dataset_name):
-        print("Testing with dataset {}".format(dataset_name))
-        tester = Tester(self.compact_model_cfg, self.compact_model_path, data_cfg, dataset_name)
+        print("Testing with dataset {}".format(dataset_name[0].keys()))
+        tester = Tester(self.compact_model_cfg, self.compact_model_path, dataset_name, data_cfg)
         tester.test()
         tester.get_benchmark()
         return tester.summarize()
 
 
 if __name__ == '__main__':
-    model_path = "exp/test_structure/seres50_17kps/seres50_17kps_best_acc.pkl"
-    model_cfg = "exp/test_structure/seres50_17kps/data_default.json"
+    model_path = "weights/pose_prune_asset/resnet50/latest.pth"
+    model_cfg = ""
+    data_cfg = ""
+
+    if not model_cfg or not data_cfg:
+        model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
+
     thresh = 80
     layer_num = 2
     CLP = ChannelLayerPruner(model_path, model_cfg)
     CLP.run(thresh, layer_num)
 
-    data_cfg = ""
     dataset_name = "coco"
 
     if data_cfg:
-        CLP.test(data_cfg, dataset_name)
+        from config.config import datasets_info
+        data_info = [{dataset_name: datasets_info[dataset_name]}]
+        CLP.test(data_cfg, data_info)
 

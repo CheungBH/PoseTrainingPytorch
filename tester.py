@@ -114,7 +114,7 @@ if __name__ == '__main__':
     data_cfg = "config/data_cfg/data_1kp_noAug.json"
     phase = "test"
 
-    if not model_path or not data_cfg:
+    if not model_cfg or not data_cfg:
         model_cfg, data_cfg, _ = get_corresponding_cfg(model_path, check_exist=["data", "model"])
 
     from config.config import datasets_info
